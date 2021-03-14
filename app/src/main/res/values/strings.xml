@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Cycling Fizz</string>
+    <string name="get_started">Get Started</string>
+    <string name="motto">Discover Lisbon’s cycleways and bikesharing stations</string>
+</resources>
