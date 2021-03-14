@@ -4,8 +4,10 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="offWhite">#EBE9E9</color>
 
     <color name="orange_500">#FF9F3C</color>
     <color name="orange_700">#F28412</color>
     <color name="dark">#2F373D</color>
+    <color name="darkTransparent">#802F373D</color>
 </resources>

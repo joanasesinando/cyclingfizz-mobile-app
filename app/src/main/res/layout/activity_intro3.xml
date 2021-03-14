@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Intro3Activity">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/intro3_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="90dp"
+        android:fontFamily="@font/quicksand_medium"
+        android:gravity="center_horizontal"
+        android:text="@string/intro3_title"
+        android:textAlignment="center"
+        android:textColor="@color/dark"
+        android:textSize="28sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/intro3_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/intro3_title"
+        android:src="@drawable/ic_sample"
+        android:layout_marginTop="35dp"/>
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/intro3_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/quicksand"
+        android:gravity="center_horizontal"
+        android:text="@string/intro3_text"
+        android:textAlignment="center"
+        android:textColor="@color/darkTransparent"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/intro3_img"
+        android:layout_marginTop="35dp"/>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnNextIntro3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/gradient_primary"
+        android:text="@string/start"
+        android:fontFamily="@font/quicksand_medium"
+        android:letterSpacing=".06"
+        android:textColor="@color/white"
+        android:layout_marginBottom="55dp"
+        android:paddingHorizontal="60dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:onClick="btnStartClicked"/>
+
+    <ImageView
+        android:id="@+id/intro3_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_progress_3"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnNextIntro3"
+        android:layout_marginTop="17dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,5 +1,24 @@
 <resources>
     <string name="app_name">Cycling Fizz</string>
+
+    <!-- Actions -->
     <string name="get_started">Get Started</string>
-    <string name="motto">Discover Lisbon’s cycleways and bikesharing stations</string>
+    <string name="next">Next</string>
+    <string name="skip">Skip</string>
+    <string name="start">Start</string>
+
+    <!-- Welcome -->
+    <string name="motto">Discover Lisbon’s cycleways\nand bikesharing stations</string>
+
+    <!-- Intro 1 -->
+    <string name="intro1_title">Title1</string>
+    <string name="intro1_text">Scelerisque rhoncus faucibus\nut ac etiam varius</string>
+
+    <!-- Intro 2 -->
+    <string name="intro2_title">Title2</string>
+    <string name="intro2_text">A justo, in porttitor consequat\nnisi netus sit ultricies</string>
+
+    <!-- Intro 3 -->
+    <string name="intro3_title">Title3</string>
+    <string name="intro3_text">Aenean amet hendrerit non\na egestas</string>
 </resources>

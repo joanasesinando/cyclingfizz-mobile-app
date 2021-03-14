@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Intro2Activity">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/intro2_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="90dp"
+        android:fontFamily="@font/quicksand_medium"
+        android:gravity="center_horizontal"
+        android:text="@string/intro2_title"
+        android:textAlignment="center"
+        android:textColor="@color/dark"
+        android:textSize="28sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/intro2_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/intro2_title"
+        android:src="@drawable/ic_sample"
+        android:layout_marginTop="35dp"/>
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/intro2_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/quicksand"
+        android:gravity="center_horizontal"
+        android:text="@string/intro2_text"
+        android:textAlignment="center"
+        android:textColor="@color/darkTransparent"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/intro2_img"
+        android:layout_marginTop="35dp"/>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnNextIntro2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/gradient_primary"
+        android:text="@string/next"
+        android:fontFamily="@font/quicksand_medium"
+        android:letterSpacing=".06"
+        android:textColor="@color/white"
+        android:layout_marginBottom="55dp"
+        android:paddingHorizontal="60dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:onClick="goToIntro3"/>
+
+    <ImageView
+        android:id="@+id/intro2_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_progress_2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnNextIntro2"
+        android:layout_marginTop="17dp"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/skip"
+        android:fontFamily="@font/quicksand"
+        android:textSize="16sp"
+        android:textAllCaps="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="10dp"
+        style="@style/Widget.MaterialComponents.Button.TextButton"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
