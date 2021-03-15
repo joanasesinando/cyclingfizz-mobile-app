@@ -47,7 +47,7 @@
         android:layout_marginTop="35dp"/>
 
     <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnNextIntro3"
+        android:id="@+id/btn_start_intro3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/gradient_primary"
@@ -59,8 +59,7 @@
         android:paddingHorizontal="60dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:onClick="btnStartClicked"/>
+        app:layout_constraintStart_toStartOf="parent"/>
 
     <ImageView
         android:id="@+id/intro3_progress"
@@ -69,7 +68,7 @@
         android:src="@drawable/ic_progress_3"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnNextIntro3"
+        app:layout_constraintTop_toBottomOf="@+id/btn_start_intro3"
         android:layout_marginTop="17dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

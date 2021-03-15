@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 
 public class Intro3Activity extends AppCompatActivity {
 
@@ -18,13 +20,18 @@ public class Intro3Activity extends AppCompatActivity {
 
         // Set status bar color
         Utils.setStatusBarColor(this, R.color.offWhite);
+
+        Button start_btn = findViewById(R.id.btn_start_intro3);
+        start_btn.setOnClickListener(this::btnStartClicked);
     }
 
     public void btnStartClicked(View view) {
-//        Intent intent = new Intent(this, Intro2Activity.class);
-//        startActivity(intent);
-//        overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+        Intent intent = new Intent(this, MapActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
     }
+
+
 
     @Override
     public void onBackPressed() {

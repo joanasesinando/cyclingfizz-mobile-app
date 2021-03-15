@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 
 public class Intro2Activity extends AppCompatActivity {
 
@@ -18,6 +19,15 @@ public class Intro2Activity extends AppCompatActivity {
 
         // Set status bar color
         Utils.setStatusBarColor(this, R.color.offWhite);
+
+        Button skip_btn = findViewById(R.id.btn_skip_intro2);
+        skip_btn.setOnClickListener(this::btnSkipClicked);
+    }
+
+    public void btnSkipClicked(View view) {
+        Intent intent = new Intent(this, MapActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
     }
 
     public void goToIntro3(View view) {
