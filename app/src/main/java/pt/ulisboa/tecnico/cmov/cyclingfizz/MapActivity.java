@@ -36,6 +36,8 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.expressions.Expression;
 import com.mapbox.mapboxsdk.style.layers.CircleLayer;
+import com.mapbox.mapboxsdk.style.layers.LineLayer;
+import com.mapbox.mapboxsdk.style.layers.Property;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.layers.TransitionOptions;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonOptions;
@@ -59,6 +61,11 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleOpacity;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleRadius;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconSize;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineJoin;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineOpacity;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textAllowOverlap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textField;
@@ -67,7 +74,8 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textSize;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, PermissionsListener {
 
-    static String MAP_SERVER_URL = "https://map.server.cyclingfizz.pt";
+    static String MAP_SERVER_URL = "https://7a594aacc4e1.ngrok.io";
+//    static String MAP_SERVER_URL = "https://map.server.cyclingfizz.pt";
 
     static String GIRA_SOURCE_ID = "gira-source";
     static String GIRA_DATA_URL = MAP_SERVER_URL + "/get-gira";
@@ -82,6 +90,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     static String MOBI_CASCAIS_STATION_LAYER_ID = "mobi-cascais-layer";
     static String MOBI_CASCAIS_CLUSTER_LAYER_ID = "mobi-cascais-cluster-layer";
     static String MOBI_CASCAIS_COUNT_LAYER_ID = "mobi-cascais-count-layer";
+
+    static String CYCLEWAYS_SOURCE_ID = "cycleways-source";
+    static String CYCLEWAYS_DATA_URL = MAP_SERVER_URL + "/get-cycleways";
+//    static String CYCLEWAYS_ICON_ID = "mobi-cascais-icon";
+    static String CYCLEWAYS_LAYER_ID = "cycleways-layer";
+//    static String MOBI_CASCAIS_CLUSTER_LAYER_ID = "mobi-cascais-cluster-layer";
+//    static String MOBI_CASCAIS_COUNT_LAYER_ID = "mobi-cascais-count-layer";
+
 
     private static final long DEFAULT_INTERVAL_IN_MILLISECONDS = 1000L;
     private static final long DEFAULT_MAX_WAIT_TIME = DEFAULT_INTERVAL_IN_MILLISECONDS * 5;
@@ -121,6 +137,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
 
             addIcons(style);
+            addCycleways(style);
             addGiraStations(style);
             addMobiCascaisStations(style);
 
@@ -136,7 +153,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 for (Feature feature : giraFeatureList) {
                     Log.d("Feature found with %1$s", feature.toJson());
 
-                    Toast.makeText(MapActivity.this, "Id = " + feature.getProperty("tags").getAsJsonObject().get("ref").getAsString(),
+                    Toast.makeText(MapActivity.this, "Id = " + feature.getProperty("id_expl").getAsString(),
                             Toast.LENGTH_SHORT).show();
                 }
                 return true;
@@ -206,7 +223,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         unclustered.setProperties(
                 iconImage(GIRA_ICON_ID),
-                iconSize(literal(1f))
+                iconSize(literal(1.5f))
         );
 
         unclustered.setFilter(not(has("point_count")));
@@ -266,7 +283,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         unclustered.setProperties(
                 iconImage(MOBI_CASCAIS_ICON_ID),
-                iconSize(literal(1f))
+                iconSize(literal(1.5f))
         );
 
         unclustered.setFilter(not(has("point_count")));
@@ -302,6 +319,34 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         );
         loadedMapStyle.addLayer(count);
     }
+
+
+    private void addCycleways(@NonNull Style loadedMapStyle) {
+
+        try {
+            loadedMapStyle.addSource(
+                    new GeoJsonSource(CYCLEWAYS_SOURCE_ID,
+                            new URI(CYCLEWAYS_DATA_URL),
+                            new GeoJsonOptions())
+            );
+        } catch (URISyntaxException uriSyntaxException) {
+            System.err.println("Check the URL " + uriSyntaxException.getMessage());
+        }
+
+        //Creating a marker layer for single data points
+        LineLayer cycleways = new LineLayer(CYCLEWAYS_LAYER_ID, CYCLEWAYS_SOURCE_ID);
+
+        cycleways.setProperties(
+                lineJoin(Property.LINE_JOIN_ROUND),
+                lineCap(Property.LINE_CAP_ROUND),
+                lineColor("#d99b15"),
+                lineWidth(5f),
+                lineOpacity(0.5f)
+        );
+
+        loadedMapStyle.addLayer(cycleways);
+    }
+
 
 
     /**
@@ -408,10 +453,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
 
                 // Create a Toast which displays the new location's coordinates
-                Toast.makeText(activity, String.format(
-                        String.valueOf(result.getLastLocation().getLatitude()),
-                        String.valueOf(result.getLastLocation().getLongitude())),
-                        Toast.LENGTH_SHORT).show();
+//                Toast.makeText(activity, String.format(
+//                        String.valueOf(result.getLastLocation().getLatitude()),
+//                        String.valueOf(result.getLastLocation().getLongitude())),
+//                        Toast.LENGTH_SHORT).show();
 
                 // Pass the new location to the Maps SDK's LocationComponent
                 if (activity.mapboxMap != null && result.getLastLocation() != null) {
