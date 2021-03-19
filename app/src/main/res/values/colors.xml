@@ -6,6 +6,8 @@
     <color name="white">#FFFFFFFF</color>
     <color name="offWhite">#EBE9E9</color>
 
+    <color name="red_danger">#F62D1E</color>
+
     <color name="orange_500">#FF9F3C</color>
     <color name="orange_700">#F48817</color>
     <color name="dark">#2F373D</color>

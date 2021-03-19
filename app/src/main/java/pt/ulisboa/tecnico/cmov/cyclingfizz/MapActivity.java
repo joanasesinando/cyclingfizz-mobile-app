@@ -1,26 +1,38 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.RectF;
-import android.location.Location;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationAvailability;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.mapbox.android.core.location.LocationEngine;
-import com.mapbox.android.core.location.LocationEngineCallback;
-import com.mapbox.android.core.location.LocationEngineProvider;
-import com.mapbox.android.core.location.LocationEngineRequest;
-import com.mapbox.android.core.location.LocationEngineResult;
-import com.mapbox.android.core.permissions.PermissionsListener;
-import com.mapbox.android.core.permissions.PermissionsManager;
 import com.mapbox.geojson.Feature;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
@@ -44,7 +56,6 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonOptions;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.mapboxsdk.utils.BitmapUtils;
 
-import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -72,7 +83,13 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textField;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textIgnorePlacement;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textSize;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, PermissionsListener {
+enum TrackingMode {
+    FREE, FOLLOW_USER
+}
+
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
+
+    static String APP_NAME_DEBUGGER = "Cycling_Fizz";
 
     static String MAP_SERVER_URL = "https://7a594aacc4e1.ngrok.io";
 //    static String MAP_SERVER_URL = "https://map.server.cyclingfizz.pt";
@@ -93,22 +110,32 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     static String CYCLEWAYS_SOURCE_ID = "cycleways-source";
     static String CYCLEWAYS_DATA_URL = MAP_SERVER_URL + "/get-cycleways";
-//    static String CYCLEWAYS_ICON_ID = "mobi-cascais-icon";
     static String CYCLEWAYS_LAYER_ID = "cycleways-layer";
-//    static String MOBI_CASCAIS_CLUSTER_LAYER_ID = "mobi-cascais-cluster-layer";
-//    static String MOBI_CASCAIS_COUNT_LAYER_ID = "mobi-cascais-count-layer";
 
-
-    private static final long DEFAULT_INTERVAL_IN_MILLISECONDS = 1000L;
-    private static final long DEFAULT_MAX_WAIT_TIME = DEFAULT_INTERVAL_IN_MILLISECONDS * 5;
-    private PermissionsManager permissionsManager;
-    private LocationEngine locationEngine;
-    private LocationChangeListeningActivityLocationCallback callback =
-            new LocationChangeListeningActivityLocationCallback(this);
+    static Long LOCATION_UPDATE_INTERVAL = 1000L;
+    static Long LOCATION_UPDATE_MAX_WAIT_INTERVAL = LOCATION_UPDATE_INTERVAL * 5;
 
 
     private MapView mapView;
     private MapboxMap mapboxMap;
+
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
+                    startLocation();
+                } else {
+                    Toast.makeText(this, "Permission not Granted", Toast.LENGTH_SHORT).show();
+                    trackingUser = false;
+                }
+            });
+
+    static int REQUEST_CHECK_LOCATION_SETTINGS = 1;
+    private LocationCallback locationCallback;
+    private FusedLocationProviderClient fusedLocationClient;
+    private LocationRequest locationRequest;
+    private boolean trackingUser;
+    private TrackingMode trackingMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,8 +144,35 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
 
         setContentView(R.layout.activity_map);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    return;
+                }
+                Log.d(APP_NAME_DEBUGGER, "Got Location");
 
 
+                // Pass the new location to the Maps SDK's LocationComponent
+                if (mapboxMap != null && locationResult.getLastLocation() != null) {
+                    mapboxMap.getLocationComponent().forceLocationUpdate(locationResult.getLastLocation());
+                }
+            }
+
+            @Override
+            public void onLocationAvailability(LocationAvailability locationAvailability) {
+                if (locationAvailability == null) {
+                    return;
+                }
+
+                if (!locationAvailability.isLocationAvailable()) {
+                    checkIfLocationOn();
+                }
+
+            }
+        };
 
         mapView = (MapView) findViewById(R.id.mapView);
         System.out.println("MY_log: " + mapView);
@@ -141,7 +195,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             addGiraStations(style);
             addMobiCascaisStations(style);
 
-
             mapboxMap.addOnMapClickListener(point -> {
 
                 PointF pointf = mapboxMap.getProjection().toScreenLocation(point);
@@ -159,32 +212,46 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 return true;
             });
 
-            enableLocationComponent(style);
+            setMapboxCameraFollowUser();
+            startLocation();
             mapboxMap.getLocationComponent().addOnCameraTrackingChangedListener(new OnCameraTrackingChangedListener() {
+
                 @Override
                 public void onCameraTrackingDismissed() {
+                    Log.d(APP_NAME_DEBUGGER, "onCameraTrackingDismissed");
 
                 }
 
                 @Override
                 public void onCameraTrackingChanged(int currentMode) {
-                    updateCurrentLocationBtnColor();
+                    Log.d(APP_NAME_DEBUGGER, String.valueOf(currentMode));
+                    if (currentMode == CameraMode.TRACKING) {
+                        setMapboxCameraFollowUser();
+                    } else {
+                        setMapboxCameraFree();
+                    }
+                    updateCurrentLocationBtn();
                 }
             });
 
             FloatingActionButton map_current_location_btn = findViewById(R.id.btn_map_current_location);
-            map_current_location_btn.setOnClickListener(view -> this.enableLocationComponent(style));
+            map_current_location_btn.setOnClickListener(view -> {
+                setMapboxCameraFollowUser();
+                turnOnLocationTrackerMapbox();
+            });
 
-            updateCurrentLocationBtnColor();
+            updateCurrentLocationBtn();
             // Map is set up and the style has loaded. Now you can add data or make other map adjustments
 
         });
     }
 
-    private void updateCurrentLocationBtnColor() {
+    private void updateCurrentLocationBtn() {
         FloatingActionButton map_current_location_btn = findViewById(R.id.btn_map_current_location);
 
-        if (mapboxMap.getLocationComponent().getCameraMode() == CameraMode.TRACKING) {
+        if (!trackingUser) {
+            map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.red_danger)));
+        } else if (trackingMode == TrackingMode.FOLLOW_USER) {
             map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange_500)));
         } else {
             map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.dark)));
@@ -218,6 +285,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
 
         //Creating a marker layer for single data points
+
         SymbolLayer unclustered = new SymbolLayer(GIRA_STATION_LAYER_ID, GIRA_SOURCE_ID);
 
 
@@ -348,137 +416,157 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
 
+    protected void createLocationRequest() {
+        locationRequest = LocationRequest.create();
+        locationRequest.setInterval(LOCATION_UPDATE_INTERVAL);
+        locationRequest.setMaxWaitTime(LOCATION_UPDATE_MAX_WAIT_INTERVAL);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }
 
-    /**
-     * Initialize the Maps SDK's LocationComponent
-     */
-    @SuppressWarnings( {"MissingPermission"})
-    private void enableLocationComponent(@NonNull Style loadedMapStyle) {
-        // Check if permissions are enabled and if not request
-        if (PermissionsManager.areLocationPermissionsGranted(this)) {
+    void checkIfLocationOn() {
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
 
-            // Get an instance of the component
-            LocationComponent locationComponent = mapboxMap.getLocationComponent();
+        SettingsClient client = LocationServices.getSettingsClient(this);
+        Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
 
-            // Set the LocationComponent activation options
-            LocationComponentActivationOptions locationComponentActivationOptions =
-                    LocationComponentActivationOptions.builder(this, loadedMapStyle)
-                            .useDefaultLocationEngine(false)
-                            .build();
 
-            // Activate with the LocationComponentActivationOptions object
-            locationComponent.activateLocationComponent(locationComponentActivationOptions);
+        task.addOnSuccessListener(this, locationSettingsResponse -> {
+            // All location settings are satisfied. The client can initialize
+            // location requests here.
+            // ...
+            Log.d(APP_NAME_DEBUGGER, "Location ON");
+            turnOnLocationTrackerMapbox();
+        });
 
-            // Enable to make component visible
-            locationComponent.setLocationComponentEnabled(true);
+        task.addOnFailureListener(this, e -> {
+            if (e instanceof ResolvableApiException) {
+                // Location settings are not satisfied, but this can be fixed
+                // by showing the user a dialog.
+                try {
+                    // Show the dialog by calling startResolutionForResult(),
+                    // and check the result in onActivityResult().
+                    ResolvableApiException resolvable = (ResolvableApiException) e;
+                    resolvable.startResolutionForResult(MapActivity.this,
+                            REQUEST_CHECK_LOCATION_SETTINGS);
+                } catch (IntentSender.SendIntentException sendEx) {
+                    // Ignore the error.
+                }
+            }
+        });
 
-            // Set the component's camera mode
-            locationComponent.setCameraMode(CameraMode.TRACKING, 750L /*duration*/,
-                    16.0 /*zoom*/,
-                    null /*bearing, use current/determine based on the tracking mode*/,
-                    null /*tilt*/,
-                    null /*transition listener*/);
+    }
 
-            locationComponent.zoomWhileTracking(16.0);
-
-            // Set the component's render mode
-            locationComponent.setRenderMode(RenderMode.COMPASS);
-
-            initLocationEngine();
+    private void startLocation() {
+        trackingUser = true;
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Permission already Granted", Toast.LENGTH_SHORT).show();
+            createLocationRequest();
+            checkIfLocationOn();
         } else {
-            permissionsManager = new PermissionsManager(this);
-            permissionsManager.requestLocationPermissions(this);
+            Toast.makeText(this, "ask for permission", Toast.LENGTH_SHORT).show();
+            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
         }
     }
 
-    /**
-     * Set up the LocationEngine and the parameters for querying the device's location
-     */
+    private void setMapboxCameraFollowUser() {
+        this.trackingMode = TrackingMode.FOLLOW_USER;
+        Log.d(APP_NAME_DEBUGGER, "set to " + trackingMode.name());
+    }
+
+    private void setMapboxCameraFree() {
+        this.trackingMode = TrackingMode.FREE;
+        Log.d(APP_NAME_DEBUGGER, "set to " + trackingMode.name());
+    }
+
+    private void updateMapboxCamera(LocationComponent locationComponent) {
+        Log.d(APP_NAME_DEBUGGER, trackingMode.name());
+        switch (trackingMode) {
+            case FOLLOW_USER:
+                // Set the component's camera mode
+                locationComponent.setCameraMode(CameraMode.TRACKING, 750L /*duration*/,
+                        16.0 /*zoom*/,
+                        null /*bearing, use current/determine based on the tracking mode*/,
+                        null /*tilt*/,
+                        null /*transition listener*/);
+
+                locationComponent.zoomWhileTracking(16.0);
+
+                // Set the component's render mode
+                locationComponent.setRenderMode(RenderMode.COMPASS);
+                break;
+            case FREE:
+                break;
+        }
+
+    }
+
+
     @SuppressLint("MissingPermission")
-    private void initLocationEngine() {
-        locationEngine = LocationEngineProvider.getBestLocationEngine(this);
+    private void turnOnLocationTrackerMapbox() {
+        Log.d(APP_NAME_DEBUGGER, "entra");
+        // Get an instance of the component
+        LocationComponent locationComponent = mapboxMap.getLocationComponent();
 
-        LocationEngineRequest request = new LocationEngineRequest.Builder(DEFAULT_INTERVAL_IN_MILLISECONDS)
-                .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
-                .setMaxWaitTime(DEFAULT_MAX_WAIT_TIME).build();
+        // Set the LocationComponent activation options
+        LocationComponentActivationOptions locationComponentActivationOptions =
+                LocationComponentActivationOptions.builder(this, mapboxMap.getStyle())
+                        .useDefaultLocationEngine(false)
+                        .build();
 
-        locationEngine.requestLocationUpdates(request, callback, getMainLooper());
-        locationEngine.getLastLocation(callback);
+        // Activate with the LocationComponentActivationOptions object
+        locationComponent.activateLocationComponent(locationComponentActivationOptions);
+
+        // Enable to make component visible
+        locationComponent.setLocationComponentEnabled(true);
+
+        updateMapboxCamera(locationComponent);
+
+        // start location updates
+        fusedLocationClient.requestLocationUpdates(locationRequest,
+                locationCallback,
+                Looper.getMainLooper());
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
 
-    @Override
-    public void onExplanationNeeded(List<String> permissionsToExplain) {
-        Toast.makeText(this, R.string.user_location_permission_explanation,
-                Toast.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void onPermissionResult(boolean granted) {
-        if (granted) {
-            mapboxMap.getStyle(this::enableLocationComponent);
-        } else {
-            Toast.makeText(this, R.string.user_location_permission_not_granted, Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private static class LocationChangeListeningActivityLocationCallback
-            implements LocationEngineCallback<LocationEngineResult> {
-
-        private final WeakReference<MapActivity> activityWeakReference;
-
-        LocationChangeListeningActivityLocationCallback(MapActivity activity) {
-            this.activityWeakReference = new WeakReference<>(activity);
-        }
-
-        /**
-         * The LocationEngineCallback interface's method which fires when the device's location has changed.
-         *
-         * @param result the LocationEngineResult object which has the last known location within it.
-         */
-        @Override
-        public void onSuccess(LocationEngineResult result) {
-            MapActivity activity = activityWeakReference.get();
-
-            if (activity != null) {
-                Location location = result.getLastLocation();
-
-                if (location == null) {
-                    return;
-                }
-
-                // Create a Toast which displays the new location's coordinates
-//                Toast.makeText(activity, String.format(
-//                        String.valueOf(result.getLastLocation().getLatitude()),
-//                        String.valueOf(result.getLastLocation().getLongitude())),
-//                        Toast.LENGTH_SHORT).show();
-
-                // Pass the new location to the Maps SDK's LocationComponent
-                if (activity.mapboxMap != null && result.getLastLocation() != null) {
-                    activity.mapboxMap.getLocationComponent().forceLocationUpdate(result.getLastLocation());
-                }
-            }
-        }
-
-        /**
-         * The LocationEngineCallback interface's method which fires when the device's location can't be captured
-         *
-         * @param exception the exception message
-         */
-        @Override
-        public void onFailure(@NonNull Exception exception) {
-            MapActivity activity = activityWeakReference.get();
-            if (activity != null) {
-                Toast.makeText(activity, exception.getLocalizedMessage(),
+    @SuppressLint("MissingPermission")
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CHECK_LOCATION_SETTINGS) {
+            if (resultCode == -1) {
+                startLocation();
+            } else {
+                trackingUser = false;
+                Toast.makeText(this, "Bem pelo menos tou aqui " + resultCode,
                         Toast.LENGTH_SHORT).show();
+                updateCurrentLocationBtn();
+                LocationComponent locationComponent = mapboxMap.getLocationComponent();
+                if (locationComponent.isLocationComponentActivated() && locationComponent.isLocationComponentEnabled()) {
+                    locationComponent.setLocationComponentEnabled(false);
+                }
             }
         }
     }
+
+//    public void askForGPS() {
+//
+//        new MaterialAlertDialogBuilder(this)
+//                .setTitle(getString(R.string.user_location_turn_on_title))
+//                .setMessage(getString(R.string.user_location_turn_on_text))
+//                .setNegativeButton(getString(R.string.user_location_turn_on_setting), (dialogInterface, i) -> {
+//                    Intent gpsOptionsIntent = new Intent(
+//                            android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+//                    startActivityForResult(gpsOptionsIntent, 1);
+//                })
+//                .setPositiveButton(getString(R.string.user_location_turn_on_ignore), (dialogInterface, i) -> {
+//
+//                })
+//                .show();
+//
+//    }
+
+
+
 
     @Override
     protected void onStart() {

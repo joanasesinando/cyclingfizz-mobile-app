@@ -25,7 +25,17 @@
     <string name="filter">Filter</string>
     <string name="search">Search</string>
     <string name="more">More</string>
-<!--    todo mesmo change this string-->
+
+    <!-- Location Permissions -->
+
+    <!--    todo mesmo change this string-->
     <string name="user_location_permission_explanation">This app needs your location to find you in the map.</string>
     <string name="user_location_permission_not_granted">Location permission not granted</string>
+
+    <!-- Location Turn on Dialog -->
+
+    <string name="user_location_turn_on_title">Turn on Location?</string>
+    <string name="user_location_turn_on_text">This app needs your location to find you in the map.</string>
+    <string name="user_location_turn_on_ignore">Ignore</string>
+    <string name="user_location_turn_on_setting">Open Settings</string>
 </resources>

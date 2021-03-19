@@ -4,10 +4,13 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class WelcomeActivity extends AppCompatActivity {
 
@@ -23,6 +26,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
         // Set status bar color
         Utils.setStatusBarColor(this, R.color.offWhite);
+
     }
 
     public void goToIntro1(View view) {
@@ -30,4 +34,6 @@ public class WelcomeActivity extends AppCompatActivity {
         startActivity(intent);
         overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
     }
+
+
 }
