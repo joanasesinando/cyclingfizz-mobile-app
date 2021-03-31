@@ -30,8 +30,5 @@ public class CyclewayActivity extends AppCompatActivity {
 
     public void closeBtnClicked(View view) {
         finish();
-//        Intent intent = new Intent(this, MapActivity.class);
-//        startActivity(intent);
-//        overridePendingTransition(R.anim.slide_right_enter, R.anim.slide_right_leave);
     }
 }

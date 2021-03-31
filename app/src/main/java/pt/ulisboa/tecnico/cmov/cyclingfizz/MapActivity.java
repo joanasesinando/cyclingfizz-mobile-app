@@ -315,7 +315,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         unclustered.setProperties(
                 iconImage(GIRA_ICON_ID),
                 iconAnchor(Property.ICON_ANCHOR_BOTTOM),
-                iconSize(literal(1f))
+                iconSize(literal(.5f))
         );
 
         unclustered.setFilter(not(has("point_count")));
