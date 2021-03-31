@@ -12,7 +12,6 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.os.Bundle;
@@ -108,6 +107,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     static Long LOCATION_UPDATE_INTERVAL = 1000L;
     static Long LOCATION_UPDATE_MAX_WAIT_INTERVAL = LOCATION_UPDATE_INTERVAL * 5;
 
+    public final static String STATION_NAME = "pt.ulisboa.tecnico.cmov.cyclingfizz.STATION_NAME";
+    public final static String CYCLEWAY_NAME = "pt.ulisboa.tecnico.cmov.cyclingfizz.CYCLEWAY_NAME";
 
     private MapView mapView;
     private MapboxMap mapboxMap;
@@ -193,14 +194,35 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 RectF rectF = new RectF(pointf.x - 10, pointf.y - 10, pointf.x + 10, pointf.y + 10);
 
                 List<Feature> giraFeatureList = mapboxMap.queryRenderedFeatures(rectF, GIRA_STATION_LAYER_ID);
+                List<Feature> cyclewaysFeatureList = mapboxMap.queryRenderedFeatures(rectF, CYCLEWAYS_LAYER_ID);
 
+                // Open only one
+                Feature feature = giraFeatureList.size() > 0 ? giraFeatureList.get(0) : null;
 
-                for (Feature feature : giraFeatureList) {
+                if (feature != null) {
                     Log.d("Feature found with %1$s", feature.toJson());
 
                     Toast.makeText(MapActivity.this, "Id = " + feature.getProperty("id_expl").getAsString(),
                             Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent(this, StationActivity.class);
+                    intent.putExtra(STATION_NAME, feature.getProperty("desig_comercial").getAsString());
+                    startActivity(intent);
+
+                } else {
+                    feature = cyclewaysFeatureList.get(0);
+                    String cyclewayName = null;
+                    if (feature.getProperty("tags").getAsJsonObject().get("name") != null) {
+                        cyclewayName = feature.getProperty("tags").getAsJsonObject().get("name").getAsString();
+                    } else {
+                        cyclewayName = "Cycleway with no name";
+                    }
+
+                    Intent intent = new Intent(this, CyclewayActivity.class);
+                    intent.putExtra(CYCLEWAY_NAME, cyclewayName);
+                    startActivity(intent);
                 }
+                overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
                 return true;
             });
 

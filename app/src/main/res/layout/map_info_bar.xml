@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="128dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/mapInfoBar"
+            style="@style/Widget.MaterialComponents.Toolbar.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:elevation="0dp"
+            app:menu="@menu/map_info_bar"
+            app:navigationIcon="@drawable/ic_round_close_24"
+            app:theme="@style/AppTheme.ToolbarFont" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Note: A RecyclerView can also be used -->
+    <androidx.core.widget.NestedScrollView
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Scrollable content -->
+
+    </androidx.core.widget.NestedScrollView>
+
+    <ImageView
+        android:id="@+id/map_info_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_cycleway"
+        android:layout_marginLeft="15dp"
+        android:layout_marginTop="55dp"
+        android:translationZ="10dp" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/map_info_name"
+        android:layout_width="285dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="65dp"
+        android:layout_marginTop="53dp"
+        android:fontFamily="@font/quicksand_medium"
+        android:text="Ciclovia da Av. Fontes Pereira de Melo"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:translationZ="10dp"
+        android:ellipsize="end"
+        android:maxLines="2"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
