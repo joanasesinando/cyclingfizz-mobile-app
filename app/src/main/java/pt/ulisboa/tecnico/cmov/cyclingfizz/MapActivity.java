@@ -79,6 +79,7 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textAllowOverlap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textField;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textFont;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textIgnorePlacement;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textSize;
 
@@ -148,7 +149,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
                 Log.d(APP_NAME_DEBUGGER, "Got Location");
 
-
                 // Pass the new location to the Maps SDK's LocationComponent
                 if (mapboxMap != null && locationResult.getLastLocation() != null) {
                     mapboxMap.getLocationComponent().forceLocationUpdate(locationResult.getLastLocation());
@@ -164,7 +164,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (!locationAvailability.isLocationAvailable()) {
                     checkIfLocationOn();
                 }
-
             }
         };
 
@@ -183,7 +182,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             mapboxMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(
                     38.722252, -9.139337), 13));
 
-
             addIcons(style);
             addCycleways(style);
             addGiraStations(style);
@@ -198,6 +196,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                 // Open only one
                 Feature feature = giraFeatureList.size() > 0 ? giraFeatureList.get(0) : null;
+                Log.d("feature", String.valueOf(feature));
 
                 if (feature != null) {
                     Log.d("Feature found with %1$s", feature.toJson());
@@ -210,8 +209,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     startActivity(intent);
 
                 } else {
-                    feature = cyclewaysFeatureList.get(0);
-                    String cyclewayName = null;
+                    feature = cyclewaysFeatureList.size() > 0 ? cyclewaysFeatureList.get(0) : null;
+                    if (feature == null) return true;
+                    String cyclewayName;
                     if (feature.getProperty("tags").getAsJsonObject().get("name") != null) {
                         cyclewayName = feature.getProperty("tags").getAsJsonObject().get("name").getAsString();
                     } else {
@@ -225,6 +225,21 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
                 return true;
             });
+
+            Runnable r = new Runnable() {
+                public void run() {
+                    while(true) {
+                        Log.d("Zoom", String.valueOf(mapboxMap.getCameraPosition().zoom));
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            };
+            Thread t = new Thread(r);
+            t.start();
 
             setMapboxCameraFollowUser();
             startLocation();
@@ -280,14 +295,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
 
     private void addGiraStations(@NonNull Style loadedMapStyle) {
-
         try {
             loadedMapStyle.addSource(
                     new GeoJsonSource(GIRA_SOURCE_ID,
                             new URI(GIRA_DATA_URL),
                             new GeoJsonOptions()
                                     .withCluster(true)
-                                    .withClusterMaxZoom(12)
+                                    .withClusterMaxZoom(14)
                                     .withClusterRadius(50)
                     )
             );
@@ -296,9 +310,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
 
         //Creating a marker layer for single data points
-
         SymbolLayer unclustered = new SymbolLayer(GIRA_STATION_LAYER_ID, GIRA_SOURCE_ID);
-
 
         unclustered.setProperties(
                 iconImage(GIRA_ICON_ID),
@@ -307,9 +319,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         );
 
         unclustered.setFilter(not(has("point_count")));
-
         loadedMapStyle.addLayer(unclustered);
-
 
         CircleLayer circles = new CircleLayer(GIRA_CLUSTER_LAYER_ID, GIRA_SOURCE_ID);
 
@@ -322,11 +332,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         stop(20, 55))),
                 circleOpacity(0.8f)
         );
-
         circles.setFilter(has("point_count"));
-
         loadedMapStyle.addLayer(circles);
-
 
         //Add the count labels
         SymbolLayer count = new SymbolLayer(GIRA_COUNT_LAYER_ID, GIRA_SOURCE_ID);
@@ -335,14 +342,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 textSize(12f),
                 textColor(getResources().getColor(R.color.white)),
                 textIgnorePlacement(true),
-                textAllowOverlap(true)
+                textAllowOverlap(true),
+                textFont(Expression.literal(R.font.quicksand_bold))
         );
         loadedMapStyle.addLayer(count);
     }
 
 
     private void addCycleways(@NonNull Style loadedMapStyle) {
-
         try {
             loadedMapStyle.addSource(
                     new GeoJsonSource(CYCLEWAYS_SOURCE_ID,
@@ -381,7 +388,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         SettingsClient client = LocationServices.getSettingsClient(this);
         Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
-
 
         task.addOnSuccessListener(this, locationSettingsResponse -> {
             // All location settings are satisfied. The client can initialize

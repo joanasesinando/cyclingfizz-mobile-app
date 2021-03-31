@@ -8,6 +8,9 @@
     <string name="start">Start</string>
     <string name="link">Get URL</string>
     <string name="share">Share</string>
+    <string name="filter">Filter</string>
+    <string name="search">Search</string>
+    <string name="more">More</string>
 
     <!-- Welcome -->
     <string name="motto">Discover Lisbon’s attractions\nand hotspots by bike</string>
@@ -23,10 +26,9 @@
     <!-- Intro 3 -->
     <string name="intro3_title">Title3</string>
     <string name="intro3_text">Aenean amet hendrerit non\na egestas</string>
+
+    <!-- Mapbox -->
     <string name="mapbox_access_token" translatable="false">pk.eyJ1IjoiYmVycmUiLCJhIjoiY2s2YmYzNmxlMGhiZjNubXZ2YzJtY3kxZyJ9.mKwbVWXuigynJ_m2ePSRFA</string>
-    <string name="filter">Filter</string>
-    <string name="search">Search</string>
-    <string name="more">More</string>
 
     <!-- Location Permissions -->
 
