@@ -108,8 +108,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     static Long LOCATION_UPDATE_INTERVAL = 1000L;
     static Long LOCATION_UPDATE_MAX_WAIT_INTERVAL = LOCATION_UPDATE_INTERVAL * 5;
 
-    public final static String STATION_NAME = "pt.ulisboa.tecnico.cmov.cyclingfizz.STATION_NAME";
-    public final static String CYCLEWAY_NAME = "pt.ulisboa.tecnico.cmov.cyclingfizz.CYCLEWAY_NAME";
+    public final static String STATION_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.STATION_INFO";
+    public final static String CYCLEWAY_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.CYCLEWAY_INFO";
 
     private MapView mapView;
     private MapboxMap mapboxMap;
@@ -196,50 +196,23 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                 // Open only one
                 Feature feature = giraFeatureList.size() > 0 ? giraFeatureList.get(0) : null;
-                Log.d("feature", String.valueOf(feature));
 
                 if (feature != null) {
-                    Log.d("Feature found with %1$s", feature.toJson());
-
-                    Toast.makeText(MapActivity.this, "Id = " + feature.getProperty("id_expl").getAsString(),
-                            Toast.LENGTH_SHORT).show();
-
                     Intent intent = new Intent(this, StationActivity.class);
-                    intent.putExtra(STATION_NAME, feature.getProperty("desig_comercial").getAsString());
+                    intent.putExtra(STATION_INFO, feature.toJson());
                     startActivity(intent);
 
                 } else {
                     feature = cyclewaysFeatureList.size() > 0 ? cyclewaysFeatureList.get(0) : null;
                     if (feature == null) return true;
-                    String cyclewayName;
-                    if (feature.getProperty("tags").getAsJsonObject().get("name") != null) {
-                        cyclewayName = feature.getProperty("tags").getAsJsonObject().get("name").getAsString();
-                    } else {
-                        cyclewayName = "Cycleway with no name";
-                    }
 
                     Intent intent = new Intent(this, CyclewayActivity.class);
-                    intent.putExtra(CYCLEWAY_NAME, cyclewayName);
+                    intent.putExtra(CYCLEWAY_INFO, feature.toJson());
                     startActivity(intent);
                 }
                 overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
                 return true;
             });
-
-            Runnable r = new Runnable() {
-                public void run() {
-                    while(true) {
-                        Log.d("Zoom", String.valueOf(mapboxMap.getCameraPosition().zoom));
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            };
-            Thread t = new Thread(r);
-            t.start();
 
             setMapboxCameraFollowUser();
             startLocation();

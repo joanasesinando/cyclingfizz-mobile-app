@@ -12,6 +12,10 @@
     <string name="search">Search</string>
     <string name="more">More</string>
 
+    <!-- Warnings -->
+    <string name="not_available">Not available</string>
+    <string name="not_name">No name</string>
+
     <!-- Welcome -->
     <string name="motto">Discover Lisbon’s attractions\nand hotspots by bike</string>
 
@@ -29,6 +33,15 @@
 
     <!-- Mapbox -->
     <string name="mapbox_access_token" translatable="false">pk.eyJ1IjoiYmVycmUiLCJhIjoiY2s2YmYzNmxlMGhiZjNubXZ2YzJtY3kxZyJ9.mKwbVWXuigynJ_m2ePSRFA</string>
+
+    <!-- Map info - cycleways -->
+    <string name="map_info_type">Type</string>
+    <string name="map_info_terrain">Terrain</string>
+
+    <!-- Map info - stations -->
+    <string name="map_info_bikes">Bicycles</string>
+    <string name="map_info_free_docks">Free docks</string>
+    <string name="map_info_rent">Rent bike</string>
 
     <!-- Location Permissions -->
 
