@@ -4,7 +4,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
@@ -70,6 +69,7 @@ import static com.mapbox.mapboxsdk.style.expressions.Expression.stop;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleOpacity;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleRadius;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconAnchor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconSize;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
@@ -91,8 +91,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     static String APP_NAME_DEBUGGER = "Cycling_Fizz";
 
-    static String MAP_SERVER_URL = "https://7a594aacc4e1.ngrok.io";
-//    static String MAP_SERVER_URL = "https://map.server.cyclingfizz.pt";
+//    static String MAP_SERVER_URL = "https://7a594aacc4e1.ngrok.io";
+    static String MAP_SERVER_URL = "https://map.server.cyclingfizz.pt";
 
     static String GIRA_SOURCE_ID = "gira-source";
     static String GIRA_DATA_URL = MAP_SERVER_URL + "/get-gira";
@@ -100,13 +100,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     static String GIRA_STATION_LAYER_ID = "gira-layer";
     static String GIRA_CLUSTER_LAYER_ID = "gira-cluster-layer";
     static String GIRA_COUNT_LAYER_ID = "gira-count-layer";
-
-    static String MOBI_CASCAIS_SOURCE_ID = "mobi-cascais-source";
-    static String MOBI_CASCAIS_DATA_URL = MAP_SERVER_URL + "/get-mobi-cascais";
-    static String MOBI_CASCAIS_ICON_ID = "mobi-cascais-icon";
-    static String MOBI_CASCAIS_STATION_LAYER_ID = "mobi-cascais-layer";
-    static String MOBI_CASCAIS_CLUSTER_LAYER_ID = "mobi-cascais-cluster-layer";
-    static String MOBI_CASCAIS_COUNT_LAYER_ID = "mobi-cascais-count-layer";
 
     static String CYCLEWAYS_SOURCE_ID = "cycleways-source";
     static String CYCLEWAYS_DATA_URL = MAP_SERVER_URL + "/get-cycleways";
@@ -193,7 +186,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             addIcons(style);
             addCycleways(style);
             addGiraStations(style);
-            addMobiCascaisStations(style);
 
             mapboxMap.addOnMapClickListener(point -> {
 
@@ -250,7 +242,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         FloatingActionButton map_current_location_btn = findViewById(R.id.btn_map_current_location);
 
         if (!trackingUser) {
-            map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.red_danger)));
+            map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.danger)));
         } else if (trackingMode == TrackingMode.FOLLOW_USER) {
             map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange_500)));
         } else {
@@ -261,10 +253,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void addIcons(@NonNull Style loadedMapStyle) {
         loadedMapStyle.addImage(GIRA_ICON_ID, Objects.requireNonNull(BitmapUtils.getBitmapFromDrawable(
-                getResources().getDrawable(R.drawable.ic_gira_icon))));
-
-        loadedMapStyle.addImage(MOBI_CASCAIS_ICON_ID, BitmapUtils.getBitmapFromDrawable(
-                getResources().getDrawable(R.drawable.ic_mobi_cascais_icon)));
+                getResources().getDrawable(R.drawable.ic_gira))));
     }
 
 
@@ -276,7 +265,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                             new URI(GIRA_DATA_URL),
                             new GeoJsonOptions()
                                     .withCluster(true)
-                                    .withClusterMaxZoom(14)
+                                    .withClusterMaxZoom(12)
                                     .withClusterRadius(50)
                     )
             );
@@ -291,7 +280,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         unclustered.setProperties(
                 iconImage(GIRA_ICON_ID),
-                iconSize(literal(1.5f))
+                iconAnchor(Property.ICON_ANCHOR_BOTTOM),
+                iconSize(literal(1f))
         );
 
         unclustered.setFilter(not(has("point_count")));
@@ -303,12 +293,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         //Add clusters' circles
         circles.setProperties(
-                circleColor(getResources().getColor(R.color.gira_green)),
+                circleColor(getResources().getColor(R.color.gira)),
                 circleRadius(step(get("point_count"), 25,
                         stop(5, 35),
                         stop(10, 45),
                         stop(20, 55))),
-                circleOpacity(0.7f)
+                circleOpacity(0.8f)
         );
 
         circles.setFilter(has("point_count"));
@@ -321,67 +311,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         count.setProperties(
                 textField(Expression.toString(get("point_count"))),
                 textSize(12f),
-                textColor(Color.BLACK),
-                textIgnorePlacement(true),
-                textAllowOverlap(true)
-        );
-        loadedMapStyle.addLayer(count);
-    }
-
-
-    private void addMobiCascaisStations(@NonNull Style loadedMapStyle) {
-
-        try {
-            loadedMapStyle.addSource(
-                    new GeoJsonSource(MOBI_CASCAIS_SOURCE_ID,
-                            new URI(MOBI_CASCAIS_DATA_URL),
-                            new GeoJsonOptions()
-                                    .withCluster(true)
-                                    .withClusterMaxZoom(14)
-                                    .withClusterRadius(50)
-                    )
-            );
-        } catch (URISyntaxException uriSyntaxException) {
-            System.err.println("Check the URL " + uriSyntaxException.getMessage());
-        }
-
-        //Creating a marker layer for single data points
-        SymbolLayer unclustered = new SymbolLayer(MOBI_CASCAIS_STATION_LAYER_ID, MOBI_CASCAIS_SOURCE_ID);
-
-
-        unclustered.setProperties(
-                iconImage(MOBI_CASCAIS_ICON_ID),
-                iconSize(literal(1.5f))
-        );
-
-        unclustered.setFilter(not(has("point_count")));
-
-        loadedMapStyle.addLayer(unclustered);
-
-
-        CircleLayer circles = new CircleLayer(MOBI_CASCAIS_CLUSTER_LAYER_ID, MOBI_CASCAIS_SOURCE_ID);
-
-        //Add clusters' circles
-        circles.setProperties(
-                circleColor(getResources().getColor(R.color.mobi_cascais_blue)),
-                circleRadius(step(get("point_count"), 25,
-                        stop(5, 35),
-                        stop(10, 45),
-                        stop(20, 55))),
-                circleOpacity(0.7f)
-        );
-
-        circles.setFilter(has("point_count"));
-
-        loadedMapStyle.addLayer(circles);
-
-
-        //Add the count labels
-        SymbolLayer count = new SymbolLayer(MOBI_CASCAIS_COUNT_LAYER_ID, MOBI_CASCAIS_SOURCE_ID);
-        count.setProperties(
-                textField(Expression.toString(get("point_count"))),
-                textSize(12f),
-                textColor(Color.BLACK),
+                textColor(getResources().getColor(R.color.white)),
                 textIgnorePlacement(true),
                 textAllowOverlap(true)
         );
@@ -407,9 +337,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         cycleways.setProperties(
                 lineJoin(Property.LINE_JOIN_ROUND),
                 lineCap(Property.LINE_CAP_ROUND),
-                lineColor("#d99b15"),
+                lineColor(getResources().getColor(R.color.pink)),
                 lineWidth(5f),
-                lineOpacity(0.5f)
+                lineOpacity(.8f)
         );
 
         loadedMapStyle.addLayer(cycleways);

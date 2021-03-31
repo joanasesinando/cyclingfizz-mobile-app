@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="25dp"
         android:backgroundTint="@color/white"
-        android:src="@drawable/ic_baseline_my_location_24"
+        android:src="@drawable/ic_round_gps_fixed_24"
         app:backgroundTint="@color/offWhite"
         app:fabSize="normal"
         app:layout_constraintBottom_toBottomOf="parent"
