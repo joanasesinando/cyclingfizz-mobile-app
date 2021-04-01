@@ -8,7 +8,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 
 public class Intro3Activity extends AppCompatActivity {
 
@@ -16,7 +15,7 @@ public class Intro3Activity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_intro3);
+        setContentView(R.layout.intro3);
 
         // Set status bar color
         Utils.setStatusBarColor(this, R.color.offWhite);

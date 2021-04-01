@@ -41,6 +41,7 @@
     <!-- Map info - stations -->
     <string name="map_info_bikes">Bicycles</string>
     <string name="map_info_free_docks">Free docks</string>
+    <string name="map_info_state">State</string>
     <string name="map_info_rent">Rent bike</string>
 
     <!-- Location Permissions -->

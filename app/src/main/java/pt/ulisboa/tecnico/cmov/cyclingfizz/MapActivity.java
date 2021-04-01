@@ -138,7 +138,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
 
-        setContentView(R.layout.activity_map);
+        setContentView(R.layout.map);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         locationCallback = new LocationCallback() {
@@ -263,7 +263,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void addIcons(@NonNull Style loadedMapStyle) {
         loadedMapStyle.addImage(GIRA_ICON_ID, Objects.requireNonNull(BitmapUtils.getBitmapFromDrawable(
-                getResources().getDrawable(R.drawable.ic_gira))));
+                getResources().getDrawable(R.drawable.ic_gira_marker))));
     }
 
 

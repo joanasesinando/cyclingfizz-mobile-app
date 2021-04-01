@@ -16,7 +16,7 @@ public class CyclewayActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_cycleway);
+        setContentView(R.layout.cycleway);
 
         Feature feature = Feature.fromJson(getIntent().getStringExtra(MapActivity.CYCLEWAY_INFO));
         JsonObject tags = feature.getProperty("tags").getAsJsonObject();

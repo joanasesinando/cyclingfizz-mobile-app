@@ -15,7 +15,7 @@ public class Intro2Activity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_intro2);
+        setContentView(R.layout.intro2);
 
         // Set status bar color
         Utils.setStatusBarColor(this, R.color.offWhite);
