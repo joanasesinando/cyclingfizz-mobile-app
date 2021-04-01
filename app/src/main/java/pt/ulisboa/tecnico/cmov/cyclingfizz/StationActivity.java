@@ -3,6 +3,7 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -24,6 +25,9 @@ import java.security.NoSuchAlgorithmException;
 public class StationActivity extends AppCompatActivity {
 
     static String APP_NAME_DEBUGGER = "Cycling_Fizz@StationActivity";
+    public final static String STATION_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.STATION_INFO";
+
+    Feature feature;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -31,7 +35,7 @@ public class StationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.station);
 
-        Feature feature = Feature.fromJson(getIntent().getStringExtra(MapActivity.STATION_INFO));
+        feature = Feature.fromJson(getIntent().getStringExtra(MapActivity.STATION_INFO));
 
         // Set top bar title & icon
         String name = feature.getProperty("desig_comercial").getAsString();
@@ -86,15 +90,24 @@ public class StationActivity extends AppCompatActivity {
         try {
             String API_KEY = getString(R.string.google_API_KEY);
             String url = Utils.signRequest("https://maps.googleapis.com/maps/api/streetview?size=600x300&location=" + lat + "," + lon + "&key=" + API_KEY, getString(R.string.google_signing_secret));
-            Log.d(APP_NAME_DEBUGGER, url);
             Picasso.get().load(url).into(thumbnail);
         } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException | URISyntaxException | MalformedURLException e) {
             Log.e(APP_NAME_DEBUGGER, e.getMessage());
             thumbnail.setVisibility(View.GONE);
         }
+
+        // Set thumbnail click listener
+        thumbnail.setOnClickListener(this::thumbnailClicked);
     }
 
     public void closeBtnClicked(View view) {
         finish();
+    }
+
+    public void thumbnailClicked(View view) {
+        Intent intent = new Intent(this, StreetViewActivity.class);
+        intent.putExtra(STATION_INFO, feature.toJson());
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
     }
 }
