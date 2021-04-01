@@ -10,7 +10,6 @@ import com.google.android.gms.maps.StreetViewPanorama;
 import com.google.android.gms.maps.SupportStreetViewPanoramaFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.appbar.MaterialToolbar;
-import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.Point;
 
 public class StreetViewActivity extends AppCompatActivity implements OnStreetViewPanoramaReadyCallback {
@@ -22,8 +21,7 @@ public class StreetViewActivity extends AppCompatActivity implements OnStreetVie
         super.onCreate(savedInstanceState);
         setContentView(R.layout.street_view);
 
-        Feature feature = Feature.fromJson(getIntent().getStringExtra(StationActivity.STATION_INFO));
-        coordinates = (Point) feature.geometry();
+        coordinates = (Point) Point.fromJson(getIntent().getStringExtra(StationActivity.COORDINATES));
 
         SupportStreetViewPanoramaFragment streetViewPanoramaFragment = (SupportStreetViewPanoramaFragment) getSupportFragmentManager().findFragmentById(R.id.gms_street_view);
         streetViewPanoramaFragment.getStreetViewPanoramaAsync(this);

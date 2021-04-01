@@ -93,7 +93,7 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:fontFamily="@font/quicksand"
-        android:text="Click to expand"
+        android:text="@string/click_to_expand"
         android:textColor="@color/white"
         android:gravity="center"
         android:textSize="16sp"

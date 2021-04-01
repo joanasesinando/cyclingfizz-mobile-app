@@ -25,9 +25,9 @@ import java.security.NoSuchAlgorithmException;
 public class StationActivity extends AppCompatActivity {
 
     static String APP_NAME_DEBUGGER = "Cycling_Fizz@StationActivity";
-    public final static String STATION_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.STATION_INFO";
+    public final static String COORDINATES = "pt.ulisboa.tecnico.cmov.cyclingfizz.COORDINATES";
 
-    Feature feature;
+    Point coord;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -35,7 +35,7 @@ public class StationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.station);
 
-        feature = Feature.fromJson(getIntent().getStringExtra(MapActivity.STATION_INFO));
+        Feature feature = Feature.fromJson(getIntent().getStringExtra(MapActivity.STATION_INFO));
 
         // Set top bar title & icon
         String name = feature.getProperty("desig_comercial").getAsString();
@@ -84,7 +84,7 @@ public class StationActivity extends AppCompatActivity {
 
         // Set thumbnail
         ImageView thumbnail = findViewById(R.id.station_thumbnail);
-        Point coord = (Point) feature.geometry();
+        coord = (Point) feature.geometry();
         String lat = String.valueOf(coord.latitude());
         String lon = String.valueOf(coord.longitude());
         try {
@@ -106,7 +106,7 @@ public class StationActivity extends AppCompatActivity {
 
     public void thumbnailClicked(View view) {
         Intent intent = new Intent(this, StreetViewActivity.class);
-        intent.putExtra(STATION_INFO, feature.toJson());
+        intent.putExtra(COORDINATES, coord.toJson());
         startActivity(intent);
         overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
     }

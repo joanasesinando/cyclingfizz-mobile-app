@@ -11,6 +11,7 @@
     <string name="filter">Filter</string>
     <string name="search">Search</string>
     <string name="more">More</string>
+    <string name="click_to_expand">Click to expand</string>
 
     <!-- Warnings -->
     <string name="not_available">Not available</string>
