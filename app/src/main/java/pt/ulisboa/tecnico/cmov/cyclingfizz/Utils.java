@@ -8,6 +8,17 @@ import android.view.WindowManager;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
 public final class Utils {
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -26,5 +37,45 @@ public final class Utils {
 
     static String capitalize(String str) {
         return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    static String signRequest(String urlString, String API_KEY) throws NoSuchAlgorithmException,
+            InvalidKeyException, UnsupportedEncodingException, URISyntaxException, MalformedURLException {
+
+        // This variable stores the binary key, which is computed from the string (Base64) key
+        byte[] key;
+
+        // Convert the string to a URL so we can parse it
+        URL url = new URL(urlString);
+
+        // Convert the key from 'web safe' base 64 to binary
+        String keyString = API_KEY;
+        keyString = keyString.replace('-', '+');
+        keyString = keyString.replace('_', '/');
+        key = Base64.getDecoder().decode(keyString);
+
+        // Retrieve the proper URL components to sign
+        String resource = url.getPath() + '?' + url.getQuery();
+
+        // Get an HMAC-SHA1 signing key from the raw key bytes
+        SecretKeySpec sha1Key = new SecretKeySpec(key, "HmacSHA1");
+
+        // Get an HMAC-SHA1 Mac instance and initialize it with the HMAC-SHA1 key
+        Mac mac = Mac.getInstance("HmacSHA1");
+        mac.init(sha1Key);
+
+        // compute the binary signature for the request
+        byte[] sigBytes = mac.doFinal(resource.getBytes());
+
+        // base 64 encode the binary signature
+        // Base64 is JDK 1.8 only - older versions may need to use Apache Commons or similar.
+        String signature = Base64.getEncoder().encodeToString(sigBytes);
+
+        // convert the signature to 'web safe' base 64
+        signature = signature.replace('+', '-');
+        signature = signature.replace('/', '_');
+
+        return url.getProtocol() + "://" + url.getHost() + resource + "&signature=" + signature;
     }
 }

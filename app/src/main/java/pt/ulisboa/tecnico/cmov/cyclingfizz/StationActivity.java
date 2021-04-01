@@ -12,10 +12,20 @@ import android.widget.TextView;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.mapbox.geojson.Feature;
+import com.mapbox.geojson.Point;
+import com.squareup.picasso.Picasso;
+
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 public class StationActivity extends AppCompatActivity {
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    static String APP_NAME_DEBUGGER = "Cycling_Fizz@StationActivity";
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,6 +77,21 @@ public class StationActivity extends AppCompatActivity {
         subtitle = card.findViewById(R.id.map_info_card_subtitle);
         subtitle.setText(Utils.capitalize(state));
         subtitle.setTextColor(state.equals("active") ? getColor(R.color.success) : getColor(R.color.pink));
+
+        // Set thumbnail
+        ImageView thumbnail = findViewById(R.id.station_thumbnail);
+        Point coord = (Point) feature.geometry();
+        String lat = String.valueOf(coord.latitude());
+        String lon = String.valueOf(coord.longitude());
+        try {
+            String API_KEY = getString(R.string.google_API_KEY);
+            String url = Utils.signRequest("https://maps.googleapis.com/maps/api/streetview?size=600x300&location=" + lat + "," + lon + "&key=" + API_KEY, getString(R.string.google_signing_secret));
+            Log.d(APP_NAME_DEBUGGER, url);
+            Picasso.get().load(url).into(thumbnail);
+        } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException | URISyntaxException | MalformedURLException e) {
+            Log.e(APP_NAME_DEBUGGER, e.getMessage());
+            thumbnail.setVisibility(View.GONE);
+        }
     }
 
     public void closeBtnClicked(View view) {

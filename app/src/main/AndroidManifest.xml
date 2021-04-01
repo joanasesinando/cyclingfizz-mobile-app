@@ -3,6 +3,7 @@
     package="pt.ulisboa.tecnico.cmov.cyclingfizz">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -11,7 +12,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.CyclingFizz">
-        <activity android:name=".CyclewayActivity"></activity>
+        <activity android:name=".CyclewayActivity" />
         <activity android:name=".StationActivity" />
         <activity android:name=".MapActivity" />
         <activity android:name=".Intro3Activity" />

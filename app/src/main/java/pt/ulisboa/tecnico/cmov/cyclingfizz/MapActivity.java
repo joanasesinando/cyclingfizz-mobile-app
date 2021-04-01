@@ -89,7 +89,7 @@ enum TrackingMode {
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    static String APP_NAME_DEBUGGER = "Cycling_Fizz";
+    static String APP_NAME_DEBUGGER = "Cycling_Fizz@MapActivity";
 
 //    static String MAP_SERVER_URL = "https://7a594aacc4e1.ngrok.io";
     static String MAP_SERVER_URL = "https://map.server.cyclingfizz.pt";

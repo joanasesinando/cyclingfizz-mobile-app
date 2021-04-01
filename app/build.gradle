@@ -41,4 +41,5 @@ dependencies {
     implementation ('com.mapbox.mapboxsdk:mapbox-android-sdk:9.6.1'){
         transitive=true
     }
+    implementation 'com.squareup.picasso:picasso:2.8'
 }
