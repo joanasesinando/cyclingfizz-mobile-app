@@ -31,13 +31,13 @@ import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.mapbox.android.gestures.MoveGestureDetector;
 import com.mapbox.geojson.Feature;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.location.LocationComponent;
 import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions;
-import com.mapbox.mapboxsdk.location.OnCameraTrackingChangedListener;
 import com.mapbox.mapboxsdk.location.modes.CameraMode;
 import com.mapbox.mapboxsdk.location.modes.RenderMode;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -84,7 +84,7 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textIgnorePlacem
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textSize;
 
 enum TrackingMode {
-    FREE, FOLLOW_USER
+    FREE, FOLLOW_USER, FOLLOW_USER_WITH_BEARING
 }
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -118,10 +118,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
                     Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
-                    startLocation();
+                    startLocation();  // afterPermissionGranted
                 } else {
+                    updateCurrentLocationBtn("PermissionNotGranted");
                     Toast.makeText(this, "Permission not Granted", Toast.LENGTH_SHORT).show();
-                    trackingUser = false;
                 }
             });
 
@@ -129,8 +129,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private LocationCallback locationCallback;
     private FusedLocationProviderClient fusedLocationClient;
     private LocationRequest locationRequest;
-    private boolean trackingUser;
+
     private TrackingMode trackingMode;
+    private boolean cameraFirstSet = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -168,7 +169,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         };
 
         mapView = (MapView) findViewById(R.id.mapView);
-        System.out.println("MY_log: " + mapView);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
     }
@@ -176,6 +176,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(@NonNull final MapboxMap mapboxMap) {
         this.mapboxMap = mapboxMap;
+
         mapboxMap.setStyle(Style.MAPBOX_STREETS, style -> {
             style.setTransition(new TransitionOptions(0, 0, false));
 
@@ -215,47 +216,98 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             });
 
             setMapboxCameraFollowUser();
-            startLocation();
-            mapboxMap.getLocationComponent().addOnCameraTrackingChangedListener(new OnCameraTrackingChangedListener() {
+            startLocation();  // onMapReady
 
-                @Override
-                public void onCameraTrackingDismissed() {
-                    Log.d(APP_NAME_DEBUGGER, "onCameraTrackingDismissed");
-
-                }
-
-                @Override
-                public void onCameraTrackingChanged(int currentMode) {
-                    Log.d(APP_NAME_DEBUGGER, String.valueOf(currentMode));
-                    if (currentMode == CameraMode.TRACKING) {
-                        setMapboxCameraFollowUser();
-                    } else {
-                        setMapboxCameraFree();
-                    }
-                    updateCurrentLocationBtn();
-                }
+            mapboxMap.addOnCameraMoveListener(() -> {
+                updateCompassBearing();
+                Log.d(APP_NAME_DEBUGGER + "_Camera", "move");
             });
+
+            mapboxMap.addOnMoveListener(new MapboxMap.OnMoveListener() {
+                @Override
+                public void onMoveBegin(@NonNull MoveGestureDetector detector) {
+
+                }
+
+                @Override
+                public void onMove(@NonNull MoveGestureDetector detector) {
+                    setMapboxCameraFree();
+                    updateCurrentLocationBtn("onCameraTrackingChanged");
+                }
+
+                @Override
+                public void onMoveEnd(@NonNull MoveGestureDetector detector) {
+
+                }
+
+            });
+
 
             FloatingActionButton map_current_location_btn = findViewById(R.id.btn_map_current_location);
+            FloatingActionButton btn_map_bearing = findViewById(R.id.btn_map_bearing);
+
             map_current_location_btn.setOnClickListener(view -> {
-                setMapboxCameraFollowUser();
-                turnOnLocationTrackerMapbox();
+
+                switch (trackingMode) {
+                    case FREE:
+                    default:
+                        setMapboxCameraFollowUser();
+                        break;
+                    case FOLLOW_USER:
+                        setMapboxCameraFollowUserWithHeading();
+                        break;
+                    case FOLLOW_USER_WITH_BEARING:
+                        setMapboxCameraFollowUser();
+                        pointToNorth();
+                        break;
+                }
+
+                startLocation();  // onLocBtnClick
             });
 
-            updateCurrentLocationBtn();
+            btn_map_bearing.setOnClickListener(view -> {
+
+               pointToNorth();
+            });
+
             // Map is set up and the style has loaded. Now you can add data or make other map adjustments
 
         });
     }
 
-    private void updateCurrentLocationBtn() {
+    private void updateCompassBearing() {
+        double bearing = mapboxMap.getCameraPosition().bearing;
+        FloatingActionButton btn_map_bearing = findViewById(R.id.btn_map_bearing);
+
+        if (bearing == 0) {
+            btn_map_bearing.setRotation(0f);
+            btn_map_bearing.setImageResource(R.drawable.ic_north);
+        } else {
+            btn_map_bearing.setImageResource(R.drawable.ic_compass);
+            btn_map_bearing.setRotation((float) bearing);
+        }
+
+    }
+
+    private void updateCurrentLocationBtn(String debugger) {
+//        Log.d(APP_NAME_DEBUGGER, "Update Btn " + debugger);
         FloatingActionButton map_current_location_btn = findViewById(R.id.btn_map_current_location);
 
-        if (!trackingUser) {
+        if (!isGpsOn()) {
+            // GPS off
+            map_current_location_btn.setImageResource(R.drawable.ic_round_gps_off_24);
             map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.danger)));
         } else if (trackingMode == TrackingMode.FOLLOW_USER) {
-            map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange_500)));
+            // following_user
+            map_current_location_btn.setImageResource(R.drawable.ic_round_gps_fixed_24);
+            map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.gps_blue)));
+        } else if (trackingMode == TrackingMode.FOLLOW_USER_WITH_BEARING) {
+            // following_user
+            map_current_location_btn.setImageResource(R.drawable.ic_round_explore_24);
+            map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.gps_blue)));
         } else {
+            // free
+            map_current_location_btn.setImageResource(R.drawable.ic_round_gps_fixed_24);
             map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.dark)));
         }
     }
@@ -363,11 +415,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
 
         task.addOnSuccessListener(this, locationSettingsResponse -> {
-            // All location settings are satisfied. The client can initialize
-            // location requests here.
-            // ...
+
             Log.d(APP_NAME_DEBUGGER, "Location ON");
-            turnOnLocationTrackerMapbox();
+            turnOnLocationTrackerMapbox();  // ifLocationOn
         });
 
         task.addOnFailureListener(this, e -> {
@@ -389,33 +439,53 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void startLocation() {
-        trackingUser = true;
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Permission already Granted", Toast.LENGTH_SHORT).show();
-            createLocationRequest();
+
+            if (locationRequest == null) createLocationRequest();
             checkIfLocationOn();
+
         } else {
             Toast.makeText(this, "ask for permission", Toast.LENGTH_SHORT).show();
             requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
         }
     }
 
+    private void pointToNorth() {
+        mapboxMap.resetNorth();
+    }
+
     private void setMapboxCameraFollowUser() {
         this.trackingMode = TrackingMode.FOLLOW_USER;
-        Log.d(APP_NAME_DEBUGGER, "set to " + trackingMode.name());
+    }
+
+    private void setMapboxCameraFollowUserWithHeading() {
+        this.trackingMode = TrackingMode.FOLLOW_USER_WITH_BEARING;
     }
 
     private void setMapboxCameraFree() {
         this.trackingMode = TrackingMode.FREE;
-        Log.d(APP_NAME_DEBUGGER, "set to " + trackingMode.name());
     }
 
     private void updateMapboxCamera(LocationComponent locationComponent) {
-        Log.d(APP_NAME_DEBUGGER, trackingMode.name());
+        cameraFirstSet = true;
         switch (trackingMode) {
             case FOLLOW_USER:
                 // Set the component's camera mode
                 locationComponent.setCameraMode(CameraMode.TRACKING, 750L /*duration*/,
+                        16.0 /*zoom*/,
+                        null /*bearing, use current/determine based on the tracking mode*/,
+                        null /*tilt*/,
+                        null /*transition listener*/);
+
+                locationComponent.zoomWhileTracking(16.0);
+
+                // Set the component's render mode
+                locationComponent.setRenderMode(RenderMode.COMPASS);
+                break;
+            case FOLLOW_USER_WITH_BEARING:
+                // Set the component's camera mode
+                locationComponent.setCameraMode(CameraMode.TRACKING_COMPASS	, 750L /*duration*/,
                         16.0 /*zoom*/,
                         null /*bearing, use current/determine based on the tracking mode*/,
                         null /*tilt*/,
@@ -435,7 +505,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @SuppressLint("MissingPermission")
     private void turnOnLocationTrackerMapbox() {
-        Log.d(APP_NAME_DEBUGGER, "entra");
         // Get an instance of the component
         LocationComponent locationComponent = mapboxMap.getLocationComponent();
 
@@ -454,9 +523,26 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         updateMapboxCamera(locationComponent);
 
         // start location updates
+        startLocationUpdates();
+
+        updateCurrentLocationBtn("turnOnLocationTrackerMapbox");
+    }
+
+    @SuppressLint("MissingPermission")
+    private void startLocationUpdates() {
         fusedLocationClient.requestLocationUpdates(locationRequest,
                 locationCallback,
                 Looper.getMainLooper());
+
+        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+            if (mapboxMap != null && location != null) {
+                mapboxMap.getLocationComponent().forceLocationUpdate(location);
+            }
+        });
+    }
+
+    private void stopLocationUpdates() {
+        fusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
 
@@ -465,37 +551,26 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CHECK_LOCATION_SETTINGS) {
             if (resultCode == -1) {
-                startLocation();
+                startLocation();  // afterGpsEnabled
             } else {
-                trackingUser = false;
-                Toast.makeText(this, "Bem pelo menos tou aqui " + resultCode,
-                        Toast.LENGTH_SHORT).show();
-                updateCurrentLocationBtn();
                 LocationComponent locationComponent = mapboxMap.getLocationComponent();
                 if (locationComponent.isLocationComponentActivated() && locationComponent.isLocationComponentEnabled()) {
                     locationComponent.setLocationComponentEnabled(false);
                 }
+                updateCurrentLocationBtn("onActivityResult");
             }
         }
     }
 
-//    public void askForGPS() {
-//
-//        new MaterialAlertDialogBuilder(this)
-//                .setTitle(getString(R.string.user_location_turn_on_title))
-//                .setMessage(getString(R.string.user_location_turn_on_text))
-//                .setNegativeButton(getString(R.string.user_location_turn_on_setting), (dialogInterface, i) -> {
-//                    Intent gpsOptionsIntent = new Intent(
-//                            android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-//                    startActivityForResult(gpsOptionsIntent, 1);
-//                })
-//                .setPositiveButton(getString(R.string.user_location_turn_on_ignore), (dialogInterface, i) -> {
-//
-//                })
-//                .show();
-//
-//    }
-
+    private boolean isGpsOn() {
+        try {
+            LocationComponent locationComponent = mapboxMap.getLocationComponent();
+            return locationComponent.isLocationComponentActivated() && locationComponent.isLocationComponentEnabled();
+        } catch (Exception e) {
+            Log.e(APP_NAME_DEBUGGER + "_isGpsOn()", e.getMessage());
+            return false;
+        }
+    }
 
 
 
@@ -508,12 +583,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     protected void onResume() {
         super.onResume();
+        if (isGpsOn()) {
+            startLocationUpdates();
+        }
         mapView.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        if (isGpsOn()) {
+            stopLocationUpdates();
+        }
         mapView.onPause();
     }
 
