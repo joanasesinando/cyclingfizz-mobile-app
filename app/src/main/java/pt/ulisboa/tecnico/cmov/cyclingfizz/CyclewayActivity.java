@@ -40,7 +40,7 @@ public class CyclewayActivity extends AppCompatActivity {
         title = card.findViewById(R.id.map_info_card_title);
         title.setText(R.string.map_info_type);
         TextView subtitle = card.findViewById(R.id.map_info_card_subtitle);
-        subtitle.setText(tags.has("cycleway") ? Utils.capitalize(tags.get("cycleway").getAsString()) : getString(R.string.not_available));
+        subtitle.setText(tags.has("type") ? parseType(tags.get("type").getAsString()) : getString(R.string.not_available));
 
         // Set terrain card info
         card = findViewById(R.id.map_info_terrain);
@@ -54,5 +54,39 @@ public class CyclewayActivity extends AppCompatActivity {
 
     public void closeBtnClicked(View view) {
         finish();
+    }
+
+    private String parseType(String type) {
+        switch (type) {
+            case "shared_lane":
+                return getString(R.string.map_info_type_shared_lane);
+
+            case "segregated":
+                return getString(R.string.map_info_type_segregated);
+
+            case "shared_with_pedestrians":
+                return getString(R.string.map_info_type_shared_pedestrians);
+
+            case "other":
+                return getString(R.string.map_info_type_shared_other);
+
+            case "lane":
+                return getString(R.string.map_info_type_lane);
+
+            case "track":
+                return getString(R.string.map_info_type_track);
+
+            case "bridge":
+                return getString(R.string.map_info_type_bridge);
+
+            case "oneway":
+                return getString(R.string.map_info_type_oneway);
+
+            case "crossing":
+                return getString(R.string.map_info_type_crossing);
+
+            default:
+                return null;
+        }
     }
 }

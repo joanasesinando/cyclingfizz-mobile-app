@@ -39,6 +39,15 @@
     <!-- Map info - cycleways -->
     <string name="map_info_type">Type</string>
     <string name="map_info_terrain">Terrain</string>
+    <string name="map_info_type_segregated">Segregated</string>
+    <string name="map_info_type_shared_pedestrians">Shared with pedestrians</string>
+    <string name="map_info_type_shared_lane">Shared lane</string>
+    <string name="map_info_type_lane">Lane</string>
+    <string name="map_info_type_track">Track</string>
+    <string name="map_info_type_bridge">Bridge</string>
+    <string name="map_info_type_oneway">One way</string>
+    <string name="map_info_type_crossing">Crossing</string>
+    <string name="map_info_type_shared_other">Other</string>
 
     <!-- Map info - stations -->
     <string name="map_info_bikes">Bicycles</string>

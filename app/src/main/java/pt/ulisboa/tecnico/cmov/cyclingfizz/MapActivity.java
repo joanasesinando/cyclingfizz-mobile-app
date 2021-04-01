@@ -91,8 +91,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     static String APP_NAME_DEBUGGER = "Cycling_Fizz@MapActivity";
 
-//    static String MAP_SERVER_URL = "https://7a594aacc4e1.ngrok.io";
-    static String MAP_SERVER_URL = "https://map.server.cyclingfizz.pt";
+    static String MAP_SERVER_URL = "https://ff58c3b926c9.ngrok.io";
+//    static String MAP_SERVER_URL = "https://map.server.cyclingfizz.pt";
 
     static String GIRA_SOURCE_ID = "gira-source";
     static String GIRA_DATA_URL = MAP_SERVER_URL + "/get-gira";
