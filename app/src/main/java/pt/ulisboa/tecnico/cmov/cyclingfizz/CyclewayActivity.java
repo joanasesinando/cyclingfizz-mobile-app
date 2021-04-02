@@ -40,6 +40,7 @@ public class CyclewayActivity extends AppCompatActivity {
 
         Feature feature = Feature.fromJson(getIntent().getStringExtra(MapActivity.CYCLEWAY_INFO));
         JsonObject tags = feature.getProperty("tags").getAsJsonObject();
+        coord = Point.fromJson(getIntent().getStringExtra(MapActivity.CYCLEWAY_INFO + ".point"));
 
         // Set top bar title & icon
         String name = tags.has("name") ? Utils.capitalize(tags.get("name").getAsString()) : getString(R.string.not_name);
@@ -73,9 +74,6 @@ public class CyclewayActivity extends AppCompatActivity {
 
         // Set thumbnail
         ImageView thumbnail = findViewById(R.id.cycleway_thumbnail);
-        LineString lineString = (LineString) feature.geometry();
-        List<Point> points = lineString.coordinates();
-        coord = points.get(Math.round((points.size() - 1) >> 1));
         String lat = String.valueOf(coord.latitude());
         String lon = String.valueOf(coord.longitude());
         try {
