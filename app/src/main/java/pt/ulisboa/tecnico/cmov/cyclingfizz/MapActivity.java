@@ -290,7 +290,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         long bearing = Math.round(mapboxMap.getCameraPosition().bearing) % 360;
         FloatingActionButton btn_map_bearing = findViewById(R.id.btn_map_bearing);
 
-        Log.d(APP_NAME_DEBUGGER, String.valueOf(bearing));
 
         if (bearing == 0) {
             btn_map_bearing.setRotation(0f);
@@ -303,7 +302,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
             btn_map_bearing.setVisibility(View.VISIBLE);
             btn_map_bearing.setImageResource(R.drawable.ic_compass);
-            btn_map_bearing.setRotation((float) bearing);
+            btn_map_bearing.setRotation((float) - bearing);
         }
 
     }
