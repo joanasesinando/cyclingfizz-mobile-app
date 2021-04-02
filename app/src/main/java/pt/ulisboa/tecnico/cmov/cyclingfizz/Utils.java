@@ -1,7 +1,10 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Build;
+import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -77,5 +80,21 @@ public final class Utils {
         signature = signature.replace('/', '_');
 
         return url.getProtocol() + "://" + url.getHost() + resource + "&signature=" + signature;
+    }
+
+    public static void keepMenuOpen(MenuItem item, Context context) {
+        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
+        item.setActionView(new View(context));
+        item.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem item) {
+                return false;
+            }
+
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem item) {
+                return false;
+            }
+        });
     }
 }

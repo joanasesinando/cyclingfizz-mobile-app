@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -21,11 +22,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.widget.Toast;
+import android.widget.Toolbar;
 
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -38,6 +42,7 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.mapbox.android.gestures.MoveGestureDetector;
 import com.mapbox.geojson.Feature;
@@ -58,6 +63,7 @@ import com.mapbox.mapboxsdk.style.layers.CircleLayer;
 import com.mapbox.mapboxsdk.style.layers.Layer;
 import com.mapbox.mapboxsdk.style.layers.LineLayer;
 import com.mapbox.mapboxsdk.style.layers.Property;
+import com.mapbox.mapboxsdk.style.layers.PropertyValue;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.layers.TransitionOptions;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonOptions;
@@ -144,39 +150,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private TrackingMode trackingMode;
 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        Log.d(APP_NAME_DEBUGGER, "Called");
-
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.top_app_bar, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle item selection
-        Log.d(APP_NAME_DEBUGGER, "Click");
-
-        int id = item.getItemId();
-        if (id == R.id.filter) {
-            Log.d(APP_NAME_DEBUGGER, "Click Filter");
-            try {
-                Layer cyclewaysLayer = mapboxMap.getStyle().getLayer(CYCLEWAYS_LAYER_ID);
-
-                Log.d(APP_NAME_DEBUGGER, String.valueOf(cyclewaysLayer.getVisibility().getValue()));
-                Log.d(APP_NAME_DEBUGGER, String.valueOf(cyclewaysLayer.getVisibility().getValue().equals(Property.VISIBLE)));
-
-                cyclewaysLayer.setProperties(visibility(cyclewaysLayer.getVisibility().getValue().equals(Property.VISIBLE) ? Property.NONE : Property.VISIBLE));
-            } catch (NullPointerException ignored) {
-                Log.e(APP_NAME_DEBUGGER, ignored.getMessage());
-            }
-            return true;
-        } else {
-            return super.onOptionsItemSelected(item);
-        }
-    }
-
     private void checkFirstOpen() {
         // Set light mode on for now
         // FIXME: remove when dark mode implemented
@@ -200,8 +173,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         checkFirstOpen();
-        Log.d(APP_NAME_DEBUGGER, "passou pah");
-
         super.onCreate(savedInstanceState);
 
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
@@ -344,14 +315,67 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                pointToNorth();
             });
 
+            MaterialToolbar toolbar = findViewById(R.id.topAppBar);
+
+//            SubMenu subm = toolbar.getMenu().getItem(0).getSubMenu(); // get my MenuItem with placeholder submenu
+//            subm.clear(); // delete place holder
+//
+//            int i = 0;
+//            for (String s :  new String[]{"ace","boom","crew","dog","eon"}) {
+//                MenuItem item = subm.add(0, i, i++, s);
+//                item.setCheckable(true);
+//                item.setChecked(true);
+//                item.setOnMenuItemClickListener();
+//            }
 
 
+            toolbar.setOnMenuItemClickListener(item -> {
+                // Handle item selection
+                Log.d(APP_NAME_DEBUGGER + "_menu", "Click \"" + item.getTitle() + "\"");
 
+                int id = item.getItemId();
+                if (id == R.id.filter_cycleways) {
+                    try {
+                        Layer cyclewaysLayer = mapboxMap.getStyle().getLayer(CYCLEWAYS_LAYER_ID);
+
+                        cyclewaysLayer.setProperties(visibility(item.isChecked() ? Property.NONE : Property.VISIBLE));
+                        item.setChecked(!item.isChecked());
+                    } catch (NullPointerException ignored) { }
+
+                    // Keep the popup menu open
+                    Utils.keepMenuOpen(item, getApplicationContext());
+
+                    return false;
+                } else if (id == R.id.filter_gira) {
+                    try {
+                        Layer giraLayer = mapboxMap.getStyle().getLayer(GIRA_STATION_LAYER_ID);
+                        Layer giraClustersLayer = mapboxMap.getStyle().getLayer(GIRA_CLUSTER_LAYER_ID);
+                        Layer giraCountLayer = mapboxMap.getStyle().getLayer(GIRA_COUNT_LAYER_ID);
+
+                        PropertyValue<String> visibility = visibility(item.isChecked() ? Property.NONE : Property.VISIBLE);
+
+                        giraLayer.setProperties(visibility);
+                        giraClustersLayer.setProperties(visibility);
+                        giraCountLayer.setProperties(visibility);
+                        item.setChecked(!item.isChecked());
+
+                    } catch (NullPointerException ignored) { }
+
+                    // Keep the popup menu open
+                    Utils.keepMenuOpen(item, getApplicationContext());
+
+                    return false;
+                } else {
+                    return false;
+                }
+            });
 
             // Map is set up and the style has loaded. Now you can add data or make other map adjustments
 
         });
     }
+
+
 
 
 

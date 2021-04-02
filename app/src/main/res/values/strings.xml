@@ -9,6 +9,10 @@
     <string name="link">Get URL</string>
     <string name="share">Share</string>
     <string name="filter">Filter</string>
+    <string name="filter_gira">Gira Stations</string>
+    <string name="filter_cycleways">Filter Cycleways</string>
+
+
     <string name="search">Search</string>
     <string name="more">More</string>
     <string name="click_to_expand">Click to expand</string>
