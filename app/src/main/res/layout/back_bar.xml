@@ -13,7 +13,6 @@
             android:id="@+id/backBar"
             style="@style/Widget.MaterialComponents.Toolbar.Primary"
             app:navigationIcon="@drawable/ic_round_arrow_back_24"
-            app:theme="@style/AppTheme.ToolbarFont"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize" />
 

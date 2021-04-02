@@ -7,8 +7,16 @@
         android:icon="@drawable/ic_round_filter_alt_24"
         android:title="@string/filter"
         app:showAsAction="ifRoom">
+
         <menu
-            android:id="@+id/menu_test">
+            android:id="@+id/menu_filter_map">
+            <item
+                android:id="@+id/filter_cycleways"
+                android:title="@string/filter_cycleways"
+                android:icon="@drawable/ic_cycleway"
+                app:showAsAction="never"
+                android:checkable="true"
+                android:checked="true" />
             <item
                 android:id="@+id/filter_gira"
                 android:title="@string/filter_gira"
@@ -16,15 +24,8 @@
                 app:showAsAction="never"
                 android:checkable="true"
                 android:checked="true"/>
-
-            <item
-                android:id="@+id/filter_cycleways"
-                android:title="@string/filter_cycleways"
-                android:icon="@drawable/ic_cycleway"
-                app:showAsAction="never"
-                android:checkable="true"
-                android:checked="true"/>
         </menu>
+
     </item>
 
     <item

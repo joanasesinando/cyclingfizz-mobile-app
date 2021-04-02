@@ -17,8 +17,7 @@
             android:layout_height="match_parent"
             android:elevation="0dp"
             app:menu="@menu/map_info_bar"
-            app:navigationIcon="@drawable/ic_round_close_24"
-            app:theme="@style/AppTheme.ToolbarFont" />
+            app:navigationIcon="@drawable/ic_round_close_24" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
