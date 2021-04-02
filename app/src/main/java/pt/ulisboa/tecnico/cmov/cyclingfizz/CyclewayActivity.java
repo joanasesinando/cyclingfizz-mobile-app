@@ -4,6 +4,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,15 +13,23 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 import com.squareup.picasso.Picasso;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -87,6 +96,24 @@ public class CyclewayActivity extends AppCompatActivity {
 
         // Set thumbnail click listener
         thumbnail.setOnClickListener(this::thumbnailClicked);
+
+        // Set distance & times
+        Location userLocation = (Location) getIntent().getParcelableExtra(MapActivity.USER_LOCATION);
+        Log.d("user_location", String.valueOf(userLocation));
+        String[] travelingModes = {"driving", "walking", "transit", "bicycling"};
+        for (String mode : travelingModes) {
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        setTravelingModeDistanceAndDuration(userLocation, coord, mode); // FIXME: currently picking the point clicked
+                    } catch (IOException e) {
+                        Log.e(APP_NAME_DEBUGGER, e.getMessage());
+                    }
+                }
+            });
+            thread.start();
+        }
     }
 
     public void closeBtnClicked(View view) {
@@ -98,6 +125,73 @@ public class CyclewayActivity extends AppCompatActivity {
         intent.putExtra(COORDINATES, coord.toJson());
         startActivity(intent);
         overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+    }
+
+    public void setTravelingModeDistanceAndDuration(Location origin, Point destination, String mode) throws IOException {
+        // Make http request
+        URL url = new URL("https://maps.googleapis.com/maps/api/distancematrix/json?origins=" +
+                origin.getLatitude() + "," + origin.getLongitude() +
+                "&destinations=" + destination.latitude() + "%2C" + destination.longitude() +
+                "&mode=" + mode +
+                "&language=en&key=" + getString(R.string.google_API_KEY));
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+
+        // Parse response
+        JsonElement element = JsonParser.parseReader(new InputStreamReader(in));
+        JsonObject json = element.getAsJsonObject();
+        JsonObject info = json.get("rows").getAsJsonArray().get(0).getAsJsonObject().get("elements").getAsJsonArray().get(0).getAsJsonObject();
+        String status = info.get("status").getAsString();
+        String distanceText = status.equals("OK") ? info.get("distance").getAsJsonObject().get("text").getAsString() : null;
+        String durationText = status.equals("OK") ? info.get("duration").getAsJsonObject().get("text").getAsString() : null;
+
+        // Update views
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                View item = null;
+                ImageView icon;
+                TextView duration;
+                TextView distance;
+
+                switch (mode) {
+                    case "driving":
+                        item = findViewById(R.id.mode_driving);
+                        icon = item.findViewById(R.id.map_info_counter_icon);
+                        icon.setImageResource(R.drawable.ic_baseline_directions_car_24);
+                        break;
+
+                    case "walking":
+                        item = findViewById(R.id.mode_walking);
+                        icon = item.findViewById(R.id.map_info_counter_icon);
+                        icon.setImageResource(R.drawable.ic_round_directions_walk_24);
+                        break;
+
+                    case "transit":
+                        item = findViewById(R.id.mode_transit);
+                        icon = item.findViewById(R.id.map_info_counter_icon);
+                        icon.setImageResource(R.drawable.ic_round_directions_bus_24);
+                        break;
+
+                    case "bicycling":
+                        item = findViewById(R.id.mode_bicycling);
+                        icon = item.findViewById(R.id.map_info_counter_icon);
+                        icon.setImageResource(R.drawable.ic_round_directions_bike_24);
+                        break;
+                }
+
+                urlConnection.disconnect();
+                if (!status.equals("OK")) {
+                    item.setVisibility(View.GONE);
+                    return;
+                }
+
+                duration = item.findViewById(R.id.map_info_counter_duration);
+                duration.setText(durationText);
+                distance = item.findViewById(R.id.map_info_counter_distance);
+                distance.setText(distanceText);
+            }
+        });
     }
 
     private String parseType(String type) {

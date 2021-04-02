@@ -258,6 +258,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     Intent intent = new Intent(this, CyclewayActivity.class);
                     intent.putExtra(CYCLEWAY_INFO, feature.toJson());
                     intent.putExtra(CYCLEWAY_INFO + ".point", (Point.fromLngLat(point.getLongitude(), point.getLatitude())).toJson());
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable(USER_LOCATION, userLocation);
+                    intent.putExtras(bundle);
                     startActivity(intent);
                 }
                 overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);

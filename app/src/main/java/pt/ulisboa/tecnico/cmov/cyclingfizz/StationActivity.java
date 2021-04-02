@@ -114,7 +114,6 @@ public class StationActivity extends AppCompatActivity {
 
         // Set distance & times
         Location userLocation = (Location) getIntent().getParcelableExtra(MapActivity.USER_LOCATION);
-        Log.d("user_location", String.valueOf(userLocation));
         String[] travelingModes = {"driving", "walking", "transit", "bicycling"};
         for (String mode : travelingModes) {
             Thread thread = new Thread(new Runnable() {
@@ -151,7 +150,6 @@ public class StationActivity extends AppCompatActivity {
                 "&language=en&key=" + getString(R.string.google_API_KEY));
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-        Log.d("url", String.valueOf(url));
 
         // Parse response
         JsonElement element = JsonParser.parseReader(new InputStreamReader(in));
@@ -170,7 +168,6 @@ public class StationActivity extends AppCompatActivity {
                 TextView duration;
                 TextView distance;
 
-                Log.d("mode", mode);
                 switch (mode) {
                     case "driving":
                         item = findViewById(R.id.mode_driving);
@@ -207,9 +204,6 @@ public class StationActivity extends AppCompatActivity {
                 duration.setText(durationText);
                 distance = item.findViewById(R.id.map_info_counter_distance);
                 distance.setText(distanceText);
-
-                Log.d("duration", durationText);
-                Log.d("distance", distanceText);
             }
         });
     }
