@@ -18,6 +18,7 @@ import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -124,6 +125,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     public final static String STATION_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.STATION_INFO";
     public final static String CYCLEWAY_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.CYCLEWAY_INFO";
+    public final static String USER_LOCATION = "pt.ulisboa.tecnico.cmov.cyclingfizz.USER_LOCATION";
 
     private MapView mapView;
     private MapboxMap mapboxMap;
@@ -145,6 +147,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private LocationCallback locationCallback;
     private FusedLocationProviderClient fusedLocationClient;
     private LocationRequest locationRequest;
+    private Location userLocation;
 
     private TrackingMode trackingMode;
 
@@ -190,6 +193,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 // Pass the new location to the Maps SDK's LocationComponent
                 if (mapboxMap != null && locationResult.getLastLocation() != null) {
                     mapboxMap.getLocationComponent().forceLocationUpdate(locationResult.getLastLocation());
+                    userLocation = locationResult.getLastLocation();
                 }
             }
 
@@ -242,6 +246,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (feature != null) {
                     Intent intent = new Intent(this, StationActivity.class);
                     intent.putExtra(STATION_INFO, feature.toJson());
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable(USER_LOCATION, userLocation);
+                    intent.putExtras(bundle);
                     startActivity(intent);
 
                 } else {
@@ -652,6 +659,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
             if (mapboxMap != null && location != null) {
                 mapboxMap.getLocationComponent().forceLocationUpdate(location);
+                userLocation = location;
             }
         });
     }

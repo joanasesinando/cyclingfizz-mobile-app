@@ -3,6 +3,8 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
+import android.os.Message;
+import android.util.JsonReader;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -11,13 +13,18 @@ import android.view.WindowManager;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;

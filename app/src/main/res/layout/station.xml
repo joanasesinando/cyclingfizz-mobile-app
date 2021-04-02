@@ -14,29 +14,46 @@
         tools:layout_editor_absoluteX="0dp"
         tools:layout_editor_absoluteY="115dp" />
 
-    <ImageView
-        android:id="@+id/location_station"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/station_counts"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:src="@drawable/ic_round_location_on_24"
+        android:orientation="horizontal"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="140dp"
-        app:tint="@color/orange_700" />
+        android:layout_marginHorizontal="16dp"
+        android:weightSum="1">
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/station_distance"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/quicksand_medium"
-        android:text="200m away"
-        android:textColor="@color/material_on_surface_emphasis_medium"
-        android:textSize="14sp"
-        app:layout_constraintStart_toEndOf="@+id/location_station"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="142dp"
-        android:layout_marginStart="5dp"/>
+        <include
+            android:id="@+id/mode_driving"
+            layout="@layout/map_info_counter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight=".25"/>
+
+        <include
+            android:id="@+id/mode_transit"
+            layout="@layout/map_info_counter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight=".25"/>
+
+        <include
+            android:id="@+id/mode_walking"
+            layout="@layout/map_info_counter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight=".25"/>
+
+        <include
+            android:id="@+id/mode_bicycling"
+            layout="@layout/map_info_counter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight=".25"/>
+
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -47,7 +64,7 @@
         android:gravity="center_horizontal"
         android:orientation="horizontal"
         android:weightSum="1"
-        app:layout_constraintTop_toBottomOf="@+id/station_distance"
+        app:layout_constraintTop_toBottomOf="@+id/station_counts"
         tools:layout_editor_absoluteX="16dp">
 
         <include
