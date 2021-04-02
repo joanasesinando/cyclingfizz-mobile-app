@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group
+        android:id="@+id/sidebar_group_main"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/sidebar_map"
+            android:icon="@drawable/ic_round_map_24"
+            android:title="@string/sidebar_map"
+            android:checked="true" />
+        <item
+            android:id="@+id/sidebar_routes"
+            android:icon="@drawable/ic_round_alt_route_24"
+            android:title="@string/sidebar_routes" />
+    </group>
+
+    <group
+        android:id="@+id/sidebar_group_extra"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/sidebar_about"
+            android:icon="@drawable/ic_round_info_24"
+            android:title="@string/sidebar_about" />
+        <item
+            android:id="@+id/sidebar_settings"
+            android:icon="@drawable/ic_round_settings_24"
+            android:title="@string/sidebar_settings" />
+        <item
+            android:id="@+id/sidebar_logout"
+            android:icon="@drawable/ic_round_logout_24"
+            android:title="@string/sidebar_logout" />
+    </group>
+
+</menu>

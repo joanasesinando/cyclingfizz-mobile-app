@@ -3,13 +3,13 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -18,18 +18,14 @@ import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.SubMenu;
 import android.view.View;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -44,6 +40,7 @@ import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
 import com.mapbox.android.gestures.MoveGestureDetector;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.Point;
@@ -131,6 +128,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private MapView mapView;
     private MapboxMap mapboxMap;
 
+    private boolean sidebarOpen = false;
+
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
@@ -209,6 +208,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mapView = (MapView) findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
+
+        // Set menu click listener for sidebar opening/closing
+        MaterialToolbar toolbar = (MaterialToolbar) findViewById(R.id.topAppBar);
+        toolbar.setNavigationOnClickListener(this::toggleSidebar);
     }
 
     @Override
@@ -684,7 +687,26 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void toggleSidebar(View v) {
+        NavigationView sidebar = (NavigationView) findViewById(R.id.sidebar);
+        RelativeLayout overlay = (RelativeLayout) findViewById(R.id.overlay);
+        FloatingActionButton bearingBtn = (FloatingActionButton) findViewById(R.id.btn_map_bearing);
+        FloatingActionButton locationBtn = (FloatingActionButton) findViewById(R.id.btn_map_current_location);
 
+        if (sidebarOpen) {
+            sidebar.animate().translationX(-(sidebar.getWidth()));
+            overlay.setVisibility(View.GONE);
+            locationBtn.setVisibility(View.VISIBLE);
+        } else {
+            sidebar.animate().translationX(0);
+            overlay.setVisibility(View.VISIBLE);
+            bearingBtn.setVisibility(View.GONE);
+            locationBtn.setVisibility(View.GONE);
+            overlay.setOnClickListener(item -> { toggleSidebar(null); });
+        }
+        sidebarOpen = !sidebarOpen;
+    }
 
     @Override
     protected void onStart() {
