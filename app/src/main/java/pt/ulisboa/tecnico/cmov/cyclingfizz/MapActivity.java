@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -283,14 +284,24 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         });
     }
 
+    Handler hideCompassBtn = new Handler();
+
     private void updateCompassBearing() {
-        long bearing = Math.round(mapboxMap.getCameraPosition().bearing);
+        long bearing = Math.round(mapboxMap.getCameraPosition().bearing) % 360;
         FloatingActionButton btn_map_bearing = findViewById(R.id.btn_map_bearing);
+
+        Log.d(APP_NAME_DEBUGGER, String.valueOf(bearing));
 
         if (bearing == 0) {
             btn_map_bearing.setRotation(0f);
             btn_map_bearing.setImageResource(R.drawable.ic_north);
+
+            hideCompassBtn.postDelayed(() -> btn_map_bearing.setVisibility(View.GONE), 4000);
+
         } else {
+            hideCompassBtn.removeCallbacksAndMessages(null);
+
+            btn_map_bearing.setVisibility(View.VISIBLE);
             btn_map_bearing.setImageResource(R.drawable.ic_compass);
             btn_map_bearing.setRotation((float) bearing);
         }

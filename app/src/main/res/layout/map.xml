@@ -23,7 +23,8 @@
         app:fabSize="mini"
         app:layout_constraintEnd_toEndOf="@+id/mapView"
         app:layout_constraintTop_toTopOf="@+id/mapView"
-        app:tint="@null"/>
+        app:tint="@null"
+        android:visibility="gone"/>
 
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
