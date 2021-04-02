@@ -12,6 +12,21 @@
         android:layout_height="match_parent"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btn_map_bearing"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="75dp"
+        android:layout_marginEnd="25dp"
+        android:backgroundTint="@color/white"
+        android:src="@drawable/ic_north"
+        app:backgroundTint="@color/offWhite"
+        app:fabSize="mini"
+        app:layout_constraintEnd_toEndOf="@+id/mapView"
+        app:layout_constraintTop_toTopOf="@+id/mapView"
+        app:tint="@null"/>
+
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btn_map_current_location"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
