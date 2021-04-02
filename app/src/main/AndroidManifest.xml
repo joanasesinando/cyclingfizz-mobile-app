@@ -17,17 +17,18 @@
         <activity android:name=".StreetViewActivity" />
         <activity android:name=".CyclewayActivity" />
         <activity android:name=".StationActivity" />
-        <activity android:name=".MapActivity" />
-        <activity android:name=".Intro3Activity" />
-        <activity android:name=".Intro2Activity" />
-        <activity android:name=".Intro1Activity" />
-        <activity android:name=".WelcomeActivity">
+        <activity android:name=".MapActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".Intro3Activity" />
+        <activity android:name=".Intro2Activity" />
+        <activity android:name=".Intro1Activity" />
+        <activity android:name=".WelcomeActivity" />
+
 
         <meta-data
             android:name="preloaded_fonts"

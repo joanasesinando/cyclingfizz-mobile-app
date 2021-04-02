@@ -4,12 +4,15 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.PointF;
@@ -18,6 +21,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
@@ -49,6 +55,7 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.expressions.Expression;
 import com.mapbox.mapboxsdk.style.layers.CircleLayer;
+import com.mapbox.mapboxsdk.style.layers.Layer;
 import com.mapbox.mapboxsdk.style.layers.LineLayer;
 import com.mapbox.mapboxsdk.style.layers.Property;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
@@ -85,6 +92,7 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textField;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textFont;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textIgnorePlacement;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textSize;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.visibility;
 
 enum TrackingMode {
     FREE, FOLLOW_USER, FOLLOW_USER_WITH_BEARING
@@ -134,10 +142,66 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private LocationRequest locationRequest;
 
     private TrackingMode trackingMode;
-    private boolean cameraFirstSet = false;
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        Log.d(APP_NAME_DEBUGGER, "Called");
+
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.top_app_bar, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        Log.d(APP_NAME_DEBUGGER, "Click");
+
+        int id = item.getItemId();
+        if (id == R.id.filter) {
+            Log.d(APP_NAME_DEBUGGER, "Click Filter");
+            try {
+                Layer cyclewaysLayer = mapboxMap.getStyle().getLayer(CYCLEWAYS_LAYER_ID);
+
+                Log.d(APP_NAME_DEBUGGER, String.valueOf(cyclewaysLayer.getVisibility().getValue()));
+                Log.d(APP_NAME_DEBUGGER, String.valueOf(cyclewaysLayer.getVisibility().getValue().equals(Property.VISIBLE)));
+
+                cyclewaysLayer.setProperties(visibility(cyclewaysLayer.getVisibility().getValue().equals(Property.VISIBLE) ? Property.NONE : Property.VISIBLE));
+            } catch (NullPointerException ignored) {
+                Log.e(APP_NAME_DEBUGGER, ignored.getMessage());
+            }
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void checkFirstOpen() {
+        // Set light mode on for now
+        // FIXME: remove when dark mode implemented
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+
+        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+
+        boolean firstOpen = sharedPref.getBoolean("firstOpenSaved", true);
+
+        if (firstOpen) {
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean("firstOpenSaved", false);
+            editor.apply();
+
+            Intent intent = new Intent(this, WelcomeActivity.class);
+            startActivity(intent);
+            finish();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        checkFirstOpen();
+        Log.d(APP_NAME_DEBUGGER, "passou pah");
+
         super.onCreate(savedInstanceState);
 
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
@@ -252,7 +316,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
 
             FloatingActionButton map_current_location_btn = findViewById(R.id.btn_map_current_location);
-            FloatingActionButton btn_map_bearing = findViewById(R.id.btn_map_bearing);
 
             map_current_location_btn.setOnClickListener(view -> {
 
@@ -274,15 +337,23 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 startLocation(); // onLocBtnClick
             });
 
+            FloatingActionButton btn_map_bearing = findViewById(R.id.btn_map_bearing);
+
             btn_map_bearing.setOnClickListener(view -> {
 
                pointToNorth();
             });
 
+
+
+
+
             // Map is set up and the style has loaded. Now you can add data or make other map adjustments
 
         });
     }
+
+
 
     Handler hideCompassBtn = new Handler();
 
@@ -486,7 +557,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void updateMapboxCamera(LocationComponent locationComponent) {
-        cameraFirstSet = true;
         switch (trackingMode) {
             case FOLLOW_USER:
                 // Set the component's camera mode

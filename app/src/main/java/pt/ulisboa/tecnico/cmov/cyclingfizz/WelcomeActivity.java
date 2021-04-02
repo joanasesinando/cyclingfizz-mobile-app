@@ -17,9 +17,6 @@ public class WelcomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.welcome);
 
-        // Set light mode on for now
-        // FIXME: remove when dark mode implemented
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
 
         // Set status bar color
         Utils.setStatusBarColor(this, R.color.offWhite);
