@@ -15,6 +15,7 @@ import android.content.res.ColorStateList;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
@@ -222,8 +223,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
             mapboxMap.addOnCameraMoveListener(() -> {
                 updateCompassBearing();
-                Log.d(APP_NAME_DEBUGGER + "_Camera", "move");
+//                Log.d(APP_NAME_DEBUGGER + "_Camera", "move");
             });
+
+            mapView.addOnCameraIsChangingListener(() -> updateCompassBearing());
+
+            mapView.addOnCameraDidChangeListener(animated -> updateCompassBearing());
 
             mapboxMap.addOnMoveListener(new MapboxMap.OnMoveListener() {
                 @Override
@@ -261,10 +266,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     case FOLLOW_USER_WITH_BEARING:
                         setMapboxCameraFollowUser();
                         pointToNorth();
-                        break;
+                        new Handler().postDelayed(this::startLocation , 800); // onLocBtnClick delayed
+                        return;
                 }
 
-                startLocation();  // onLocBtnClick
+                startLocation(); // onLocBtnClick
             });
 
             btn_map_bearing.setOnClickListener(view -> {
@@ -278,7 +284,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void updateCompassBearing() {
-        double bearing = mapboxMap.getCameraPosition().bearing;
+        long bearing = Math.round(mapboxMap.getCameraPosition().bearing);
         FloatingActionButton btn_map_bearing = findViewById(R.id.btn_map_bearing);
 
         if (bearing == 0) {
