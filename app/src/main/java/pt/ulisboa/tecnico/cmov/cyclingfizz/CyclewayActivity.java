@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -114,6 +116,15 @@ public class CyclewayActivity extends AppCompatActivity {
             });
             thread.start();
         }
+
+        // Set navigation btn listener
+        FloatingActionButton fab_nav = (FloatingActionButton) findViewById(R.id.navigate_to);
+        fab_nav.setOnClickListener(v -> {
+            Uri gmmIntentUri = Uri.parse("google.navigation:q=" + coord.latitude() + "," + coord.longitude() + "&mode=w");
+            Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+            mapIntent.setPackage("com.google.android.apps.maps");
+            startActivity(mapIntent);
+        });
     }
 
     public void closeBtnClicked(View view) {
