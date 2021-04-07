@@ -16,6 +16,8 @@
     <string name="click_to_expand">Click to expand</string>
     <string name="sign_in">Sign in</string>
     <string name="sign_in_later">Sign in later</string>
+    <string name="sign_up_later">Sign up later</string>
+    <string name="sign_up">Sign up</string>
 
     <!-- Warnings -->
     <string name="not_available">Not available</string>
@@ -65,9 +67,11 @@
     <!-- Login -->
     <string name="email">Email</string>
     <string name="password">Password</string>
+    <string name="confirm_password">Confirm password</string>
     <string name="no_account_yet">No account yet?</string>
     <string name="create_one">Create one</string>
     <string name="sign_in_using">Sign in using</string>
+    <string name="already_have_account">Already have an account?</string>
     <string name="google">Google</string>
     <string name="facebook">Facebook</string>
     <string name="or">or</string>

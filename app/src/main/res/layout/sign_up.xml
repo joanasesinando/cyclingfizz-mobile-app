@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".LoginActivity">
+    tools:context=".SignUpActivity">
 
     <ImageView
         android:id="@+id/sign_up_logo"
@@ -55,8 +55,28 @@
             android:fontFamily="@font/quicksand"/>
     </com.google.android.material.textfield.TextInputLayout>
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/sign_up_confirm_password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/confirm_password"
+        app:endIconMode="password_toggle"
+        app:boxStrokeWidth="2dp"
+        android:layout_marginHorizontal="40dp"
+        android:layout_marginTop="16dp"
+        app:boxStrokeColor="@color/orange_500"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        app:layout_constraintTop_toBottomOf="@+id/sign_up_password">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:fontFamily="@font/quicksand"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
     <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btn_login"
+        android:id="@+id/btn_sign_up"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/gradient_primary"
@@ -65,130 +85,46 @@
         android:paddingHorizontal="60dp"
         android:layout_marginHorizontal="40dp"
         android:layout_marginTop="30dp"
-        android:text="@string/sign_in"
+        android:text="@string/sign_up"
         android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/sign_up_password" />
+        app:layout_constraintTop_toBottomOf="@+id/sign_up_confirm_password" />
 
     <LinearLayout
-        android:id="@+id/account_group"
+        android:id="@+id/login_group"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_login">
+        app:layout_constraintTop_toBottomOf="@+id/btn_sign_up">
 
         <TextView
-            android:id="@+id/no_account"
+            android:id="@+id/with_account"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/quicksand"
-            android:text="@string/no_account_yet" />
+            android:text="@string/already_have_account" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_create_account"
+            android:id="@+id/btn_sign_in"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/create_one"
+            android:text="@string/sign_in"
+            android:minWidth="0dp"
             android:textColor="@color/material_on_surface_emphasis_medium"
             android:fontFamily="@font/quicksand"
             android:textAllCaps="false"
-            android:minWidth="0dp"
             style="@style/Widget.MaterialComponents.Button.TextButton"/>
     </LinearLayout>
 
-    <RelativeLayout
-        android:id="@+id/divider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_marginTop="20dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/account_group">
-
-        <TextView
-            android:id="@+id/divider_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:text="@string/or"
-            android:textAllCaps="true"
-            android:textColor="@color/material_on_surface_disabled"
-            android:fontFamily="@font/quicksand"/>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="2dp"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="32dp"
-            android:layout_toStartOf="@id/divider_text"
-            android:background="@color/dark"
-            android:alpha=".2"/>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="2dp"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="32dp"
-            android:layout_toEndOf="@id/divider_text"
-            android:background="@color/dark"
-            android:alpha=".2" />
-
-    </RelativeLayout>
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:fontFamily="@font/quicksand"
-        android:text="@string/sign_in_using"
-        android:textAlignment="center"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/divider" />
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btn_google"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="40dp"
-        android:background="@drawable/google_btn"
-        android:fontFamily="@font/quicksand_medium"
-        android:paddingHorizontal="115dp"
-        android:letterSpacing=".06"
-        android:text="@string/google"
-        android:textColor="@color/dark"
-        android:drawableStart="@drawable/ic_google_logo"
-        android:layout_marginTop="15dp"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btn_facebook"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="40dp"
-        android:background="@drawable/facebook_btn"
-        android:fontFamily="@font/quicksand_medium"
-        android:paddingHorizontal="105dp"
-        android:letterSpacing=".06"
-        android:text="@string/facebook"
-        android:textColor="@color/white"
-        android:drawableStart="@drawable/ic_facebook_logo"
-        android:layout_marginTop="15dp"
-        app:layout_constraintTop_toBottomOf="@+id/btn_google" />
-
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_sign_in_later"
+        android:id="@+id/btn_sign_up_later"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/sign_in_later"
+        android:text="@string/sign_up_later"
         android:fontFamily="@font/quicksand"
         android:textSize="16sp"
         android:textAllCaps="false"
