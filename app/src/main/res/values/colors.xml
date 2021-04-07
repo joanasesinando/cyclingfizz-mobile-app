@@ -20,4 +20,6 @@
 
     <color name="gira">#79C000</color>
     <color name="facebook">#4267B2</color>
+
+    <color name="mtrl_textinput_default_box_stroke_color">#E0E0E0</color>
 </resources>
