@@ -762,9 +762,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         NavigationMenuItemView logoutBtn = findViewById(R.id.sidebar_logout);
 
-        Log.e(TAG, userEmail == null ? "Email is null" : "Got email");
-        Log.e(TAG, userName == null ? "Name is null" : "Got name");
-        Log.e(TAG, userAvatar == null ? "Avatar is null" : "Got avatar");
 
         if (userEmail == null || userName == null || userAvatar == null || logoutBtn == null) {
             return;

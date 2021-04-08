@@ -82,6 +82,9 @@
     <string name="password_wrong_error">Password is incorrect or invalid.</string>
     <string name="auth_failed">Authentication failed.</string>
     <string name="sign_in_msg">Click here to sign in</string>
+    <string name="create_failed">Could not create account.</string>
+    <string name="passwords_not_match">Passwords don\'t match</string>
+    <string name="email_duplicated">This email already have an account registered.</string>
 
 
 

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Patterns;
+import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -38,9 +39,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
 
-    public static boolean isValidEmail(CharSequence target) {
-        return Patterns.EMAIL_ADDRESS.matcher(target).matches();
-    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,71 +54,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         Button loginBtn = findViewById(R.id.btn_login);
-
-        loginBtn.setOnClickListener(v -> {
-
-            TextInputEditText emailInput =  findViewById(R.id.login_email);
-            TextInputLayout emailInputLayout = findViewById(R.id.sign_in_email);
-
-            TextInputEditText passwordInput =  findViewById(R.id.login_password);
-            TextInputLayout passwordInputLayout = findViewById(R.id.sign_in_password);
-
-
-            String email = Objects.requireNonNull(emailInput.getText()).toString();
-            String password = Objects.requireNonNull(passwordInput.getText()).toString();
-
-            if (email.isEmpty()) {
-                emailInputLayout.setError(getString(R.string.email_required_error));
-            } else if (!isValidEmail(email)) {
-                emailInputLayout.setError(getString(R.string.email_format_error));
-            }
-
-            if (password.isEmpty()) {
-                passwordInputLayout.setError(getString(R.string.password_required_error));
-            }
-
-            if (!password.isEmpty() && !email.isEmpty() && isValidEmail(email)) {
-                mAuth.signInWithEmailAndPassword(email, password)
-                        .addOnCompleteListener(this, task -> {
-                            if (task.isSuccessful()) {
-                                // Sign in success, update UI with the signed-in user's information
-                                Log.d(TAG, "signInWithEmail:success");
-                                FirebaseUser user = mAuth.getCurrentUser();
-                                // got user
-                                assert user != null;
-                                Log.d(TAG, "got user " + user.getEmail());
-                                finish();
-                            } else {
-                                // If sign in fails, display a message to the user.
-                                Exception e = task.getException();
-
-                                if (e instanceof FirebaseAuthException) {
-                                    String errorCode = ((FirebaseAuthException) e).getErrorCode();
-
-                                    switch (errorCode) {
-                                        case "ERROR_USER_NOT_FOUND":
-                                            emailInput.setError(getString(R.string.email_invalid_error));
-                                            break;
-                                        case "ERROR_WRONG_PASSWORD":
-                                            passwordInput.setError(getString(R.string.password_wrong_error));
-                                            break;
-                                        default:
-                                            emailInput.setError(getString(R.string.auth_failed));
-                                            passwordInput.setError(getString(R.string.auth_failed));
-                                            Log.e(TAG, errorCode);
-                                            break;
-                                    }
-                                }
-
-                                Toast.makeText(LoginActivity.this, R.string.auth_failed,
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                        });
-            } else {
-                Toast.makeText(LoginActivity.this, R.string.auth_failed,
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
+        loginBtn.setOnClickListener(this::signInEmail);
 
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -132,13 +67,85 @@ public class LoginActivity extends AppCompatActivity {
 
         Button loginWithGoogleBtn = findViewById(R.id.btn_google);
 
-        loginWithGoogleBtn.setOnClickListener(v -> {
-            signInWithGoogle();
+        loginWithGoogleBtn.setOnClickListener(this::signInWithGoogle);
+        Button createNewAccountBtn = findViewById(R.id.btn_create_account);
+
+        createNewAccountBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(this, SignUpActivity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+            finish();
         });
+
 
     }
 
-    private void signInWithGoogle() {
+    private void signInEmail(View v) {
+        boolean error = false;
+        TextInputLayout emailInputLayout = findViewById(R.id.sign_in_email);
+        TextInputLayout passwordInputLayout = findViewById(R.id.sign_in_password);
+
+
+        String email = Objects.requireNonNull(emailInputLayout.getEditText()).getText().toString();
+        String password = Objects.requireNonNull(emailInputLayout.getEditText()).getText().toString();
+
+        if (email.isEmpty()) {
+            emailInputLayout.setError(getString(R.string.email_required_error));
+            error = true;
+        } else if (!Utils.isValidEmail(email)) {
+            emailInputLayout.setError(getString(R.string.email_format_error));
+            error = true;
+        }
+
+        if (password.isEmpty()) {
+            passwordInputLayout.setError(getString(R.string.password_required_error));
+            error = true;
+        }
+
+        if (!error) {
+            mAuth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, task -> {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(TAG, "signInWithEmail:success");
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            // got user
+                            assert user != null;
+                            Log.d(TAG, "got user " + user.getEmail());
+                            finish();
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Exception e = task.getException();
+
+                            if (e instanceof FirebaseAuthException) {
+                                String errorCode = ((FirebaseAuthException) e).getErrorCode();
+
+                                switch (errorCode) {
+                                    case "ERROR_USER_NOT_FOUND":
+                                        emailInputLayout.setError(getString(R.string.email_invalid_error));
+                                        break;
+                                    case "ERROR_WRONG_PASSWORD":
+                                        passwordInputLayout.setError(getString(R.string.password_wrong_error));
+                                        break;
+                                    default:
+                                        emailInputLayout.setError(getString(R.string.auth_failed));
+                                        passwordInputLayout.setError(getString(R.string.auth_failed));
+                                        Log.e(TAG, errorCode);
+                                        break;
+                                }
+                            }
+
+                            Toast.makeText(LoginActivity.this, R.string.auth_failed,
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        } else {
+            Toast.makeText(LoginActivity.this, R.string.auth_failed,
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void signInWithGoogle(View v) {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }

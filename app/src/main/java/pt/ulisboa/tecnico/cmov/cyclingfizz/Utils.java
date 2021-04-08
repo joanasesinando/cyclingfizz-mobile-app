@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Message;
 import android.util.JsonReader;
+import android.util.Patterns;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -103,5 +104,9 @@ public final class Utils {
                 return false;
             }
         });
+    }
+
+    public static boolean isValidEmail(CharSequence target) {
+        return Patterns.EMAIL_ADDRESS.matcher(target).matches();
     }
 }
