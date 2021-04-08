@@ -75,6 +75,15 @@
     <string name="google">Google</string>
     <string name="facebook">Facebook</string>
     <string name="or">or</string>
+    <string name="email_required_error">Please input your email address.</string>
+    <string name="email_format_error">Invalid email address format.</string>
+    <string name="email_invalid_error">Email address does not exist or is invalid.</string>
+    <string name="password_required_error">Please input your password address.</string>
+    <string name="password_wrong_error">Password is incorrect or invalid.</string>
+    <string name="auth_failed">Authentication failed.</string>
+    <string name="sign_in_msg">Click here to sign in</string>
+
+
 
     <!-- Location Permissions -->
     <!--    todo mesmo change this string-->

@@ -24,8 +24,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -41,7 +45,11 @@ import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.internal.NavigationMenuItemView;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.mapbox.android.gestures.MoveGestureDetector;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.Point;
@@ -104,7 +112,7 @@ enum TrackingMode {
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    static String APP_NAME_DEBUGGER = "Cycling_Fizz@MapActivity";
+    static String TAG = "Cycling_Fizz@MapActivity";
 
 //    static String MAP_SERVER_URL = "https://ff58c3b926c9.ngrok.io";
     static String MAP_SERVER_URL = "https://map.server.cyclingfizz.pt";
@@ -129,6 +137,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private MapView mapView;
     private MapboxMap mapboxMap;
+
+    private FirebaseAuth mAuth;
+
 
     private boolean sidebarOpen = false;
 
@@ -176,6 +187,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         checkFirstOpen();
         super.onCreate(savedInstanceState);
+        mAuth = FirebaseAuth.getInstance();
 
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
 
@@ -188,7 +200,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (locationResult == null) {
                     return;
                 }
-                Log.d(APP_NAME_DEBUGGER, "Got Location");
+                Log.d(TAG, "Got Location");
 
                 // Pass the new location to the Maps SDK's LocationComponent
                 if (mapboxMap != null && locationResult.getLastLocation() != null) {
@@ -216,7 +228,29 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Set menu click listener for sidebar opening/closing
         MaterialToolbar toolbar = (MaterialToolbar) findViewById(R.id.topAppBar);
         toolbar.setNavigationOnClickListener(this::toggleSidebar);
+
+
+
+        NavigationView sidebar = (NavigationView) findViewById(R.id.sidebar);
+
+        if (sidebar != null) {
+            sidebar.setNavigationItemSelectedListener(item -> {
+                Log.d(TAG + "_sidebar", "Click \"" + item.getTitle() + "\"");
+
+                int id = item.getItemId();
+                if (id == R.id.sidebar_logout) {
+
+                    mAuth.signOut();
+                    changeUserUI();
+                    Utils.keepMenuOpen(item, getApplicationContext());
+                    return false;
+                } else {
+                    return false;
+                }
+            });
+        }
     }
+
 
     @Override
     public void onMapReady(@NonNull final MapboxMap mapboxMap) {
@@ -328,23 +362,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                pointToNorth();
             });
 
-            MaterialToolbar toolbar = findViewById(R.id.topAppBar);
-
-//            SubMenu subm = toolbar.getMenu().getItem(0).getSubMenu(); // get my MenuItem with placeholder submenu
-//            subm.clear(); // delete place holder
-//
-//            int i = 0;
-//            for (String s :  new String[]{"ace","boom","crew","dog","eon"}) {
-//                MenuItem item = subm.add(0, i, i++, s);
-//                item.setCheckable(true);
-//                item.setChecked(true);
-//                item.setOnMenuItemClickListener();
-//            }
+            MaterialToolbar toolbar = (MaterialToolbar) findViewById(R.id.topAppBar);
 
 
             toolbar.setOnMenuItemClickListener(item -> {
                 // Handle item selection
-                Log.d(APP_NAME_DEBUGGER + "_menu", "Click \"" + item.getTitle() + "\"");
+                Log.d(TAG + "_menu", "Click \"" + item.getTitle() + "\"");
 
                 int id = item.getItemId();
                 if (id == R.id.filter_cycleways) {
@@ -542,7 +565,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         task.addOnSuccessListener(this, locationSettingsResponse -> {
 
-            Log.d(APP_NAME_DEBUGGER, "Location ON");
+            Log.d(TAG, "Location ON");
             turnOnLocationTrackerMapbox();  // ifLocationOn
         });
 
@@ -693,7 +716,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             LocationComponent locationComponent = mapboxMap.getLocationComponent();
             return locationComponent.isLocationComponentActivated() && locationComponent.isLocationComponentEnabled();
         } catch (Exception e) {
-            Log.e(APP_NAME_DEBUGGER + "_isGpsOn()", e.getMessage());
+            Log.e(TAG + "_isGpsOn()", e.getMessage());
             return false;
         }
     }
@@ -715,13 +738,59 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             bearingBtn.setVisibility(View.GONE);
             locationBtn.setVisibility(View.GONE);
             overlay.setOnClickListener(item -> { toggleSidebar(null); });
+            LinearLayout sidebarUser = (LinearLayout)findViewById(R.id.sidebar_user);
+
+            changeUserUI();
+            sidebarUser.setOnClickListener(view -> {
+
+                if (mAuth.getCurrentUser() == null) {
+                    Intent intent = new Intent(this, LoginActivity.class);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+                }
+
+            });
+
         }
         sidebarOpen = !sidebarOpen;
     }
 
+    void changeUserUI() {
+        TextView userEmail = findViewById(R.id.logged_user_email);
+        TextView userName = findViewById(R.id.logged_user_name);
+        ImageView userAvatar = findViewById(R.id.logged_user_avatar);
+
+        NavigationMenuItemView logoutBtn = findViewById(R.id.sidebar_logout);
+
+        Log.e(TAG, userEmail == null ? "Email is null" : "Got email");
+        Log.e(TAG, userName == null ? "Name is null" : "Got name");
+        Log.e(TAG, userAvatar == null ? "Avatar is null" : "Got avatar");
+
+        if (userEmail == null || userName == null || userAvatar == null || logoutBtn == null) {
+            return;
+        }
+
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        if (user == null) {
+            userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_map_info_default));
+            userEmail.setText(R.string.sign_in_msg);
+            userName.setText(R.string.sign_in);
+            logoutBtn.setVisibility(View.INVISIBLE);
+        } else {
+            userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_map_info_default));
+            userEmail.setText(user.getEmail());
+            userName.setText(user.getDisplayName() != null && !user.getDisplayName().isEmpty() ? user.getDisplayName() : Utils.capitalize(Objects.requireNonNull(user.getEmail()).split("@")[0]));
+            logoutBtn.setVisibility(View.VISIBLE);
+        }
+    }
+
+
     @Override
     protected void onStart() {
         super.onStart();
+
+        changeUserUI();
         mapView.onStart();
     }
 
@@ -731,6 +800,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (isGpsOn()) {
             startLocationUpdates();
         }
+        changeUserUI();
         mapView.onResume();
     }
 
