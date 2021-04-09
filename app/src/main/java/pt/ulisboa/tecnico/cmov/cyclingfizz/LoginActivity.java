@@ -87,7 +87,7 @@ public class LoginActivity extends AppCompatActivity {
 
 
         String email = Objects.requireNonNull(emailInputLayout.getEditText()).getText().toString();
-        String password = Objects.requireNonNull(emailInputLayout.getEditText()).getText().toString();
+        String password = Objects.requireNonNull(passwordInputLayout.getEditText()).getText().toString();
 
         if (email.isEmpty()) {
             emailInputLayout.setError(getString(R.string.email_required_error));
