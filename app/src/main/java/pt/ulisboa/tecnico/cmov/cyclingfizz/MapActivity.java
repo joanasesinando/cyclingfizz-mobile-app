@@ -114,18 +114,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     static String TAG = "Cycling_Fizz@MapActivity";
 
-//    static String MAP_SERVER_URL = "https://ff58c3b926c9.ngrok.io";
-    static String MAP_SERVER_URL = "https://map.server.cyclingfizz.pt";
+    String MAP_SERVER_URL = "https://map.cfservertest.ga";
 
     static String GIRA_SOURCE_ID = "gira-source";
-    static String GIRA_DATA_URL = MAP_SERVER_URL + "/get-gira";
+    String GIRA_DATA_URL = MAP_SERVER_URL + "/get-gira";
     static String GIRA_ICON_ID = "gira-icon";
     static String GIRA_STATION_LAYER_ID = "gira-layer";
     static String GIRA_CLUSTER_LAYER_ID = "gira-cluster-layer";
     static String GIRA_COUNT_LAYER_ID = "gira-count-layer";
 
     static String CYCLEWAYS_SOURCE_ID = "cycleways-source";
-    static String CYCLEWAYS_DATA_URL = MAP_SERVER_URL + "/get-cycleways";
+    String CYCLEWAYS_DATA_URL = MAP_SERVER_URL + "/get-cycleways";
     static String CYCLEWAYS_LAYER_ID = "cycleways-layer";
 
     static Long LOCATION_UPDATE_INTERVAL = 1000L;
@@ -239,7 +238,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (id == R.id.sidebar_logout) {
                     mAuth.signOut();
                     changeUserUI();
-                    Utils.keepMenuOpen(item, getApplicationContext());
+                     Utils.keepMenuOpen(item, getApplicationContext());
                     return false;
                 } else {
                     return false;

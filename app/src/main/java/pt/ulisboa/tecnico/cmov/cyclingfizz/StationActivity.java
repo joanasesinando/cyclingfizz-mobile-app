@@ -13,10 +13,14 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.android.gms.common.util.IOUtils;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.textview.MaterialTextView;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -24,11 +28,12 @@ import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.Point;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONObject;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -39,15 +44,24 @@ import java.security.NoSuchAlgorithmException;
 
 public class StationActivity extends AppCompatActivity {
 
-    static String APP_NAME_DEBUGGER = "Cycling_Fizz@StationActivity";
+    static String TAG = "Cycling_Fizz@StationActivity";
     public final static String COORDINATES = "pt.ulisboa.tecnico.cmov.cyclingfizz.COORDINATES";
 
+    String STATIONS_SERVER_URL = "https://stations.cfservertest.ga";
+
+
     Point coord;
+
+    RequestQueue queue;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        queue = Volley.newRequestQueue(this);
+
+
         setContentView(R.layout.station);
 
         Feature feature = Feature.fromJson(getIntent().getStringExtra(MapActivity.STATION_INFO));
@@ -86,6 +100,8 @@ public class StationActivity extends AppCompatActivity {
         subtitle = card.findViewById(R.id.map_info_card_subtitle);
         subtitle.setText(getString(R.string.map_info_free_docks));
 
+        test("");
+
         // Set state info
         String state = feature.getProperty("estado").getAsString();
         card = findViewById(R.id.map_info_state);
@@ -107,7 +123,7 @@ public class StationActivity extends AppCompatActivity {
             String url = Utils.signRequest("https://maps.googleapis.com/maps/api/streetview?size=600x300&location=" + lat + "," + lon + "&key=" + API_KEY, getString(R.string.google_signing_secret));
             Picasso.get().load(url).into(thumbnail);
         } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException | URISyntaxException | MalformedURLException e) {
-            Log.e(APP_NAME_DEBUGGER, e.getMessage());
+            Log.e(TAG, e.getMessage());
             thumbnail.setVisibility(View.GONE);
         }
 
@@ -124,7 +140,7 @@ public class StationActivity extends AppCompatActivity {
                     try {
                         setTravelingModeDistanceAndDuration(userLocation, coord, mode);
                     } catch (IOException e) {
-                        Log.e(APP_NAME_DEBUGGER, e.getMessage());
+                        Log.e(TAG, e.getMessage());
                     }
                 }
             });
@@ -143,6 +159,22 @@ public class StationActivity extends AppCompatActivity {
 
     public void closeBtnClicked(View view) {
         finish();
+    }
+
+    public void test(String stationID) {
+
+        String url = STATIONS_SERVER_URL + "/get-station-info?StationID=101";
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
+                        response -> {
+                            Log.d(TAG, "Response: " + response.toString());
+                        },
+                        error -> {
+                            // TODO: Handle error
+
+                });
+
+        queue.add(jsonObjectRequest);
     }
 
     public void thumbnailClicked(View view) {
