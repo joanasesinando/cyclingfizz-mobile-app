@@ -57,19 +57,25 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <include
-            layout="@layout/renting"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="match_parent">
 
-        <com.google.android.material.navigation.NavigationView
-            android:id="@+id/sidebar"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            app:itemTextAppearance="@style/SidebarTextViewStyle"
-            app:menu="@menu/sidebar"
-            app:headerLayout="@layout/sidebar_header"
-            android:translationX="-280dp"/>
+            <include
+                layout="@layout/renting"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <com.google.android.material.navigation.NavigationView
+                android:id="@+id/sidebar"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                app:itemTextAppearance="@style/SidebarTextViewStyle"
+                app:menu="@menu/sidebar"
+                app:headerLayout="@layout/sidebar_header"
+                android:translationX="-280dp"/>
+
+        </RelativeLayout>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
