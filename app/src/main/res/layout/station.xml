@@ -64,8 +64,7 @@
         android:gravity="center_horizontal"
         android:orientation="horizontal"
         android:weightSum="1"
-        app:layout_constraintTop_toBottomOf="@+id/station_counts"
-        tools:layout_editor_absoluteX="16dp">
+        app:layout_constraintTop_toBottomOf="@+id/station_counts">
 
         <include
             android:id="@+id/map_info_bikes"
