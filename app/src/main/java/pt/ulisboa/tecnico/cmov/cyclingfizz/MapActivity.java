@@ -140,7 +140,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private FirebaseAuth mAuth;
 
-
     private boolean sidebarOpen = false;
 
     private final ActivityResultLauncher<String> requestPermissionLauncher =
@@ -230,7 +229,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         toolbar.setNavigationOnClickListener(this::toggleSidebar);
 
 
-
         NavigationView sidebar = (NavigationView) findViewById(R.id.sidebar);
 
         if (sidebar != null) {
@@ -239,7 +237,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                 int id = item.getItemId();
                 if (id == R.id.sidebar_logout) {
-
                     mAuth.signOut();
                     changeUserUI();
                     Utils.keepMenuOpen(item, getApplicationContext());
@@ -738,7 +735,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             bearingBtn.setVisibility(View.GONE);
             locationBtn.setVisibility(View.GONE);
             overlay.setOnClickListener(item -> { toggleSidebar(null); });
-            LinearLayout sidebarUser = (LinearLayout)findViewById(R.id.sidebar_user);
+            LinearLayout sidebarUser = (LinearLayout) findViewById(R.id.sidebar_user);
 
             changeUserUI();
             sidebarUser.setOnClickListener(view -> {
@@ -762,7 +759,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         NavigationMenuItemView logoutBtn = findViewById(R.id.sidebar_logout);
 
-
         if (userEmail == null || userName == null || userAvatar == null || logoutBtn == null) {
             return;
         }
@@ -770,12 +766,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user == null) {
-            userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_map_info_default));
+            userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_default_avatar));
             userEmail.setText(R.string.sign_in_msg);
             userName.setText(R.string.sign_in);
-            logoutBtn.setVisibility(View.INVISIBLE);
+            logoutBtn.setVisibility(View.GONE);
         } else {
-            userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_map_info_default));
+            userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_default_avatar)); // TODO: set avatar if has
             userEmail.setText(user.getEmail());
             userName.setText(user.getDisplayName() != null && !user.getDisplayName().isEmpty() ? user.getDisplayName() : Utils.capitalize(Objects.requireNonNull(user.getEmail()).split("@")[0]));
             logoutBtn.setVisibility(View.VISIBLE);
