@@ -64,6 +64,10 @@
     <string name="map_info_state">State</string>
     <string name="map_info_rent">Rent bike</string>
 
+    <!-- Renting -->
+    <string name="lock_bike">Lock bike</string>
+    <string name="end_ride">End ride</string>
+
     <!-- Login -->
     <string name="email">Email</string>
     <string name="password">Password</string>
@@ -85,7 +89,6 @@
     <string name="create_failed">Could not create account.</string>
     <string name="passwords_not_match">Passwords don\'t match</string>
     <string name="email_duplicated">This email already have an account registered.</string>
-
 
 
     <!-- Location Permissions -->

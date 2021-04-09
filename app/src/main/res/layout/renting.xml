@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/orange_500"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <Chronometer
+            android:id="@+id/time_counter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/quicksand_medium"
+            android:textColor="@color/white"
+            android:alpha=".7"
+            android:textSize="36sp">
+        </Chronometer>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="10dp"
+            android:gravity="center_horizontal"
+            android:weightSum="1"
+            android:paddingVertical="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/lock_bike"
+                style="@style/Widget.MaterialComponents.Button.Icon"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:paddingVertical="8dp"
+                android:text="@string/lock_bike"
+                android:textColor="@color/orange_500"
+                app:icon="@drawable/ic_round_lock_24"
+                app:iconTint="@color/orange_500"
+                app:iconGravity="textStart"
+                android:fontFamily="@font/quicksand_bold"
+                android:backgroundTint="@color/white"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="0.5"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/end_ride"
+                style="@style/Widget.MaterialComponents.Button.Icon"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:paddingVertical="8dp"
+                android:text="@string/end_ride"
+                android:textColor="@color/pink"
+                app:icon="@drawable/ic_round_cancel_24"
+                app:iconTint="@color/pink"
+                app:iconGravity="textStart"
+                android:fontFamily="@font/quicksand_bold"
+                android:backgroundTint="@color/white"
+                android:layout_marginStart="8dp"
+                android:layout_weight="0.5"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
