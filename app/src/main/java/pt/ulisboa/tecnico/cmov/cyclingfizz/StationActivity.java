@@ -24,7 +24,10 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -52,7 +55,8 @@ public class StationActivity extends AppCompatActivity {
     public final static String COORDINATES = "pt.ulisboa.tecnico.cmov.cyclingfizz.COORDINATES";
 
     String STATIONS_SERVER_URL = "https://stations.cfservertest.ga";
-
+    private FirebaseAuth mAuth;
+    String stationID;
 
     Point coord;
 
@@ -62,11 +66,14 @@ public class StationActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mAuth = FirebaseAuth.getInstance();
 
 
         setContentView(R.layout.station);
 
         Feature feature = Feature.fromJson(getIntent().getStringExtra(MapActivity.STATION_INFO));
+
+        stationID = feature.getProperty("id_expl").getAsString();
 
         // Set top bar title & icon
         String name = feature.getProperty("desig_comercial").getAsString();
@@ -99,22 +106,7 @@ public class StationActivity extends AppCompatActivity {
         subtitle.setText(getString(R.string.map_info_free_docks));
 
         // Get num_bikes & num_free_docks
-        (new Utils.httpRequestJson(obj -> {
-            if (obj.get("status").getAsString().equals("success")) {
-                JsonObject data = obj.get("data").getAsJsonObject();
-
-                int num_bikes = data.get("num_bikes").getAsInt();
-                int num_free_docks = data.get("num_docks").getAsInt() - num_bikes;
-
-                numBikesView.setText(String.valueOf(num_bikes));
-                numDockView.setText(String.valueOf(num_free_docks));
-
-            } else {
-                Log.e(TAG, "Could not get Station Info");
-            }
-
-        })).execute(STATIONS_SERVER_URL + "/get-station-info?stationID=" + feature.getProperty("id_expl").getAsString());
-
+        getStationInfo(numBikesView, numDockView);
 
         // Set state info
         String state = feature.getProperty("estado").getAsString();
@@ -169,10 +161,52 @@ public class StationActivity extends AppCompatActivity {
             mapIntent.setPackage("com.google.android.apps.maps");
             startActivity(mapIntent);
         });
+
+        MaterialButton rentBtn = findViewById(R.id.rent_bike);
+        rentBtn.setOnClickListener(this::rentBike);
+    }
+
+    public void getStationInfo(TextView numBikesView, TextView numDockView) {
+        (new Utils.httpRequestJson(obj -> {
+            if (obj.get("status").getAsString().equals("success")) {
+                JsonObject data = obj.get("data").getAsJsonObject();
+
+                int num_bikes = data.get("num_bikes").getAsInt();
+                int num_free_docks = data.get("num_docks").getAsInt() - num_bikes;
+
+                numBikesView.setText(String.valueOf(num_bikes));
+                numDockView.setText(String.valueOf(num_free_docks));
+
+                MaterialButton rentBtn = findViewById(R.id.rent_bike);
+
+                rentBtn.setEnabled(num_bikes > 0);
+
+            } else {
+                Log.e(TAG, "Could not get Station Info");
+            }
+
+        })).execute(STATIONS_SERVER_URL + "/get-station-info?stationID=" + stationID);
     }
 
     public void closeBtnClicked(View view) {
         finish();
+    }
+
+    public void rentBike(View view) {
+
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                (new Utils.httpRequestJson(obj -> {
+                    finish();
+                })).execute(STATIONS_SERVER_URL + "/rent-a-bike?idToken=" + idToken + "&stationID=" + stationID);
+
+            });
+        }
+
     }
 
 

@@ -50,6 +50,7 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.gson.JsonObject;
 import com.mapbox.android.gestures.MoveGestureDetector;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.Point;
@@ -115,6 +116,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     static String TAG = "Cycling_Fizz@MapActivity";
 
     String MAP_SERVER_URL = "https://map.cfservertest.ga";
+    String STATIONS_SERVER_URL = "https://stations.cfservertest.ga";
 
     static String GIRA_SOURCE_ID = "gira-source";
     String GIRA_DATA_URL = MAP_SERVER_URL + "/get-gira";
@@ -186,6 +188,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         checkFirstOpen();
         super.onCreate(savedInstanceState);
         mAuth = FirebaseAuth.getInstance();
+        checkIfRenting();
 
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
 
@@ -777,6 +780,36 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
+    private void checkIfRenting() {
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                (new Utils.httpRequestJson(obj -> {
+
+                    if (obj.get("status").getAsString().equals("success")) {
+                        JsonObject data = obj.get("data").getAsJsonObject();
+
+                        boolean renting = data.get("renting").getAsBoolean();
+
+                        View rentingView = findViewById(R.id.renting_info);
+                        if (renting) {
+                            rentingView.setVisibility(View.VISIBLE);
+                        } else {
+                            rentingView.setVisibility(View.GONE);
+                        }
+
+                    } else {
+                        Log.e(TAG, "Could not get renting status");
+                    }
+
+                })).execute(STATIONS_SERVER_URL + "/get-rent-status?idToken=" + idToken);
+            });
+        }
+    }
+
 
     @Override
     protected void onStart() {
@@ -793,6 +826,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             startLocationUpdates();
         }
         changeUserUI();
+        checkIfRenting();
         mapView.onResume();
     }
 

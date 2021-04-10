@@ -62,9 +62,11 @@
             android:layout_height="match_parent">
 
             <include
+                android:id="@+id/renting_info"
                 layout="@layout/renting"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:visibility="gone"/>
 
             <com.google.android.material.navigation.NavigationView
                 android:id="@+id/sidebar"
