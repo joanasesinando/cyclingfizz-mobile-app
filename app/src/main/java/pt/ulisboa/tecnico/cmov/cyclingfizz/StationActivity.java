@@ -3,9 +3,13 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -52,14 +56,12 @@ public class StationActivity extends AppCompatActivity {
 
     Point coord;
 
-    RequestQueue queue;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        queue = Volley.newRequestQueue(this);
 
 
         setContentView(R.layout.station);
@@ -78,16 +80,12 @@ public class StationActivity extends AppCompatActivity {
         MaterialToolbar materialToolbar = findViewById(R.id.map_info_bar);
         materialToolbar.setNavigationOnClickListener(this::closeBtnClicked);
 
-        // Calc num_bikes & num_free_docks
-        int num_bikes = feature.getProperty("num_bicicletas").getAsInt();
-        int num_free_docks = feature.getProperty("num_docas").getAsInt() - num_bikes;
-
-        // Set bikes card info
+         // Set bikes card info
         View card = findViewById(R.id.map_info_bikes);
         icon = card.findViewById(R.id.map_info_card_icon);
         icon.setImageResource(R.drawable.ic_map_info_bikes);
-        title = card.findViewById(R.id.map_info_card_title);
-        title.setText(String.valueOf(num_bikes));
+        TextView numBikesView = card.findViewById(R.id.map_info_card_title);
+        numBikesView.setText("-");
         TextView subtitle = card.findViewById(R.id.map_info_card_subtitle);
         subtitle.setText(getString(R.string.map_info_bikes));
 
@@ -95,12 +93,28 @@ public class StationActivity extends AppCompatActivity {
         card = findViewById(R.id.map_info_free_docks);
         icon = card.findViewById(R.id.map_info_card_icon);
         icon.setImageResource(R.drawable.ic_map_info_free_docks);
-        title = card.findViewById(R.id.map_info_card_title);
-        title.setText(String.valueOf(num_free_docks));
+        TextView numDockView = card.findViewById(R.id.map_info_card_title);
+        numDockView.setText("-");
         subtitle = card.findViewById(R.id.map_info_card_subtitle);
         subtitle.setText(getString(R.string.map_info_free_docks));
 
-        test("");
+        // Get num_bikes & num_free_docks
+        (new Utils.httpRequestJson(obj -> {
+            if (obj.get("status").getAsString().equals("success")) {
+                JsonObject data = obj.get("data").getAsJsonObject();
+
+                int num_bikes = data.get("num_bikes").getAsInt();
+                int num_free_docks = data.get("num_docks").getAsInt() - num_bikes;
+
+                numBikesView.setText(String.valueOf(num_bikes));
+                numDockView.setText(String.valueOf(num_free_docks));
+
+            } else {
+                Log.e(TAG, "Could not get Station Info");
+            }
+
+        })).execute(STATIONS_SERVER_URL + "/get-station-info?stationID=" + feature.getProperty("id_expl").getAsString());
+
 
         // Set state info
         String state = feature.getProperty("estado").getAsString();
@@ -161,21 +175,8 @@ public class StationActivity extends AppCompatActivity {
         finish();
     }
 
-    public void test(String stationID) {
 
-        String url = STATIONS_SERVER_URL + "/get-station-info?StationID=101";
 
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                        response -> {
-                            Log.d(TAG, "Response: " + response.toString());
-                        },
-                        error -> {
-                            // TODO: Handle error
-
-                });
-
-        queue.add(jsonObjectRequest);
-    }
 
     public void thumbnailClicked(View view) {
         Intent intent = new Intent(this, StreetViewActivity.class);
