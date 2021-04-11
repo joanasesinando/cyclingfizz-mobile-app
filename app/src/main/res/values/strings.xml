@@ -68,6 +68,7 @@
     <string name="map_info_rent">Rent bike</string>
 
     <!-- Renting -->
+    <string name="unlock_bike">Unlock bike</string>
     <string name="lock_bike">Lock bike</string>
     <string name="end_ride">End ride</string>
 

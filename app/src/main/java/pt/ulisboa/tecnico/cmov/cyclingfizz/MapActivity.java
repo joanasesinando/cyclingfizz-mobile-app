@@ -23,9 +23,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
+import android.widget.Chronometer;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -44,10 +45,10 @@ import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.internal.NavigationMenuItemView;
 import com.google.android.material.navigation.NavigationView;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonObject;
@@ -797,9 +798,30 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                         boolean renting = data.get("renting").getAsBoolean();
 
+                        Log.d(TAG, String.valueOf(obj));
+
                         View rentingView = findViewById(R.id.renting_info);
                         if (renting) {
                             rentingView.setVisibility(View.VISIBLE);
+                            Chronometer rentChronometer = findViewById(R.id.time_counter);
+
+                            long timeElapsedInMilSeconds = System.currentTimeMillis() - data.get("rent_timestamp").getAsLong();
+
+                            rentChronometer.setBase(SystemClock.elapsedRealtime() - timeElapsedInMilSeconds);
+                            rentChronometer.start();
+
+                            MaterialButton btnStop = findViewById(R.id.end_ride);
+                            btnStop.setOnClickListener(this::stopTrip);
+
+                            MaterialButton btnRent = findViewById(R.id.lock_bike);
+
+                            if (data.get("bike_status").getAsInt() == 0) {  //unlock
+                                btnRent.setText(R.string.lock_bike);
+                                btnRent.setOnClickListener(this::lockBike);
+                            } else {
+                                btnRent.setText(R.string.unlock_bike);
+                                btnRent.setOnClickListener(this::unlockBike);
+                            }
                         } else {
                             rentingView.setVisibility(View.GONE);
                         }
@@ -809,6 +831,62 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     }
 
                 })).execute(STATIONS_SERVER_URL + "/get-rent-status?idToken=" + idToken);
+            });
+        }
+    }
+
+    private void stopTrip(View view) {
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+                (new Utils.httpRequestJson(obj -> {
+                    if (obj.get("status").getAsString().equals("success")) {
+                        View rentingView = findViewById(R.id.renting_info);
+                        rentingView.setVisibility(View.GONE);
+                    } else {
+                        Toast.makeText(this, "Error: " + obj.get("msg").getAsString(), Toast.LENGTH_SHORT).show();
+                    }
+                })).execute(STATIONS_SERVER_URL + "/stop-trip?idToken=" + idToken);  // fixme send station
+            });
+        }
+    }
+
+    private void lockBike(View view) {
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+                (new Utils.httpRequestJson(obj -> {
+                    if (obj.get("status").getAsString().equals("success")) {
+                        MaterialButton btn = (MaterialButton) view;
+                        btn.setText(R.string.unlock_bike);
+                        btn.setOnClickListener(this::unlockBike);
+                    } else {
+                        Toast.makeText(this, "Error: " + obj.get("msg").getAsString(), Toast.LENGTH_SHORT).show();
+                    }
+                })).execute(STATIONS_SERVER_URL + "/lock-bike?idToken=" + idToken);
+            });
+        }
+    }
+
+    private void unlockBike(View view) {
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+                (new Utils.httpRequestJson(obj -> {
+                    if (obj.get("status").getAsString().equals("success")) {
+                        MaterialButton btn = (MaterialButton) view;
+                        btn.setText(R.string.lock_bike);
+                        btn.setOnClickListener(this::lockBike);
+                    } else {
+                        Toast.makeText(this, "Error: " + obj.get("msg").getAsString(), Toast.LENGTH_SHORT).show();
+                    }
+                })).execute(STATIONS_SERVER_URL + "/unlock-bike?idToken=" + idToken);
             });
         }
     }
