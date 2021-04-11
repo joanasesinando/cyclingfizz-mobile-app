@@ -19,9 +19,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mapbox.geojson.Feature;
-import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
-import com.squareup.picasso.Picasso;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -34,7 +32,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
 
 public class CyclewayActivity extends AppCompatActivity {
 
@@ -90,7 +87,8 @@ public class CyclewayActivity extends AppCompatActivity {
         try {
             String API_KEY = getString(R.string.google_API_KEY);
             String url = Utils.signRequest("https://maps.googleapis.com/maps/api/streetview?size=600x300&location=" + lat + "," + lon + "&key=" + API_KEY, getString(R.string.google_signing_secret));
-            Picasso.get().load(url).into(thumbnail);
+            Log.d("url", url);
+            (new Utils.httpRequestImage(thumbnail::setImageBitmap)).execute(url);
         } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException | URISyntaxException | MalformedURLException e) {
             Log.e(APP_NAME_DEBUGGER, e.getMessage());
             thumbnail.setVisibility(View.GONE);

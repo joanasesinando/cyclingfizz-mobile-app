@@ -3,15 +3,9 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -19,12 +13,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -36,9 +24,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.Point;
-import com.squareup.picasso.Picasso;
-
-import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -129,7 +114,7 @@ public class StationActivity extends AppCompatActivity {
         try {
             String API_KEY = getString(R.string.google_API_KEY);
             String url = Utils.signRequest("https://maps.googleapis.com/maps/api/streetview?size=600x300&location=" + lat + "," + lon + "&key=" + API_KEY, getString(R.string.google_signing_secret));
-            Picasso.get().load(url).into(thumbnail);
+            (new Utils.httpRequestImage(thumbnail::setImageBitmap)).execute(url);
         } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException | URISyntaxException | MalformedURLException e) {
             Log.e(TAG, e.getMessage());
             thumbnail.setVisibility(View.GONE);

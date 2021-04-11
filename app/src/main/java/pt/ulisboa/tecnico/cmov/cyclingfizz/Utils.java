@@ -3,6 +3,7 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Message;
@@ -161,6 +162,43 @@ public final class Utils {
 
         @Override
         protected void onPostExecute(JsonObject result) {
+            callback.onTaskCompleted(result);
+        }
+    }
+
+    public static class httpRequestImage extends AsyncTask<String, Void, Bitmap> {
+
+        private final OnTaskCompleted<Bitmap> callback;
+
+        public httpRequestImage(OnTaskCompleted<Bitmap> callback) {
+            this.callback = callback;
+        }
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected Bitmap doInBackground(String[] urls) {
+            URL url;
+            try {
+                url = new URL(urls[0]);
+                HttpURLConnection connection;
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+
+                return BitmapFactory.decodeStream(input);
+
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap result) {
             callback.onTaskCompleted(result);
         }
     }
