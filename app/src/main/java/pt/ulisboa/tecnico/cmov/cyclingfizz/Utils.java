@@ -136,8 +136,6 @@ public final class Utils {
             this.callback = callback;
         }
 
-
-
         @Override
         protected void onPreExecute() {
         }
@@ -152,7 +150,6 @@ public final class Utils {
                 connection.setDoInput(true);
                 connection.connect();
                 InputStream input = connection.getInputStream();
-
 
                 return JsonParser.parseReader( new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
 

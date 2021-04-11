@@ -71,7 +71,6 @@ public class StationActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-
         setContentView(R.layout.station);
 
         Feature feature = Feature.fromJson(getIntent().getStringExtra(MapActivity.STATION_INFO));
@@ -181,7 +180,6 @@ public class StationActivity extends AppCompatActivity {
                 numDockView.setText(String.valueOf(num_free_docks));
 
                 MaterialButton rentBtn = findViewById(R.id.rent_bike);
-
                 rentBtn.setEnabled(num_bikes > 0);
 
             } else {
