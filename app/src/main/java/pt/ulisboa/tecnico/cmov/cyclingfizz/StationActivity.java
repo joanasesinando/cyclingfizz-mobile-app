@@ -4,7 +4,9 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
@@ -25,6 +27,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -204,8 +207,22 @@ public class StationActivity extends AppCompatActivity {
                 })).execute(STATIONS_SERVER_URL + "/rent-a-bike?idToken=" + idToken + "&stationID=" + stationID);
 
             });
-        }
 
+        } else {
+            new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.sign_in_required)
+                .setMessage(R.string.renting_dialog_warning)
+                .setNeutralButton(R.string.cancel, (dialog, which) -> {
+                    // Respond to neutral button press
+                })
+                .setPositiveButton(R.string.sign_in, (dialog, which) -> {
+                    // Respond to positive button press
+                    Intent intent = new Intent(this, LoginActivity.class);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+                })
+            .   show();
+        }
     }
 
     public void thumbnailClicked(View view) {

@@ -18,10 +18,13 @@
     <string name="sign_in_later">Sign in later</string>
     <string name="sign_up_later">Sign up later</string>
     <string name="sign_up">Sign up</string>
+    <string name="cancel">Cancel</string>
 
     <!-- Warnings -->
     <string name="not_available">Not available</string>
     <string name="not_name">No name</string>
+    <string name="sign_in_required">Sign in required</string>
+    <string name="renting_dialog_warning">You need to be signed in to rent a bike.</string>
 
     <!-- Welcome -->
     <string name="motto">Discover Lisbon’s attractions\nand hotspots by bike</string>
