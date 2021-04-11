@@ -726,16 +726,19 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         RelativeLayout overlay = (RelativeLayout) findViewById(R.id.overlay);
         FloatingActionButton bearingBtn = (FloatingActionButton) findViewById(R.id.btn_map_bearing);
         FloatingActionButton locationBtn = (FloatingActionButton) findViewById(R.id.btn_map_current_location);
+        View rentingMenu = findViewById(R.id.renting_info);
 
         if (sidebarOpen) {
             sidebar.animate().translationX(-(sidebar.getWidth()));
             overlay.setVisibility(View.GONE);
             locationBtn.setVisibility(View.VISIBLE);
+            checkIfRenting();
         } else {
             sidebar.animate().translationX(0);
             overlay.setVisibility(View.VISIBLE);
             bearingBtn.setVisibility(View.GONE);
             locationBtn.setVisibility(View.GONE);
+            rentingMenu.setVisibility(View.GONE);
             overlay.setOnClickListener(item -> { toggleSidebar(null); });
             LinearLayout sidebarUser = (LinearLayout) findViewById(R.id.sidebar_user);
 

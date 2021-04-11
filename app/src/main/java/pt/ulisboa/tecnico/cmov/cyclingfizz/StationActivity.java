@@ -193,7 +193,6 @@ public class StationActivity extends AppCompatActivity {
     }
 
     public void rentBike(View view) {
-
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user != null) {
@@ -208,9 +207,6 @@ public class StationActivity extends AppCompatActivity {
         }
 
     }
-
-
-
 
     public void thumbnailClicked(View view) {
         Intent intent = new Intent(this, StreetViewActivity.class);

@@ -19,22 +19,6 @@
         android:visibility="gone"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/btn_map_bearing"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="75dp"
-        android:layout_marginEnd="25dp"
-        android:backgroundTint="@color/white"
-        android:src="@drawable/ic_north"
-        app:backgroundTint="@color/offWhite"
-        app:fabSize="mini"
-        app:layout_constraintEnd_toEndOf="@+id/mapView"
-        app:layout_constraintTop_toTopOf="@+id/mapView"
-        app:tint="@null"
-        android:visibility="gone"
-        android:translationZ="-10dp"/>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btn_map_current_location"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -53,6 +37,7 @@
         android:orientation="vertical">
 
         <include
+            android:id="@+id/action_bar"
             layout="@layout/action_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
@@ -61,12 +46,32 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <include
-                android:id="@+id/renting_info"
-                layout="@layout/renting"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="gone"/>
+                android:orientation="vertical">
+
+                <include
+                    android:id="@+id/renting_info"
+                    layout="@layout/renting"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"/>
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btn_map_bearing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    android:layout_marginEnd="25dp"
+                    android:layout_gravity="end"
+                    android:backgroundTint="@color/white"
+                    android:src="@drawable/ic_north"
+                    app:backgroundTint="@color/offWhite"
+                    app:fabSize="mini"
+                    app:tint="@null"
+                    android:translationZ="-10dp"/>
+            </LinearLayout>
 
             <com.google.android.material.navigation.NavigationView
                 android:id="@+id/sidebar"
@@ -75,7 +80,7 @@
                 app:itemTextAppearance="@style/SidebarTextViewStyle"
                 app:menu="@menu/sidebar"
                 app:headerLayout="@layout/sidebar_header"
-                android:translationX="-280dp"/>
+                android:translationX="-280dp" />
 
         </RelativeLayout>
     </LinearLayout>
