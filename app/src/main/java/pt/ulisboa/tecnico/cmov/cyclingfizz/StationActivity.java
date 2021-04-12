@@ -8,8 +8,10 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
+import android.widget.Chronometer;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -154,6 +156,9 @@ public class StationActivity extends AppCompatActivity {
     }
 
     public void getStationInfo(TextView numBikesView, TextView numDockView) {
+        MaterialButton rentBtn = findViewById(R.id.rent_bike);
+        rentBtn.setEnabled(false);
+
         (new Utils.httpRequestJson(obj -> {
             if (obj.get("status").getAsString().equals("success")) {
                 JsonObject data = obj.get("data").getAsJsonObject();
@@ -164,8 +169,29 @@ public class StationActivity extends AppCompatActivity {
                 numBikesView.setText(String.valueOf(num_bikes));
                 numDockView.setText(String.valueOf(num_free_docks));
 
-                MaterialButton rentBtn = findViewById(R.id.rent_bike);
-                rentBtn.setEnabled(num_bikes > 0);
+                FirebaseUser user = mAuth.getCurrentUser();
+
+                if (user != null) {
+                    user.getIdToken(true).addOnSuccessListener(result -> {
+                        String idToken = result.getToken();
+
+                        (new Utils.httpRequestJson(statusObj -> {
+
+                            if (statusObj.get("status").getAsString().equals("success")) {
+                                JsonObject statusData = statusObj.get("data").getAsJsonObject();
+
+                                boolean renting = statusData.get("renting").getAsBoolean();
+                                rentBtn.setEnabled(!renting && num_bikes > 0);
+
+                            } else {
+                                Log.e(TAG, "Could not get renting status");
+                            }
+
+                        })).execute(STATIONS_SERVER_URL + "/get-rent-status?idToken=" + idToken);
+                    });
+                }
+
+
 
             } else {
                 Log.e(TAG, "Could not get Station Info");
@@ -204,7 +230,7 @@ public class StationActivity extends AppCompatActivity {
                     startActivity(intent);
                     overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
                 })
-            .   show();
+                .show();
         }
     }
 

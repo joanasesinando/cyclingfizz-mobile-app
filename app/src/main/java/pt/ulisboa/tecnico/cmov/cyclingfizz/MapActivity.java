@@ -242,7 +242,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (id == R.id.sidebar_logout) {
                     mAuth.signOut();
                     changeUserUI();
-                     Utils.keepMenuOpen(item, getApplicationContext());
                     return false;
                 } else {
                     return false;
@@ -813,14 +812,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                             MaterialButton btnStop = findViewById(R.id.end_ride);
                             btnStop.setOnClickListener(this::stopTrip);
 
-                            MaterialButton btnRent = findViewById(R.id.lock_bike);
+                            MaterialButton btnLock = findViewById(R.id.lock_bike);
 
-                            if (data.get("bike_status").getAsInt() == 0) {  //unlock
-                                btnRent.setText(R.string.lock_bike);
-                                btnRent.setOnClickListener(this::lockBike);
-                            } else {
-                                btnRent.setText(R.string.unlock_bike);
-                                btnRent.setOnClickListener(this::unlockBike);
+                            if (data.get("bike_status").getAsInt() == 0) {  // unlocked
+                                btnLock.setText(R.string.lock_bike);
+                                btnLock.setIconResource(R.drawable.ic_round_lock_24);
+                                findViewById(R.id.locked_status).setVisibility(View.GONE);
+                                btnLock.setOnClickListener(this::lockBike);
+                            } else { // locked
+                                btnLock.setText(R.string.unlock_bike);
+                                btnLock.setIconResource(R.drawable.ic_round_lock_open_24);
+                                findViewById(R.id.locked_status).setVisibility(View.VISIBLE);
+                                btnLock.setOnClickListener(this::unlockBike);
                             }
                         } else {
                             rentingView.setVisibility(View.GONE);
@@ -863,6 +866,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     if (obj.get("status").getAsString().equals("success")) {
                         MaterialButton btn = (MaterialButton) view;
                         btn.setText(R.string.unlock_bike);
+                        findViewById(R.id.locked_status).setVisibility(View.VISIBLE);
+                        btn.setIconResource(R.drawable.ic_round_lock_open_24);
                         btn.setOnClickListener(this::unlockBike);
                     } else {
                         Toast.makeText(this, "Error: " + obj.get("msg").getAsString(), Toast.LENGTH_SHORT).show();
@@ -882,6 +887,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     if (obj.get("status").getAsString().equals("success")) {
                         MaterialButton btn = (MaterialButton) view;
                         btn.setText(R.string.lock_bike);
+                        findViewById(R.id.locked_status).setVisibility(View.GONE);
+                        btn.setIconResource(R.drawable.ic_round_lock_24);
                         btn.setOnClickListener(this::lockBike);
                     } else {
                         Toast.makeText(this, "Error: " + obj.get("msg").getAsString(), Toast.LENGTH_SHORT).show();
