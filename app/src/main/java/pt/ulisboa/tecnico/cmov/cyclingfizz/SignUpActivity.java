@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,6 +28,9 @@ public class SignUpActivity extends AppCompatActivity {
     static String TAG = "Cycling_Fizz@SignUp";
     private FirebaseAuth mAuth;
 
+    TextInputLayout emailInputLayout;
+    TextInputLayout passwordInputLayout;
+    TextInputLayout confirmPasswordInputLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,16 +39,69 @@ public class SignUpActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
+        emailInputLayout = findViewById(R.id.sign_up_email);
+        passwordInputLayout = findViewById(R.id.sign_up_password);
+        confirmPasswordInputLayout = findViewById(R.id.sign_up_confirm_password);
+
         Button loginBtn = findViewById(R.id.btn_sign_up);
         loginBtn.setOnClickListener(this::createAccount);
+
+        Objects.requireNonNull(emailInputLayout.getEditText()).addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                emailInputLayout.setError(null);
+            }
+        });
+
+        Objects.requireNonNull(passwordInputLayout.getEditText()).addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                passwordInputLayout.setError(null);
+            }
+        });
+
+        Objects.requireNonNull(confirmPasswordInputLayout.getEditText()).addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                confirmPasswordInputLayout.setError(null);
+            }
+        });
     }
 
 
     void createAccount(View v) {
         boolean error = false;
-        TextInputLayout emailInputLayout = findViewById(R.id.sign_up_email);
-        TextInputLayout passwordInputLayout = findViewById(R.id.sign_up_password);
-        TextInputLayout confirmPasswordInputLayout = findViewById(R.id.sign_up_confirm_password);
+
 
 
         String email = Objects.requireNonNull(emailInputLayout.getEditText()).getText().toString();

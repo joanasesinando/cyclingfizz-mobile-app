@@ -42,7 +42,7 @@ import java.security.NoSuchAlgorithmException;
 public class StationActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@StationActivity";
-    public final static String COORDINATES = "pt.ulisboa.tecnico.cmov.cyclingfizz.COORDINATES";
+    public final static String COORDINATES = "pt.ulisboa.tecnico.cmov.cyclingfizz.COORDINATES"; 
 
     String STATIONS_SERVER_URL = "https://stations.cfservertest.ga";
     private FirebaseAuth mAuth;

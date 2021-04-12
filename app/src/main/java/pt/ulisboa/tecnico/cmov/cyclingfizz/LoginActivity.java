@@ -5,10 +5,13 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -39,6 +42,9 @@ public class LoginActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
 
+    TextInputLayout emailInputLayout;
+    TextInputLayout passwordInputLayout;
+
 
 
     @Override
@@ -47,6 +53,9 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.login);
 
         mAuth = FirebaseAuth.getInstance();
+
+        emailInputLayout = findViewById(R.id.sign_in_email);
+        passwordInputLayout = findViewById(R.id.sign_in_password);
 
         Button signInLater = findViewById(R.id.btn_sign_in_later);
         signInLater.setOnClickListener(v -> {
@@ -78,12 +87,47 @@ public class LoginActivity extends AppCompatActivity {
         });
 
 
+        Objects.requireNonNull(emailInputLayout.getEditText()).addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                emailInputLayout.setError(null);
+            }
+        });
+
+        Objects.requireNonNull(passwordInputLayout.getEditText()).addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                passwordInputLayout.setError(null);
+            }
+        });
+
     }
 
     private void signInEmail(View v) {
         boolean error = false;
-        TextInputLayout emailInputLayout = findViewById(R.id.sign_in_email);
-        TextInputLayout passwordInputLayout = findViewById(R.id.sign_in_password);
+
+        emailInputLayout.setError(null);
+        passwordInputLayout.setError(null);
 
 
         String email = Objects.requireNonNull(emailInputLayout.getEditText()).getText().toString();
@@ -146,8 +190,10 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void signInWithGoogle(View v) {
+        mGoogleSignInClient.signOut();
+
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-        startActivityForResult(signInIntent, RC_SIGN_IN);
+        startActivityForResult(signInIntent, RC_SIGN_IN, null);
     }
 
     @Override
