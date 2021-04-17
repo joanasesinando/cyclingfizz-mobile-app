@@ -798,8 +798,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             userEmail.setText(R.string.sign_in_msg);
             userName.setText(R.string.sign_in);
             logoutBtn.setVisibility(View.GONE);
+
         } else {
-            userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_default_avatar)); // TODO: set avatar if has
+            if (user.getPhotoUrl() != null) {
+                (new Utils.httpRequestImage(userAvatar::setImageBitmap)).execute(user.getPhotoUrl().toString());
+            } else {
+                userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_default_avatar));
+            }
             userEmail.setText(user.getEmail());
             userName.setText(user.getDisplayName() != null && !user.getDisplayName().isEmpty() ? user.getDisplayName() : Utils.capitalize(Objects.requireNonNull(user.getEmail()).split("@")[0]));
             logoutBtn.setVisibility(View.VISIBLE);
