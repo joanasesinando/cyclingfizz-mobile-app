@@ -23,10 +23,12 @@ import androidx.core.content.ContextCompat;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mapbox.geojson.Point;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -125,6 +127,25 @@ public final class Utils {
         return Patterns.EMAIL_ADDRESS.matcher(target).matches();
     }
 
+    public static double distanceBetweenPointsInMeters(Point p1, Point p2) {
+
+        final int R = 6371; // Radius of the earth
+
+        double latDistance = Math.toRadians(p2.latitude() - p1.latitude());
+        double lonDistance = Math.toRadians(p2.longitude() - p1.longitude());
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(p1.latitude())) * Math.cos(Math.toRadians(p2.latitude()))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = R * c * 1000; // convert to meters
+
+        double height = 0;
+
+        distance = Math.pow(distance, 2) + Math.pow(height, 2);
+
+        return Math.sqrt(distance);
+    }
+
     public interface OnTaskCompleted<T> {
         void onTaskCompleted(T obj);
     }
@@ -199,6 +220,54 @@ public final class Utils {
 
         @Override
         protected void onPostExecute(Bitmap result) {
+            callback.onTaskCompleted(result);
+        }
+    }
+
+
+    public static class httpPostRequestJson extends AsyncTask<String, Void, JsonObject> {
+
+        private final OnTaskCompleted<JsonObject> callback;
+        private final String jsonString;
+
+        public httpPostRequestJson(OnTaskCompleted<JsonObject> callback, String jsonString) {
+            this.callback = callback;
+            this.jsonString = jsonString;
+        }
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected JsonObject doInBackground(String[] urls) {
+            URL url;
+            try {
+                url = new URL(urls[0]);
+                HttpURLConnection connection;
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json; utf-8");
+                connection.setRequestProperty("Accept", "application/json");
+                connection.setDoOutput(true);
+                connection.setDoInput(true);
+
+                OutputStream outputStream = connection.getOutputStream();
+                byte[] inputJson = jsonString.getBytes(StandardCharsets.UTF_8);
+                outputStream.write(inputJson, 0, inputJson.length);
+
+                InputStream input = connection.getInputStream();
+
+                return JsonParser.parseReader( new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
+
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(JsonObject result) {
             callback.onTaskCompleted(result);
         }
     }

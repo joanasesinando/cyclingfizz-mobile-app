@@ -142,6 +142,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private FirebaseAuth mAuth;
 
+    PathRecorder pathRecorder;
+
+
     private boolean sidebarOpen = false;
 
     private final ActivityResultLauncher<String> requestPermissionLauncher =
@@ -171,6 +174,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
 
+
         boolean firstOpen = sharedPref.getBoolean("firstOpenSaved", true);
 
         if (firstOpen) {
@@ -191,6 +195,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mAuth = FirebaseAuth.getInstance();
         checkIfRenting();
 
+        pathRecorder = PathRecorder.getInstance();
+
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
 
         setContentView(R.layout.map);
@@ -205,10 +211,16 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 Log.d(TAG, "Got Location");
 
                 // Pass the new location to the Maps SDK's LocationComponent
-                if (mapboxMap != null && locationResult.getLastLocation() != null) {
-                    mapboxMap.getLocationComponent().forceLocationUpdate(locationResult.getLastLocation());
+                if (mapboxMap != null) {
                     userLocation = locationResult.getLastLocation();
+                    mapboxMap.getLocationComponent().forceLocationUpdate(userLocation);
                 }
+
+                (new Thread(() -> {
+                    if (pathRecorder.isRecording()) {
+                        pathRecorder.addPointToPath(Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude()));
+                    }
+                })).start();
             }
 
             @Override
@@ -242,6 +254,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (id == R.id.sidebar_logout) {
                     mAuth.signOut();
                     changeUserUI();
+                    return false;
+                } else if (id == R.id.sidebar_routes) {
+                    if (!pathRecorder.isRecording()) {
+                        pathRecorder.startRecording();
+                    } else {
+                        pathRecorder.stopRecording();
+                    }
                     return false;
                 } else {
                     return false;
@@ -570,6 +589,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         task.addOnFailureListener(this, e -> {
             if (e instanceof ResolvableApiException) {
+                Log.d(TAG, "Location OFF " + e);
+
                 // Location settings are not satisfied, but this can be fixed
                 // by showing the user a dialog.
                 try {
@@ -681,6 +702,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 locationCallback,
                 Looper.getMainLooper());
 
+
         fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
             if (mapboxMap != null && location != null) {
                 mapboxMap.getLocationComponent().forceLocationUpdate(location);
@@ -699,6 +721,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CHECK_LOCATION_SETTINGS) {
             if (resultCode == -1) {
+                Log.e(TAG, "aqui tou eu " + pathRecorder.isRecording());
                 startLocation();  // afterGpsEnabled
             } else {
                 LocationComponent locationComponent = mapboxMap.getLocationComponent();
@@ -921,7 +944,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     protected void onPause() {
         super.onPause();
-        if (isGpsOn()) {
+        if (isGpsOn() && !pathRecorder.isRecording()) {
             stopLocationUpdates();
         }
         mapView.onPause();
