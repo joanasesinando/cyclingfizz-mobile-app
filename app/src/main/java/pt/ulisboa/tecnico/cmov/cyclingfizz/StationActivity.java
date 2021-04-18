@@ -88,7 +88,6 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
         Feature feature = Feature.fromJson(getIntent().getStringExtra(MapActivity.STATION_INFO));
         stationID = feature.getProperty("id_expl").getAsString();
         coord = (Point) feature.geometry();
-//        checkForStationsInRange();
 
         uiInit(feature);
         getCurrentBikesAndFreeDocks();
@@ -316,7 +315,6 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
     /*** -------------------------------------------- ***/
 
     private void getCurrentBikesAndFreeDocks() {
-        MaterialButton rentBtn = findViewById(R.id.rent_bike);
         (new Utils.httpRequestJson(obj -> {
             if (obj.get("status").getAsString().equals("success")) {
                 JsonObject data = obj.get("data").getAsJsonObject();
@@ -325,10 +323,12 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
                 numBikes = data.get("num_bikes").getAsInt();
                 numFreeDocks = data.get("num_docks").getAsInt() - numBikes;
 
-                // Update view
+                // Update counters' views
                 uiUpdateCardTitle(findViewById(R.id.map_info_bikes), String.valueOf(numBikes));
                 uiUpdateCardTitle(findViewById(R.id.map_info_free_docks), String.valueOf(numFreeDocks));
-                rentBtn.setEnabled(!sharedState.isRenting() && numBikes > 0);
+
+                // Check for stations around
+                checkForStationsInRange();
 
             } else {
                 Log.e(TAG, "Could not get station's info");
@@ -428,29 +428,26 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
 
     @Override
     public void onPeersAvailable(SimWifiP2pDeviceList peers) {
-        StringBuilder peersStr = new StringBuilder();
-
-        // compile list of devices in range
-        for (SimWifiP2pDevice device : peers.getDeviceList()) {
-            String devstr = "" + device.deviceName + " (" + device.getVirtIp() + ")\n";
-            peersStr.append(devstr);
-        }
-
-        // display list of devices in range
-        new AlertDialog.Builder(this)
-                .setTitle("Devices in WiFi Range")
-                .setMessage(peersStr.toString())
-                .setNeutralButton("Dismiss", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                })
-                .show();
+        Log.d(TAG, "is in");
+        boolean isClose = false;
 
         for (SimWifiP2pDevice device : peers.getDeviceList()) {
-            String beaconID = device.deviceName.split("_")[1];
+            // Get beacon ID
+            String beaconName = device.deviceName;
+            String beaconID = beaconName.contains("_") ? beaconName.split("_")[1] : beaconName;
+
             if (beaconID.equals(stationID)) {
-                Toast.makeText(this, "YEP", Toast.LENGTH_SHORT).show();
+                isClose = true;
+                Toast.makeText(this, "Station in range", Toast.LENGTH_SHORT).show();
+                break;
             }
         }
+
+        if (!isClose)
+            Toast.makeText(this, "Station is far", Toast.LENGTH_SHORT).show();
+
+        // Update rent btn
+        MaterialButton rentBtn = findViewById(R.id.rent_bike);
+        rentBtn.setEnabled(isClose && !sharedState.isRenting() && numBikes > 0);
     }
 }
