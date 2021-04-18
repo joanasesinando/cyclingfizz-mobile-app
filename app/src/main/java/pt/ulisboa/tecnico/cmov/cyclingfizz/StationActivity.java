@@ -4,8 +4,6 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
@@ -45,17 +43,6 @@ import pt.inesc.termite.wifidirect.SimWifiP2pDevice;
 import pt.inesc.termite.wifidirect.SimWifiP2pDeviceList;
 import pt.inesc.termite.wifidirect.SimWifiP2pManager;
 
-enum TravelingMode {
-    DRIVING("driving"), WALKING("walking"),
-    PUBLIC_TRANSPORT("transit"), BIKE("bicycling");
-
-    private final String label;
-
-    TravelingMode(String label) { this.label = label; }
-
-    public String getLabel() { return this.label; }
-}
-
 public class StationActivity extends AppCompatActivity implements SimWifiP2pManager.PeerListListener {
 
     SharedState sharedState;
@@ -66,6 +53,7 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
 
     String STATIONS_SERVER_URL = "https://stations.cfservertest.ga";
     String GOOGLE_STREET_VIEW_URL = "https://maps.googleapis.com/maps/api/streetview";
+    String GOOGLE_DISTANCE_URL = "https://maps.googleapis.com/maps/api/distancematrix";
     private FirebaseAuth mAuth;
 
     Point coord;
@@ -101,7 +89,7 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void uiInit(Feature feature) {
         // Set top bar
-        uiUpdateTopBar(feature);
+        uiUpdateTopBar(feature.getProperty("desig_comercial").getAsString());
 
         // Set navigation estimates
         uiUpdateNavigationEstimates();
@@ -125,9 +113,8 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
         uiSetClickListeners();
     }
 
-    private void uiUpdateTopBar(Feature feature) {
+    private void uiUpdateTopBar(String name) {
         // Set top bar title
-        String name = feature.getProperty("desig_comercial").getAsString();
         TextView title = findViewById(R.id.map_info_name);
         title.setText(name);
 
@@ -224,6 +211,7 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
             overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
         });
 
+        // Set rent btn click listener
         MaterialButton rentBtn = findViewById(R.id.rent_bike);
         rentBtn.setOnClickListener(this::rentBike);
 
@@ -244,8 +232,7 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
 
     public void setTravelingModeEstimates(Location origin, Point destination, String mode) throws IOException {
         // Make http request
-        URL url = new URL("https://maps.googleapis.com/maps/api/distancematrix/json?origins=" +
-                origin.getLatitude() + "," + origin.getLongitude() +
+        URL url = new URL(GOOGLE_DISTANCE_URL + "/json?origins=" + origin.getLatitude() + "," + origin.getLongitude() +
                 "&destinations=" + destination.latitude() + "%2C" + destination.longitude() +
                 "&mode=" + mode +
                 "&language=en&key=" + getString(R.string.google_API_KEY));
@@ -333,52 +320,6 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
             } else {
                 Log.e(TAG, "Could not get station's info");
             }
-        })).execute(STATIONS_SERVER_URL + "/get-station-info?stationID=" + stationID);
-    }
-
-    public void getStationInfo(TextView numBikesView, TextView numDockView) {
-        MaterialButton rentBtn = findViewById(R.id.rent_bike);
-
-        (new Utils.httpRequestJson(obj -> {
-            if (obj.get("status").getAsString().equals("success")) {
-                JsonObject data = obj.get("data").getAsJsonObject();
-
-                int num_bikes = data.get("num_bikes").getAsInt();
-                int num_free_docks = data.get("num_docks").getAsInt() - num_bikes;
-
-                rentBtn.setEnabled(num_bikes > 0);
-                numBikesView.setText(String.valueOf(num_bikes));
-                numDockView.setText(String.valueOf(num_free_docks));
-
-                FirebaseUser user = mAuth.getCurrentUser();
-
-                if (user != null) {
-                    rentBtn.setEnabled(false);
-                    user.getIdToken(true).addOnSuccessListener(result -> {
-                        String idToken = result.getToken();
-
-                        (new Utils.httpRequestJson(statusObj -> {
-
-                            if (statusObj.get("status").getAsString().equals("success")) {
-                                JsonObject statusData = statusObj.get("data").getAsJsonObject();
-
-                                boolean renting = statusData.get("renting").getAsBoolean();
-                                rentBtn.setEnabled(!renting && num_bikes > 0);
-
-                            } else {
-                                Log.e(TAG, "Could not get renting status");
-                            }
-
-                        })).execute(STATIONS_SERVER_URL + "/get-rent-status?idToken=" + idToken);
-                    });
-                }
-
-
-
-            } else {
-                Log.e(TAG, "Could not get Station Info");
-            }
-
         })).execute(STATIONS_SERVER_URL + "/get-station-info?stationID=" + stationID);
     }
 

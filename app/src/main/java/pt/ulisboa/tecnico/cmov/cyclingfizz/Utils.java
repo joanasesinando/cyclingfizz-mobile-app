@@ -44,6 +44,17 @@ import java.util.List;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+enum TravelingMode {
+    DRIVING("driving"), WALKING("walking"),
+    PUBLIC_TRANSPORT("transit"), BIKE("bicycling");
+
+    private final String label;
+
+    TravelingMode(String label) { this.label = label; }
+
+    public String getLabel() { return this.label; }
+}
+
 public final class Utils {
 
     static String TAG = "Cycling_Fizz@Utils";
