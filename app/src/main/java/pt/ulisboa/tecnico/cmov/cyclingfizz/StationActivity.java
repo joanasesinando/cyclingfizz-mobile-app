@@ -428,7 +428,6 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
 
     @Override
     public void onPeersAvailable(SimWifiP2pDeviceList peers) {
-        Log.d(TAG, "is in");
         boolean isClose = false;
 
         for (SimWifiP2pDevice device : peers.getDeviceList()) {

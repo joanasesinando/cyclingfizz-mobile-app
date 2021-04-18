@@ -89,6 +89,8 @@ import java.util.List;
 import java.util.Objects;
 
 import pt.inesc.termite.wifidirect.SimWifiP2pBroadcast;
+import pt.inesc.termite.wifidirect.SimWifiP2pDevice;
+import pt.inesc.termite.wifidirect.SimWifiP2pDeviceList;
 import pt.inesc.termite.wifidirect.SimWifiP2pManager;
 import pt.inesc.termite.wifidirect.service.SimWifiP2pService;
 
@@ -121,7 +123,7 @@ enum TrackingMode {
     FREE, FOLLOW_USER, FOLLOW_USER_WITH_BEARING
 }
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, SimWifiP2pManager.PeerListListener {
 
     SharedState sharedState;
 
@@ -858,7 +860,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                             rentChronometer.start();
 
                             MaterialButton btnStop = findViewById(R.id.end_ride);
-                            btnStop.setOnClickListener(this::stopTrip);
+                            btnStop.setOnClickListener(this::checkForStationsInRange);
 
                             MaterialButton btnLock = findViewById(R.id.lock_bike);
 
@@ -886,7 +888,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
-    private void stopTrip(View view) {
+    private void stopTrip(String stationID) {
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user != null) {
@@ -900,7 +902,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     } else {
                         Toast.makeText(this, "Error: " + obj.get("msg").getAsString(), Toast.LENGTH_SHORT).show();
                     }
-                })).execute(STATIONS_SERVER_URL + "/stop-trip?idToken=" + idToken);  // fixme send station
+                })).execute(STATIONS_SERVER_URL + "/stop-trip?idToken=" + idToken + "&stationID=" + stationID);
             });
         }
     }
@@ -947,20 +949,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
-    /*
-     * Termite actions
-     */
+
+    /*** -------------------------------------------- ***/
+    /*** ------- (WIFI DIRECT) STATIONS IN RANGE ---- ***/
+    /*** -------------------------------------------- ***/
 
     private void initWifiDirect() {
-
-        // register broadcast receiver
+        // Register broadcast receiver
         IntentFilter filter = new IntentFilter();
         filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_STATE_CHANGED_ACTION);
         filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_PEERS_CHANGED_ACTION);
         filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_NETWORK_MEMBERSHIP_CHANGED_ACTION);
         filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_GROUP_OWNERSHIP_CHANGED_ACTION);
         mReceiver = new SimWifiP2pBroadcastReceiver(this);
-        registerReceiver(mReceiver, filter);
+        registerReceiver(mReceiver, filter); // FIXME: onde dar unregister?
     }
 
     private void turnWifiOn() {
@@ -969,10 +971,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mBound = true;
     }
 
-    private void turnWifiOff() {
+    private void turnWifiOff() { // FIXME: onde desligar?
         if (mBound) {
             unbindService(mConnection);
             mBound = false;
+        }
+    }
+
+    private void checkForStationsInRange(View view) {
+        if (mBound) {
+            mManager.requestPeers(mChannel, MapActivity.this);
+        } else {
+            Toast.makeText(this, "Service not bound", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -993,6 +1003,26 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             mBound = false;
         }
     };
+
+    @Override
+    public void onPeersAvailable(SimWifiP2pDeviceList peers) {
+        boolean isClose = peers.getDeviceList().size() > 0;
+
+        if (!isClose) {
+            Toast.makeText(this, "No stations nearby", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        for (SimWifiP2pDevice device : peers.getDeviceList()) {
+            // Get beacon ID
+            String beaconName = device.deviceName;
+            String beaconID = beaconName.contains("_") ? beaconName.split("_")[1] : beaconName;
+
+            Toast.makeText(this, "Station " + beaconID + " is in range", Toast.LENGTH_SHORT).show();
+            stopTrip(beaconID);
+            break;
+        }
+    }
 
     @Override
     protected void onStart() {
