@@ -68,7 +68,7 @@ public final class Utils {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    static String signRequest(String urlString, String API_KEY) throws NoSuchAlgorithmException,
+    static String signRequest(String urlString, String SECRET) throws NoSuchAlgorithmException,
             InvalidKeyException, UnsupportedEncodingException, URISyntaxException, MalformedURLException {
 
         // This variable stores the binary key, which is computed from the string (Base64) key
@@ -78,7 +78,7 @@ public final class Utils {
         URL url = new URL(urlString);
 
         // Convert the key from 'web safe' base 64 to binary
-        String keyString = API_KEY;
+        String keyString = SECRET;
         keyString = keyString.replace('-', '+');
         keyString = keyString.replace('_', '/');
         key = Base64.getDecoder().decode(keyString);

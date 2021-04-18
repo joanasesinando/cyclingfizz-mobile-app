@@ -10,9 +10,12 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
@@ -22,7 +25,9 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
+import android.os.Messenger;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
@@ -83,6 +88,10 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
 
+import pt.inesc.termite.wifidirect.SimWifiP2pBroadcast;
+import pt.inesc.termite.wifidirect.SimWifiP2pManager;
+import pt.inesc.termite.wifidirect.service.SimWifiP2pService;
+
 import static com.mapbox.mapboxsdk.style.expressions.Expression.get;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.has;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
@@ -113,6 +122,8 @@ enum TrackingMode {
 }
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
+
+    SharedState sharedState;
 
     static String TAG = "Cycling_Fizz@MapActivity";
 
@@ -166,6 +177,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private TrackingMode trackingMode;
 
+    static SimWifiP2pManager mManager = null;
+    static SimWifiP2pManager.Channel mChannel = null;
+    static boolean mBound = false;
+    private SimWifiP2pBroadcastReceiver mReceiver;
+
 
     private void checkFirstOpen() {
         // Set light mode on for now
@@ -192,6 +208,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         checkFirstOpen();
         super.onCreate(savedInstanceState);
+        sharedState = (SharedState) getApplicationContext();
         mAuth = FirebaseAuth.getInstance();
         checkIfRenting();
 
@@ -267,6 +284,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
             });
         }
+
+        initWifiDirect();
+        turnWifiOn();
     }
 
 
@@ -874,6 +894,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 String idToken = result.getToken();
                 (new Utils.httpRequestJson(obj -> {
                     if (obj.get("status").getAsString().equals("success")) {
+                        sharedState.setRenting(false);
                         View rentingView = findViewById(R.id.renting_info);
                         rentingView.setVisibility(View.GONE);
                     } else {
@@ -926,6 +947,52 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
+    /*
+     * Termite actions
+     */
+
+    private void initWifiDirect() {
+
+        // register broadcast receiver
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_STATE_CHANGED_ACTION);
+        filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_PEERS_CHANGED_ACTION);
+        filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_NETWORK_MEMBERSHIP_CHANGED_ACTION);
+        filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_GROUP_OWNERSHIP_CHANGED_ACTION);
+        mReceiver = new SimWifiP2pBroadcastReceiver(this);
+        registerReceiver(mReceiver, filter);
+    }
+
+    private void turnWifiOn() {
+        Intent intent = new Intent(this, SimWifiP2pService.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        mBound = true;
+    }
+
+    private void turnWifiOff() {
+        if (mBound) {
+            unbindService(mConnection);
+            mBound = false;
+        }
+    }
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+        // callbacks for service binding, passed to bindService()
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            mManager = new SimWifiP2pManager(new Messenger(service));
+            mChannel = mManager.initialize(getApplication(), getMainLooper(), null);
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mManager = null;
+            mChannel = null;
+            mBound = false;
+        }
+    };
 
     @Override
     protected void onStart() {

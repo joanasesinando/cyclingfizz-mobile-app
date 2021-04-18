@@ -1,19 +1,21 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
-import android.widget.Chronometer;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
@@ -39,209 +41,209 @@ import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
-public class StationActivity extends AppCompatActivity {
+import pt.inesc.termite.wifidirect.SimWifiP2pDevice;
+import pt.inesc.termite.wifidirect.SimWifiP2pDeviceList;
+import pt.inesc.termite.wifidirect.SimWifiP2pManager;
+
+enum TravelingMode {
+    DRIVING("driving"), WALKING("walking"),
+    PUBLIC_TRANSPORT("transit"), BIKE("bicycling");
+
+    private final String label;
+
+    TravelingMode(String label) { this.label = label; }
+
+    public String getLabel() { return this.label; }
+}
+
+public class StationActivity extends AppCompatActivity implements SimWifiP2pManager.PeerListListener {
+
+    SharedState sharedState;
 
     static String TAG = "Cycling_Fizz@StationActivity";
-    public final static String COORDINATES = "pt.ulisboa.tecnico.cmov.cyclingfizz.COORDINATES"; 
+    public final static String COORDINATES = "pt.ulisboa.tecnico.cmov.cyclingfizz.COORDINATES";
+    private final static String COUNTER_DEFAULT = "?";
 
     String STATIONS_SERVER_URL = "https://stations.cfservertest.ga";
+    String GOOGLE_STREET_VIEW_URL = "https://maps.googleapis.com/maps/api/streetview";
     private FirebaseAuth mAuth;
-    String stationID;
 
     Point coord;
+    String stationID;
+
+    int numBikes;
+    int numFreeDocks;
 
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sharedState = (SharedState) getApplicationContext();
 
         mAuth = FirebaseAuth.getInstance();
 
         setContentView(R.layout.station);
 
         Feature feature = Feature.fromJson(getIntent().getStringExtra(MapActivity.STATION_INFO));
-
         stationID = feature.getProperty("id_expl").getAsString();
+        coord = (Point) feature.geometry();
+//        checkForStationsInRange();
 
-        // Set top bar title & icon
+        uiInit(feature);
+        getCurrentBikesAndFreeDocks();
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** -------------- USER INTERFACE -------------- ***/
+    /*** -------------------------------------------- ***/
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void uiInit(Feature feature) {
+        // Set top bar
+        uiUpdateTopBar(feature);
+
+        // Set navigation estimates
+        uiUpdateNavigationEstimates();
+
+        // Set #bikes & #free_docks cards
+        uiUpdateCard(findViewById(R.id.map_info_bikes), R.drawable.ic_map_info_bikes,
+                COUNTER_DEFAULT, getString(R.string.map_info_bikes));
+        uiUpdateCard(findViewById(R.id.map_info_free_docks), R.drawable.ic_map_info_free_docks,
+                COUNTER_DEFAULT, getString(R.string.map_info_free_docks));
+
+        // Set state card
+        String state = feature.getProperty("estado").getAsString();
+        uiUpdateCard(findViewById(R.id.map_info_state),
+                state.equals("active") ? R.drawable.ic_map_info_active : R.drawable.ic_map_info_inactive,
+                getString(R.string.map_info_state), Utils.capitalize(state), state);
+
+        // Set street view thumbnail
+        uiUpdateStreetViewThumbnail();
+
+        // Set click listeners
+        uiSetClickListeners();
+    }
+
+    private void uiUpdateTopBar(Feature feature) {
+        // Set top bar title
         String name = feature.getProperty("desig_comercial").getAsString();
         TextView title = findViewById(R.id.map_info_name);
         title.setText(name);
 
+        // Set top bar icon
         ImageView icon = findViewById(R.id.map_info_icon);
         icon.setImageResource(R.drawable.ic_station);
+    }
 
-        // Set click listener for close btn
-        MaterialToolbar materialToolbar = findViewById(R.id.map_info_bar);
-        materialToolbar.setNavigationOnClickListener(this::closeBtnClicked);
-
-         // Set bikes card info
-        View card = findViewById(R.id.map_info_bikes);
-        icon = card.findViewById(R.id.map_info_card_icon);
-        icon.setImageResource(R.drawable.ic_map_info_bikes);
-        TextView numBikesView = card.findViewById(R.id.map_info_card_title);
-        numBikesView.setText("-");
-        TextView subtitle = card.findViewById(R.id.map_info_card_subtitle);
-        subtitle.setText(getString(R.string.map_info_bikes));
-
-        // Set free docks card info
-        card = findViewById(R.id.map_info_free_docks);
-        icon = card.findViewById(R.id.map_info_card_icon);
-        icon.setImageResource(R.drawable.ic_map_info_free_docks);
-        TextView numDockView = card.findViewById(R.id.map_info_card_title);
-        numDockView.setText("-");
-        subtitle = card.findViewById(R.id.map_info_card_subtitle);
-        subtitle.setText(getString(R.string.map_info_free_docks));
-
-        // Get num_bikes & num_free_docks
-        getStationInfo(numBikesView, numDockView);
-
-        // Set state info
-        String state = feature.getProperty("estado").getAsString();
-        card = findViewById(R.id.map_info_state);
-        icon = card.findViewById(R.id.map_info_card_icon);
-        icon.setImageResource(state.equals("active") ? R.drawable.ic_map_info_active : R.drawable.ic_map_info_inactive);
-        title = card.findViewById(R.id.map_info_card_title);
-        title.setText(getString(R.string.map_info_state));
-        subtitle = card.findViewById(R.id.map_info_card_subtitle);
-        subtitle.setText(Utils.capitalize(state));
-        subtitle.setTextColor(state.equals("active") ? getColor(R.color.success) : getColor(R.color.pink));
-
-        // Set thumbnail
-        ImageView thumbnail = findViewById(R.id.station_thumbnail);
-        coord = (Point) feature.geometry();
-        String lat = String.valueOf(coord.latitude());
-        String lon = String.valueOf(coord.longitude());
-        try {
-            String API_KEY = getString(R.string.google_API_KEY);
-            String url = Utils.signRequest("https://maps.googleapis.com/maps/api/streetview?size=600x300&location=" + lat + "," + lon + "&key=" + API_KEY, getString(R.string.google_signing_secret));
-            (new Utils.httpRequestImage(thumbnail::setImageBitmap)).execute(url);
-        } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException | URISyntaxException | MalformedURLException e) {
-            Log.e(TAG, e.getMessage());
-            thumbnail.setVisibility(View.GONE);
-        }
-
-        // Set thumbnail click listener
-        thumbnail.setOnClickListener(this::thumbnailClicked);
-
-        // Set distance & times
+    private void uiUpdateNavigationEstimates() {
         Location userLocation = (Location) getIntent().getParcelableExtra(MapActivity.USER_LOCATION);
-        String[] travelingModes = {"driving", "walking", "transit", "bicycling"};
-        for (String mode : travelingModes) {
+
+        TravelingMode[] travelingModes = TravelingMode.values();
+        for (TravelingMode mode : travelingModes) {
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        setTravelingModeDistanceAndDuration(userLocation, coord, mode);
+                        setTravelingModeEstimates(userLocation, coord, mode.getLabel());
                     } catch (IOException e) {
                         Log.e(TAG, e.getMessage());
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                View modeCounter = findViewById(getResources()
+                                        .getIdentifier("mode_" + mode.getLabel(), null, null));
+                                modeCounter.setVisibility(View.GONE);
+                            }
+                        });
                     }
                 }
             });
             thread.start();
         }
+    }
 
-        // Set navigation btn listener
-        FloatingActionButton fab_nav = (FloatingActionButton) findViewById(R.id.navigate_to);
-        fab_nav.setOnClickListener(v -> {
+    private void uiUpdateCard(View card, @DrawableRes int iconId, CharSequence textTitle, CharSequence textSubtitle) {
+        // Set card icon
+        ImageView icon = card.findViewById(R.id.map_info_card_icon);
+        icon.setImageResource(iconId);
+
+        // Set card title
+        TextView title = card.findViewById(R.id.map_info_card_title);
+        title.setText(textTitle);
+
+        // Set card subtitle
+        TextView subtitle = card.findViewById(R.id.map_info_card_subtitle);
+        subtitle.setText(textSubtitle);
+    }
+
+    private void uiUpdateCard(View card, @DrawableRes int iconId, CharSequence textTitle, CharSequence textSubtitle, String state) {
+        uiUpdateCard(card, iconId, textTitle, textSubtitle);
+
+        // Set state color
+        TextView subtitle = card.findViewById(R.id.map_info_card_subtitle);
+        subtitle.setTextColor(state.equals("active") ?
+                getResources().getColor(R.color.success) : getResources().getColor(R.color.pink));
+    }
+
+    private void uiUpdateCardTitle(View card, CharSequence textTitle) {
+        // Set card title
+        TextView title = card.findViewById(R.id.map_info_card_title);
+        title.setText(textTitle);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void uiUpdateStreetViewThumbnail() {
+        ImageView thumbnail = findViewById(R.id.station_thumbnail);
+        String lat = String.valueOf(coord.latitude());
+        String lon = String.valueOf(coord.longitude());
+
+        try {
+            String API_KEY = getString(R.string.google_API_KEY);
+            String url = Utils.signRequest(GOOGLE_STREET_VIEW_URL + "?size=600x300&location=" + lat + "," + lon + "&key=" + API_KEY,
+                    getString(R.string.google_signing_secret));
+            (new Utils.httpRequestImage(thumbnail::setImageBitmap)).execute(url);
+
+        } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException | URISyntaxException | MalformedURLException e) {
+            Log.e(TAG, e.getMessage());
+            thumbnail.setVisibility(View.GONE);
+        }
+    }
+
+    private void uiSetClickListeners() {
+        // Set close btn click listener
+        MaterialToolbar topBar = findViewById(R.id.map_info_bar);
+        topBar.setNavigationOnClickListener(v -> finish());
+
+        // Set street view thumbnail click listener
+        ImageView thumbnail = findViewById(R.id.station_thumbnail);
+        thumbnail.setOnClickListener(v -> {
+            Intent intent = new Intent(this, StreetViewActivity.class);
+            intent.putExtra(COORDINATES, coord.toJson());
+            startActivity(intent);
+            overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+        });
+
+        MaterialButton rentBtn = findViewById(R.id.rent_bike);
+        rentBtn.setOnClickListener(this::rentBike);
+
+        // Set navigation btn click listener
+        FloatingActionButton navBtn = (FloatingActionButton) findViewById(R.id.navigate_to);
+        navBtn.setOnClickListener(v -> {
             Uri gmmIntentUri = Uri.parse("google.navigation:q=" + coord.latitude() + "," + coord.longitude() + "&mode=w");
             Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
             mapIntent.setPackage("com.google.android.apps.maps");
             startActivity(mapIntent);
         });
-
-        MaterialButton rentBtn = findViewById(R.id.rent_bike);
-        rentBtn.setOnClickListener(this::rentBike);
     }
 
-    public void getStationInfo(TextView numBikesView, TextView numDockView) {
-        MaterialButton rentBtn = findViewById(R.id.rent_bike);
-        rentBtn.setEnabled(false);
 
-        (new Utils.httpRequestJson(obj -> {
-            if (obj.get("status").getAsString().equals("success")) {
-                JsonObject data = obj.get("data").getAsJsonObject();
+    /*** -------------------------------------------- ***/
+    /*** --------------- TRAVELING MODES ------------ ***/
+    /*** -------------------------------------------- ***/
 
-                int num_bikes = data.get("num_bikes").getAsInt();
-                int num_free_docks = data.get("num_docks").getAsInt() - num_bikes;
-
-                numBikesView.setText(String.valueOf(num_bikes));
-                numDockView.setText(String.valueOf(num_free_docks));
-
-                FirebaseUser user = mAuth.getCurrentUser();
-
-                if (user != null) {
-                    user.getIdToken(true).addOnSuccessListener(result -> {
-                        String idToken = result.getToken();
-
-                        (new Utils.httpRequestJson(statusObj -> {
-
-                            if (statusObj.get("status").getAsString().equals("success")) {
-                                JsonObject statusData = statusObj.get("data").getAsJsonObject();
-
-                                boolean renting = statusData.get("renting").getAsBoolean();
-                                rentBtn.setEnabled(!renting && num_bikes > 0);
-
-                            } else {
-                                Log.e(TAG, "Could not get renting status");
-                            }
-
-                        })).execute(STATIONS_SERVER_URL + "/get-rent-status?idToken=" + idToken);
-                    });
-                }
-
-
-
-            } else {
-                Log.e(TAG, "Could not get Station Info");
-            }
-
-        })).execute(STATIONS_SERVER_URL + "/get-station-info?stationID=" + stationID);
-    }
-
-    public void closeBtnClicked(View view) {
-        finish();
-    }
-
-    public void rentBike(View view) {
-        FirebaseUser user = mAuth.getCurrentUser();
-
-        if (user != null) {
-            user.getIdToken(true).addOnSuccessListener(result -> {
-                String idToken = result.getToken();
-
-                (new Utils.httpRequestJson(obj -> {
-                    finish();
-                })).execute(STATIONS_SERVER_URL + "/rent-a-bike?idToken=" + idToken + "&stationID=" + stationID);
-
-            });
-
-        } else {
-            new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.sign_in_required)
-                .setMessage(R.string.renting_dialog_warning)
-                .setNeutralButton(R.string.cancel, (dialog, which) -> {
-                    // Respond to neutral button press
-                })
-                .setPositiveButton(R.string.sign_in, (dialog, which) -> {
-                    // Respond to positive button press
-                    Intent intent = new Intent(this, LoginActivity.class);
-                    startActivity(intent);
-                    overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
-                })
-                .show();
-        }
-    }
-
-    public void thumbnailClicked(View view) {
-        Intent intent = new Intent(this, StreetViewActivity.class);
-        intent.putExtra(COORDINATES, coord.toJson());
-        startActivity(intent);
-        overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
-    }
-
-    public void setTravelingModeDistanceAndDuration(Location origin, Point destination, String mode) throws IOException {
+    public void setTravelingModeEstimates(Location origin, Point destination, String mode) throws IOException {
         // Make http request
         URL url = new URL("https://maps.googleapis.com/maps/api/distancematrix/json?origins=" +
                 origin.getLatitude() + "," + origin.getLongitude() +
@@ -306,5 +308,149 @@ public class StationActivity extends AppCompatActivity {
                 distance.setText(distanceText);
             }
         });
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** --------------- BIKES RELATED -------------- ***/
+    /*** -------------------------------------------- ***/
+
+    private void getCurrentBikesAndFreeDocks() {
+        MaterialButton rentBtn = findViewById(R.id.rent_bike);
+        (new Utils.httpRequestJson(obj -> {
+            if (obj.get("status").getAsString().equals("success")) {
+                JsonObject data = obj.get("data").getAsJsonObject();
+
+                // Update counters
+                numBikes = data.get("num_bikes").getAsInt();
+                numFreeDocks = data.get("num_docks").getAsInt() - numBikes;
+
+                // Update view
+                uiUpdateCardTitle(findViewById(R.id.map_info_bikes), String.valueOf(numBikes));
+                uiUpdateCardTitle(findViewById(R.id.map_info_free_docks), String.valueOf(numFreeDocks));
+                rentBtn.setEnabled(!sharedState.isRenting() && numBikes > 0);
+
+            } else {
+                Log.e(TAG, "Could not get station's info");
+            }
+        })).execute(STATIONS_SERVER_URL + "/get-station-info?stationID=" + stationID);
+    }
+
+    public void getStationInfo(TextView numBikesView, TextView numDockView) {
+        MaterialButton rentBtn = findViewById(R.id.rent_bike);
+
+        (new Utils.httpRequestJson(obj -> {
+            if (obj.get("status").getAsString().equals("success")) {
+                JsonObject data = obj.get("data").getAsJsonObject();
+
+                int num_bikes = data.get("num_bikes").getAsInt();
+                int num_free_docks = data.get("num_docks").getAsInt() - num_bikes;
+
+                rentBtn.setEnabled(num_bikes > 0);
+                numBikesView.setText(String.valueOf(num_bikes));
+                numDockView.setText(String.valueOf(num_free_docks));
+
+                FirebaseUser user = mAuth.getCurrentUser();
+
+                if (user != null) {
+                    rentBtn.setEnabled(false);
+                    user.getIdToken(true).addOnSuccessListener(result -> {
+                        String idToken = result.getToken();
+
+                        (new Utils.httpRequestJson(statusObj -> {
+
+                            if (statusObj.get("status").getAsString().equals("success")) {
+                                JsonObject statusData = statusObj.get("data").getAsJsonObject();
+
+                                boolean renting = statusData.get("renting").getAsBoolean();
+                                rentBtn.setEnabled(!renting && num_bikes > 0);
+
+                            } else {
+                                Log.e(TAG, "Could not get renting status");
+                            }
+
+                        })).execute(STATIONS_SERVER_URL + "/get-rent-status?idToken=" + idToken);
+                    });
+                }
+
+
+
+            } else {
+                Log.e(TAG, "Could not get Station Info");
+            }
+
+        })).execute(STATIONS_SERVER_URL + "/get-station-info?stationID=" + stationID);
+    }
+
+    public void rentBike(View view) {
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                (new Utils.httpRequestJson(obj -> {
+                    sharedState.setRenting(true);
+                    finish();
+                })).execute(STATIONS_SERVER_URL + "/rent-a-bike?idToken=" + idToken + "&stationID=" + stationID);
+
+            });
+
+        } else {
+            new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.sign_in_required)
+                .setMessage(R.string.renting_dialog_warning)
+                .setNeutralButton(R.string.cancel, (dialog, which) -> {
+                    // Respond to neutral button press
+                })
+                .setPositiveButton(R.string.sign_in, (dialog, which) -> {
+                    // Respond to positive button press
+                    Intent intent = new Intent(this, LoginActivity.class);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+                })
+                .show();
+        }
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ------- (WIFI DIRECT) STATIONS IN RANGE ---- ***/
+    /*** -------------------------------------------- ***/
+
+    private void checkForStationsInRange() {
+        if (MapActivity.mBound) {
+            MapActivity.mManager.requestPeers(MapActivity.mChannel, StationActivity.this);
+        } else {
+            Toast.makeText(this, "Service not bound", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onPeersAvailable(SimWifiP2pDeviceList peers) {
+        StringBuilder peersStr = new StringBuilder();
+
+        // compile list of devices in range
+        for (SimWifiP2pDevice device : peers.getDeviceList()) {
+            String devstr = "" + device.deviceName + " (" + device.getVirtIp() + ")\n";
+            peersStr.append(devstr);
+        }
+
+        // display list of devices in range
+        new AlertDialog.Builder(this)
+                .setTitle("Devices in WiFi Range")
+                .setMessage(peersStr.toString())
+                .setNeutralButton("Dismiss", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                })
+                .show();
+
+        for (SimWifiP2pDevice device : peers.getDeviceList()) {
+            String beaconID = device.deviceName.split("_")[1];
+            if (beaconID.equals(stationID)) {
+                Toast.makeText(this, "YEP", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }
