@@ -60,6 +60,10 @@ public final class Utils {
     static String TAG = "Cycling_Fizz@Utils";
 
 
+    /*** -------------------------------------------- ***/
+    /*** -------------- USER INTERFACE -------------- ***/
+    /*** -------------------------------------------- ***/
+
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     static void setStatusBarColor(Activity activity, int color) {
         Window window = activity.getWindow();
@@ -74,9 +78,68 @@ public final class Utils {
         window.setStatusBarColor(ContextCompat.getColor(activity,color));
     }
 
+    public static void keepMenuOpen(MenuItem item, Context context) {
+        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
+        item.setActionView(new View(context));
+        item.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem item) {
+                return false;
+            }
+
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem item) {
+                return false;
+            }
+        });
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ------------------ STRINGS ----------------- ***/
+    /*** -------------------------------------------- ***/
+
     static String capitalize(String str) {
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ----------------- VALIDITY ----------------- ***/
+    /*** -------------------------------------------- ***/
+
+    public static boolean isValidEmail(CharSequence target) {
+        return Patterns.EMAIL_ADDRESS.matcher(target).matches();
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** -------------------- MAP ------------------- ***/
+    /*** -------------------------------------------- ***/
+
+    public static double distanceBetweenPointsInMeters(Point p1, Point p2) {
+
+        final int R = 6371; // Radius of the earth
+
+        double latDistance = Math.toRadians(p2.latitude() - p1.latitude());
+        double lonDistance = Math.toRadians(p2.longitude() - p1.longitude());
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(p1.latitude())) * Math.cos(Math.toRadians(p2.latitude()))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = R * c * 1000; // convert to meters
+
+        double height = 0;
+
+        distance = Math.pow(distance, 2) + Math.pow(height, 2);
+
+        return Math.sqrt(distance);
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ------------ AUTH & CREDENTIALS ------------ ***/
+    /*** -------------------------------------------- ***/
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     static String signRequest(String urlString, String SECRET) throws NoSuchAlgorithmException,
@@ -118,44 +181,10 @@ public final class Utils {
         return url.getProtocol() + "://" + url.getHost() + resource + "&signature=" + signature;
     }
 
-    public static void keepMenuOpen(MenuItem item, Context context) {
-        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
-        item.setActionView(new View(context));
-        item.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
-            @Override
-            public boolean onMenuItemActionExpand(MenuItem item) {
-                return false;
-            }
 
-            @Override
-            public boolean onMenuItemActionCollapse(MenuItem item) {
-                return false;
-            }
-        });
-    }
-
-    public static boolean isValidEmail(CharSequence target) {
-        return Patterns.EMAIL_ADDRESS.matcher(target).matches();
-    }
-
-    public static double distanceBetweenPointsInMeters(Point p1, Point p2) {
-
-        final int R = 6371; // Radius of the earth
-
-        double latDistance = Math.toRadians(p2.latitude() - p1.latitude());
-        double lonDistance = Math.toRadians(p2.longitude() - p1.longitude());
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(p1.latitude())) * Math.cos(Math.toRadians(p2.latitude()))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        double distance = R * c * 1000; // convert to meters
-
-        double height = 0;
-
-        distance = Math.pow(distance, 2) + Math.pow(height, 2);
-
-        return Math.sqrt(distance);
-    }
+    /*** -------------------------------------------- ***/
+    /*** --------------- HTTP REQUESTS -------------- ***/
+    /*** -------------------------------------------- ***/
 
     public interface OnTaskCompleted<T> {
         void onTaskCompleted(T obj);
@@ -234,7 +263,6 @@ public final class Utils {
             callback.onTaskCompleted(result);
         }
     }
-
 
     public static class httpPostRequestJson extends AsyncTask<String, Void, JsonObject> {
 

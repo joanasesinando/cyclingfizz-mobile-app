@@ -152,13 +152,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private MapView mapView;
     private MapboxMap mapboxMap;
-
-    private FirebaseAuth mAuth;
-
     PathRecorder pathRecorder;
-
-
-    private boolean sidebarOpen = false;
 
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -176,35 +170,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private FusedLocationProviderClient fusedLocationClient;
     private LocationRequest locationRequest;
     private Location userLocation;
-
     private TrackingMode trackingMode;
+
+    private FirebaseAuth mAuth;
+
+    private boolean sidebarOpen = false;
 
     static SimWifiP2pManager mManager = null;
     static SimWifiP2pManager.Channel mChannel = null;
     static boolean mBound = false;
     private SimWifiP2pBroadcastReceiver mReceiver;
 
-
-    private void checkFirstOpen() {
-        // Set light mode on for now
-        // FIXME: remove when dark mode implemented
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-
-        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
-
-
-        boolean firstOpen = sharedPref.getBoolean("firstOpenSaved", true);
-
-        if (firstOpen) {
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putBoolean("firstOpenSaved", false);
-            editor.apply();
-
-            Intent intent = new Intent(this, WelcomeActivity.class);
-            startActivity(intent);
-            finish();
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -291,6 +267,24 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         turnWifiOn();
     }
 
+    private void checkFirstOpen() {
+        // Set light mode on for now
+        // FIXME: remove when dark mode implemented
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+
+        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+        boolean firstOpen = sharedPref.getBoolean("firstOpenSaved", true);
+
+        if (firstOpen) {
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean("firstOpenSaved", false);
+            editor.apply();
+
+            Intent intent = new Intent(this, WelcomeActivity.class);
+            startActivity(intent);
+            finish();
+        }
+    }
 
     @Override
     public void onMapReady(@NonNull final MapboxMap mapboxMap) {
@@ -851,6 +845,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                         View rentingView = findViewById(R.id.renting_info);
                         if (renting) {
+                            sharedState.setRenting(true);
                             rentingView.setVisibility(View.VISIBLE);
                             Chronometer rentChronometer = findViewById(R.id.time_counter);
 
@@ -876,6 +871,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                 btnLock.setOnClickListener(this::unlockBike);
                             }
                         } else {
+                            sharedState.setRenting(false);
                             rentingView.setVisibility(View.GONE);
                         }
 
