@@ -2,6 +2,7 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,6 +31,7 @@ import android.os.Looper;
 import android.os.Messenger;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Chronometer;
 import android.widget.ImageView;
@@ -51,6 +53,7 @@ import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.internal.NavigationMenuItemView;
 import com.google.android.material.navigation.NavigationView;
@@ -827,6 +830,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
+    private void uiUpdateCard(View card, @DrawableRes int iconId, CharSequence textTitle, CharSequence textSubtitle) {
+        // Set card icon
+        ImageView icon = card.findViewById(R.id.card_icon);
+        icon.setImageResource(iconId);
+
+        // Set card title
+        TextView title = card.findViewById(R.id.card_title);
+        title.setText(textTitle);
+
+        // Set card subtitle
+        TextView subtitle = card.findViewById(R.id.card_subtitle);
+        subtitle.setText(textSubtitle);
+    }
+
     private void checkIfRenting() {
         FirebaseUser user = mAuth.getCurrentUser();
 
@@ -849,7 +866,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                             rentingView.setVisibility(View.VISIBLE);
                             Chronometer rentChronometer = findViewById(R.id.time_counter);
 
-                            long timeElapsedInMilSeconds = System.currentTimeMillis() - data.get("rent_timestamp").getAsLong();
+                            long rentTimestamp = data.get("rent_timestamp").getAsLong();
+                            long timeElapsedInMilSeconds = System.currentTimeMillis() - rentTimestamp;
 
                             rentChronometer.setBase(SystemClock.elapsedRealtime() - timeElapsedInMilSeconds);
                             rentChronometer.start();
@@ -884,7 +902,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
-    private void stopTrip(String stationID) {
+    private void endTrip(String stationID) {
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user != null) {
@@ -893,8 +911,37 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 (new Utils.httpRequestJson(obj -> {
                     if (obj.get("status").getAsString().equals("success")) {
                         sharedState.setRenting(false);
+
+                        long tripTime = obj.get("data").getAsJsonObject().get("trip_time").getAsLong();
+                        String originStationID = obj.get("data").getAsJsonObject().get("start_station_id").getAsString();
+                        String destinationStationID = obj.get("data").getAsJsonObject().get("end_station_id").getAsString();
+                        String originStationName = obj.get("data").getAsJsonObject().get("start_station_name").getAsString();
+                        String destinationStationName = obj.get("data").getAsJsonObject().get("end_station_name").getAsString();
+
+                        // Remove renting view
                         View rentingView = findViewById(R.id.renting_info);
                         rentingView.setVisibility(View.GONE);
+
+                        // Inflate end trip dialog view
+                        View customDialog = LayoutInflater.from(this)
+                                .inflate(R.layout.end_trip_dialog, null, false);
+
+                        // Update dialog view
+                        Chronometer totalTime = customDialog.findViewById(R.id.end_trip_time_counter);
+                        totalTime.setBase(SystemClock.elapsedRealtime() - tripTime);
+                        uiUpdateCard(customDialog.findViewById(R.id.end_trip_origin), R.drawable.ic_end_trip_origin,
+                                originStationID, originStationName);
+                        uiUpdateCard(customDialog.findViewById(R.id.end_trip_destination), R.drawable.ic_end_trip_destination,
+                                destinationStationID, destinationStationName);
+
+                        // Show dialog
+                        new MaterialAlertDialogBuilder(this)
+                            .setView(customDialog)
+                            .setTitle(R.string.bike_delivered)
+                            .setMessage(R.string.bike_delivered_message)
+                            .setPositiveButton(R.string.ok, (dialog, which) -> {})
+                            .show();
+
                     } else {
                         Toast.makeText(this, "Error: " + obj.get("msg").getAsString(), Toast.LENGTH_SHORT).show();
                     }
@@ -1015,7 +1062,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             String beaconID = beaconName.contains("_") ? beaconName.split("_")[1] : beaconName;
 
             Toast.makeText(this, "Station " + beaconID + " is in range", Toast.LENGTH_SHORT).show();
-            stopTrip(beaconID);
+            endTrip(beaconID);
             break;
         }
     }

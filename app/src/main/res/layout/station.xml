@@ -68,7 +68,7 @@
 
         <include
             android:id="@+id/map_info_bikes"
-            layout="@layout/map_info_card"
+            layout="@layout/card"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="5dp"
@@ -76,7 +76,7 @@
 
         <include
             android:id="@+id/map_info_free_docks"
-            layout="@layout/map_info_card"
+            layout="@layout/card"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
@@ -86,7 +86,7 @@
 
     <include
         android:id="@+id/map_info_state"
-        layout="@layout/map_info_card"
+        layout="@layout/card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"

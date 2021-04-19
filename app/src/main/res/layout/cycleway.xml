@@ -57,7 +57,7 @@
 
     <include
         android:id="@+id/map_info_type"
-        layout="@layout/map_info_card"
+        layout="@layout/card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
@@ -66,7 +66,7 @@
 
     <include
         android:id="@+id/map_info_terrain"
-        layout="@layout/map_info_card"
+        layout="@layout/card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"

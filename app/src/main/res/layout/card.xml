@@ -23,7 +23,7 @@
             android:paddingVertical="15dp">
 
             <ImageView
-                android:id="@+id/map_info_card_icon"
+                android:id="@+id/card_icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:src="@drawable/ic_map_info_default" />
@@ -35,7 +35,7 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/map_info_card_title"
+                    android:id="@+id/card_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/quicksand_medium"
@@ -44,7 +44,7 @@
                     android:textSize="14sp" />
 
                 <TextView
-                    android:id="@+id/map_info_card_subtitle"
+                    android:id="@+id/card_subtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/quicksand"

@@ -152,15 +152,15 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
 
     private void uiUpdateCard(View card, @DrawableRes int iconId, CharSequence textTitle, CharSequence textSubtitle) {
         // Set card icon
-        ImageView icon = card.findViewById(R.id.map_info_card_icon);
+        ImageView icon = card.findViewById(R.id.card_icon);
         icon.setImageResource(iconId);
 
         // Set card title
-        TextView title = card.findViewById(R.id.map_info_card_title);
+        TextView title = card.findViewById(R.id.card_title);
         title.setText(textTitle);
 
         // Set card subtitle
-        TextView subtitle = card.findViewById(R.id.map_info_card_subtitle);
+        TextView subtitle = card.findViewById(R.id.card_subtitle);
         subtitle.setText(textSubtitle);
     }
 
@@ -168,14 +168,14 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
         uiUpdateCard(card, iconId, textTitle, textSubtitle);
 
         // Set state color
-        TextView subtitle = card.findViewById(R.id.map_info_card_subtitle);
+        TextView subtitle = card.findViewById(R.id.card_subtitle);
         subtitle.setTextColor(state.equals("active") ?
                 getResources().getColor(R.color.success) : getResources().getColor(R.color.pink));
     }
 
     private void uiUpdateCardTitle(View card, CharSequence textTitle) {
         // Set card title
-        TextView title = card.findViewById(R.id.map_info_card_title);
+        TextView title = card.findViewById(R.id.card_title);
         title.setText(textTitle);
     }
 
