@@ -749,6 +749,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Update view
         ExtendedFloatingActionButton recordBtn = findViewById(R.id.btn_map_record_route);
         recordBtn.setVisibility(View.GONE);
+        FloatingActionButton cancelRecordingBtn = findViewById(R.id.btn_cancel_recording);
+        cancelRecordingBtn.setVisibility(View.GONE);
 
         FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
         addPOIBtn.setVisibility(View.VISIBLE);
@@ -769,6 +771,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         setMapboxCameraFollowUser();
         updateCurrentLocationBtn();
         updateMapboxCamera(mapboxMap.getLocationComponent());
+        pointToNorth();
 
         // Update view
         FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
