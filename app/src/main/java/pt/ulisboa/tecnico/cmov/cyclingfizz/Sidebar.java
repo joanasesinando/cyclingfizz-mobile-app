@@ -82,6 +82,7 @@ public final class Sidebar {
         FloatingActionButton stopRecordingBtn = activity.findViewById(R.id.btn_map_stop_recording);
         ExtendedFloatingActionButton flagRecording = activity.findViewById(R.id.flag_recording);
         ExtendedFloatingActionButton startRecordingBtn = activity.findViewById(R.id.btn_map_record_route);
+        FloatingActionButton cancelRecordingBtn = activity.findViewById(R.id.btn_cancel_recording);
         View rentingMenu = activity.findViewById(R.id.renting_info);
 
         // RoutesListActivity
@@ -104,6 +105,7 @@ public final class Sidebar {
 
                 } else if (pathRecorder.isPreparingToRecord()) {
                     startRecordingBtn.setVisibility(View.VISIBLE);
+                    cancelRecordingBtn.setVisibility(View.VISIBLE);
 
                 } else if (sharedState.isRenting()) {
                     rentingMenu.setVisibility(View.VISIBLE);
@@ -126,6 +128,7 @@ public final class Sidebar {
                 stopRecordingBtn.setVisibility(View.GONE);
                 flagRecording.setVisibility(View.GONE);
                 startRecordingBtn.setVisibility(View.GONE);
+                cancelRecordingBtn.setVisibility(View.GONE);
 
             } else if (activity instanceof RoutesListActivity) {
                 menuItem = activity.findViewById(R.id.sidebar_routes);

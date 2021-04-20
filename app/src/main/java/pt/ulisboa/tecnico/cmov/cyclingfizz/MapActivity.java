@@ -1084,6 +1084,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             ExtendedFloatingActionButton recordBtn = findViewById(R.id.btn_map_record_route);
             recordBtn.setVisibility(View.VISIBLE);
             recordBtn.setOnClickListener(MapActivity.this::recordNewRoute);
+
+            FloatingActionButton cancelRecordingBtn = findViewById(R.id.btn_cancel_recording);
+            cancelRecordingBtn.setVisibility(View.VISIBLE);
+            cancelRecordingBtn.setOnClickListener(v -> {
+                pathRecorder.setPreparingToRecord(false);
+                recordBtn.setVisibility(View.GONE);
+                cancelRecordingBtn.setVisibility(View.GONE);
+            });
         }
     }
 

@@ -32,6 +32,7 @@
     <string name="no_name">No name</string>
     <string name="sign_in_required">Sign in required</string>
     <string name="renting_dialog_warning">You need to be signed in to rent a bike.</string>
+    <string name="creating_route_dialog_warning">You need to be signed in to create a route.</string>
 
     <!-- Messages -->
     <string name="route_recorded">Route recorded</string>

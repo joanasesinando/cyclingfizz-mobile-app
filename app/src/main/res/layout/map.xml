@@ -145,6 +145,21 @@
                     app:tint="@color/white"
                     android:visibility="gone"/>
 
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btn_cancel_recording"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="25dp"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="@color/white"
+                    android:src="@drawable/ic_round_close_24"
+                    app:backgroundTint="@color/offWhite"
+                    app:fabSize="mini"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/btn_map_record_route"
+                    app:tint="@color/orange_500"
+                    android:visibility="gone"/>
+
                 <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
                     android:id="@+id/btn_map_record_route"
                     android:layout_width="wrap_content"
