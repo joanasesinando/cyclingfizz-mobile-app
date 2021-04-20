@@ -85,6 +85,7 @@ import com.mapbox.mapboxsdk.utils.BitmapUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -764,6 +765,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void stopRecordingRoute(View view) {
         // Stop recording
         pathRecorder.stopRecording();
+        cleanPathRecorded();
+        setMapboxCameraFollowUser();
+        updateCurrentLocationBtn();
+        updateMapboxCamera(mapboxMap.getLocationComponent());
 
         // Update view
         FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
@@ -815,6 +820,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             pathRecordedSource.setGeoJson(FeatureCollection.fromFeatures(
                     new Feature[] {Feature.fromGeometry(
                             LineString.fromLngLats(pathRecorder.getPath())
+                    )}
+            ));
+        }
+    }
+
+    private void cleanPathRecorded() {
+        Log.d(TAG, "cleaning path recorded on map");
+        GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
+        if (pathRecordedSource != null) {
+            pathRecordedSource.setGeoJson(FeatureCollection.fromFeatures(
+                    new Feature[] {Feature.fromGeometry(
+                            LineString.fromLngLats(new ArrayList<Point>())
                     )}
             ));
         }
