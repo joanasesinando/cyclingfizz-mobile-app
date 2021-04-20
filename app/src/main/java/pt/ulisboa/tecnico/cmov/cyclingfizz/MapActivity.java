@@ -32,7 +32,6 @@ import android.os.Messenger;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Chronometer;
 import android.widget.ImageView;
@@ -130,11 +129,30 @@ enum TrackingMode {
     FREE, FOLLOW_USER, FOLLOW_USER_WITH_BEARING
 }
 
+enum BikeLocking {
+    UNLOCKED(0), LOCKED(1);
+
+    private final int state;
+
+    BikeLocking(int state) {
+        this.state = state;
+    }
+
+    public int getState() {
+        return this.state;
+    }
+}
+
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, SimWifiP2pManager.PeerListListener {
 
     SharedState sharedState;
 
     static String TAG = "Cycling_Fizz@MapActivity";
+
+    private FirebaseAuth mAuth;
+    private boolean sidebarOpen = false; // FIXME: refactor; more general
+
+    /// -------------- MAP RELATED -------------- ///
 
     String MAP_SERVER_URL = "https://map.cfservertest.ga";
     String STATIONS_SERVER_URL = "https://stations.cfservertest.ga";
@@ -162,7 +180,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private MapView mapView;
     private MapboxMap mapboxMap;
-    PathRecorder pathRecorder;
+    private PathRecorder pathRecorder;
+
+    /// -------------- PERMISSIONS -------------- ///
 
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -170,7 +190,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
                     startLocation();  // afterPermissionGranted
                 } else {
-                    updateCurrentLocationBtn("PermissionNotGranted");
+                    updateCurrentLocationBtn();
                     Toast.makeText(this, "Permission not Granted", Toast.LENGTH_SHORT).show();
                 }
             });
@@ -182,38 +202,35 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private Location userLocation;
     private TrackingMode trackingMode;
 
-    private FirebaseAuth mAuth;
-
-    private boolean sidebarOpen = false;
+    /// -------------- WIFI DIRECT -------------- ///
 
     static SimWifiP2pManager mManager = null;
     static SimWifiP2pManager.Channel mChannel = null;
     static boolean mBound = false;
-    private SimWifiP2pBroadcastReceiver mReceiver;
 
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        checkFirstOpen();
+        forceLightModeOn(); // FIXME: remove when dark mode implemented
+        checkIfFirstTimeOpening();
         super.onCreate(savedInstanceState);
+
         sharedState = (SharedState) getApplicationContext();
         mAuth = FirebaseAuth.getInstance();
+
         checkIfRenting();
 
+        Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
         pathRecorder = PathRecorder.getInstance();
 
-        Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
-
         setContentView(R.layout.map);
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
-                if (locationResult == null) {
-                    return;
-                }
+                if (locationResult == null) return;
                 Log.d(TAG, "Got Location");
 
                 // Pass the new location to the Maps SDK's LocationComponent
@@ -222,16 +239,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     mapboxMap.getLocationComponent().forceLocationUpdate(userLocation);
                 }
 
+                // Create thread waiting for path recording
                 (new Thread(() -> {
                     if (pathRecorder.isRecording()) {
-                        boolean added = pathRecorder.addPointToPath(Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude()));
-                        if (added) {
+                        boolean pointAdded = pathRecorder.addPointToPath(Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude()));
+                        if (pointAdded) {
                             runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                addPathRecorded();
-                            }
-                        });
+                                @Override
+                                public void run() {
+                                    addPathRecorded();
+                                }
+                            });
                         }
                     }
                 })).start();
@@ -239,26 +257,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
             @Override
             public void onLocationAvailability(LocationAvailability locationAvailability) {
-                if (locationAvailability == null) {
-                    return;
-                }
-
-                if (!locationAvailability.isLocationAvailable()) {
-                    checkIfLocationOn();
-                }
+                if (locationAvailability == null) return;
+                if (!locationAvailability.isLocationAvailable()) checkIfLocationOn();
             }
         };
 
-        mapView = (MapView) findViewById(R.id.mapView);
+        mapView = findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
         // Set menu click listener for sidebar opening/closing
-        MaterialToolbar toolbar = (MaterialToolbar) findViewById(R.id.topAppBar);
+        MaterialToolbar toolbar = findViewById(R.id.topAppBar);
         toolbar.setNavigationOnClickListener(this::toggleSidebar);
 
-
-        NavigationView sidebar = (NavigationView) findViewById(R.id.sidebar);
+        NavigationView sidebar = findViewById(R.id.sidebar);
 
         if (sidebar != null) {
             sidebar.setNavigationItemSelectedListener(item -> {
@@ -269,16 +281,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     mAuth.signOut();
                     changeUserUI();
                     return false;
+
                 } else if (id == R.id.sidebar_routes) {
                     if (!pathRecorder.isRecording()) {
                         // FIXME: should be done by the '+' btn on bike routes
-                        ExtendedFloatingActionButton recordBtn = (ExtendedFloatingActionButton) findViewById(R.id.btn_map_record_route);
+                        ExtendedFloatingActionButton recordBtn = findViewById(R.id.btn_map_record_route);
                         recordBtn.setVisibility(View.VISIBLE);
                         pathRecorder.setPreparingToRecord(true);
                         recordBtn.setOnClickListener(this::recordNewRoute);
                     }
                     toggleSidebar(null);
                     return false;
+
                 } else {
                     return false;
                 }
@@ -289,60 +303,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         turnWifiOn();
     }
 
-    private void recordNewRoute(View view) {
-        // Start recording
-        pathRecorder.startRecording();
-        pathRecorder.setPreparingToRecord(false);
-        setMapboxCameraFollowUser();
 
-        // Update view
-        ExtendedFloatingActionButton recordBtn = (ExtendedFloatingActionButton) findViewById(R.id.btn_map_record_route);
-        recordBtn.setVisibility(View.GONE);
+    /*** -------------------------------------------- ***/
+    /*** -------------- USER INTERFACE -------------- ***/
+    /*** -------------------------------------------- ***/
 
-        FloatingActionButton addPOIBtn = (FloatingActionButton) findViewById(R.id.btn_map_add_poi);
-        addPOIBtn.setVisibility(View.VISIBLE);
-
-        FloatingActionButton stopRecordingBtn = (FloatingActionButton) findViewById(R.id.btn_map_stop_recording);
-        stopRecordingBtn.setVisibility(View.VISIBLE);
-        stopRecordingBtn.setOnClickListener(this::stopRecordingRoute);
-
-        ExtendedFloatingActionButton recordingFlag = (ExtendedFloatingActionButton) findViewById(R.id.flag_recording);
-        recordingFlag.setVisibility(View.VISIBLE);
-    }
-
-    private void stopRecordingRoute(View view) {
-        // Stop recording
-        pathRecorder.stopRecording();
-
-        // Update view
-        FloatingActionButton addPOIBtn = (FloatingActionButton) findViewById(R.id.btn_map_add_poi);
-        addPOIBtn.setVisibility(View.GONE);
-
-        FloatingActionButton stopRecordingBtn = (FloatingActionButton) findViewById(R.id.btn_map_stop_recording);
-        stopRecordingBtn.setVisibility(View.GONE);
-
-        ExtendedFloatingActionButton recordingFlag = (ExtendedFloatingActionButton) findViewById(R.id.flag_recording);
-        recordingFlag.setVisibility(View.GONE);
-
-        // Show dialog
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.route_recorded)
-                .setMessage(R.string.route_recorded_message)
-                .setNeutralButton(R.string.delete, (dialog, which) -> {
-                    // Respond to neutral button press
-                })
-                .setPositiveButton(R.string.save, (dialog, which) -> {
-                    // Respond to positive button press
-                    pathRecorder.saveRecording();
-                })
-                .show();
-    }
-
-    private void checkFirstOpen() {
-        // Set light mode on for now
-        // FIXME: remove when dark mode implemented
+    private void forceLightModeOn() {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+    }
 
+    private void checkIfFirstTimeOpening() {
+        // Set flag for first time opening
         SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
         boolean firstOpen = sharedPref.getBoolean("firstOpenSaved", true);
 
@@ -351,11 +322,111 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             editor.putBoolean("firstOpenSaved", false);
             editor.apply();
 
+            // Redirect to the welcome creen
             Intent intent = new Intent(this, WelcomeActivity.class);
             startActivity(intent);
             finish();
         }
     }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void toggleSidebar(View v) { // FIXME: refactor; more general
+        NavigationView sidebar = findViewById(R.id.sidebar);
+        RelativeLayout overlay = findViewById(R.id.overlay);
+        FloatingActionButton bearingBtn = findViewById(R.id.btn_map_bearing);
+        FloatingActionButton locationBtn = findViewById(R.id.btn_map_current_location);
+        FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
+        FloatingActionButton stopRecordingBtn = findViewById(R.id.btn_map_stop_recording);
+        ExtendedFloatingActionButton flagRecording = findViewById(R.id.flag_recording);
+        ExtendedFloatingActionButton startRecordingBtn = findViewById(R.id.btn_map_record_route);
+        View rentingMenu = findViewById(R.id.renting_info);
+
+        if (sidebarOpen) {  // close it
+            sidebar.animate().translationX(-(sidebar.getWidth()));
+            overlay.setVisibility(View.GONE);
+            locationBtn.setVisibility(View.VISIBLE);
+
+            if (pathRecorder.isRecording()) {
+                addPOIBtn.setVisibility(View.VISIBLE);
+                stopRecordingBtn.setVisibility(View.VISIBLE);
+                flagRecording.setVisibility(View.VISIBLE);
+
+            } else if (pathRecorder.isPreparingToRecord()) {
+                startRecordingBtn.setVisibility(View.VISIBLE);
+            }
+            checkIfRenting();
+
+        } else {    // open it
+            sidebar.animate().translationX(0);
+            overlay.setVisibility(View.VISIBLE);
+            bearingBtn.setVisibility(View.GONE);
+            locationBtn.setVisibility(View.GONE);
+            rentingMenu.setVisibility(View.GONE);
+            addPOIBtn.setVisibility(View.GONE);
+            stopRecordingBtn.setVisibility(View.GONE);
+            flagRecording.setVisibility(View.GONE);
+            startRecordingBtn.setVisibility(View.GONE);
+            overlay.setOnClickListener(item -> toggleSidebar(null));
+            LinearLayout sidebarUser = findViewById(R.id.sidebar_user);
+
+            changeUserUI();
+            sidebarUser.setOnClickListener(view -> {
+                if (mAuth.getCurrentUser() == null) {
+                    Intent intent = new Intent(this, LoginActivity.class);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+                }
+            });
+        }
+        sidebarOpen = !sidebarOpen;
+    }
+
+    void changeUserUI() {
+        TextView userEmail = findViewById(R.id.logged_user_email);
+        TextView userName = findViewById(R.id.logged_user_name);
+        ImageView userAvatar = findViewById(R.id.logged_user_avatar);
+        NavigationMenuItemView logoutBtn = findViewById(R.id.sidebar_logout);
+
+        if (userEmail == null || userName == null || userAvatar == null || logoutBtn == null) return;
+
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        if (user == null) {
+            userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_default_avatar));
+            userEmail.setText(R.string.sign_in_msg);
+            userName.setText(R.string.sign_in);
+            logoutBtn.setVisibility(View.GONE);
+
+        } else {
+            if (user.getPhotoUrl() != null) {
+                (new Utils.httpRequestImage(userAvatar::setImageBitmap)).execute(user.getPhotoUrl().toString());
+            } else {
+                userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_default_avatar));
+            }
+            userEmail.setText(user.getEmail());
+            userName.setText(user.getDisplayName() != null && !user.getDisplayName().isEmpty() ? user.getDisplayName() : Utils.capitalize(Objects.requireNonNull(user.getEmail()).split("@")[0]));
+            logoutBtn.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void uiUpdateCard(View card, @DrawableRes int iconId, CharSequence textTitle, CharSequence textSubtitle) {
+        // Set card icon
+        ImageView icon = card.findViewById(R.id.card_icon);
+        icon.setImageResource(iconId);
+
+        // Set card title
+        TextView title = card.findViewById(R.id.card_title);
+        title.setText(textTitle);
+
+        // Set card subtitle
+        TextView subtitle = card.findViewById(R.id.card_subtitle);
+        subtitle.setText(textSubtitle);
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ------------------ MAPBOX ------------------ ***/
+    /*** -------------------------------------------- ***/
 
     @Override
     public void onMapReady(@NonNull final MapboxMap mapboxMap) {
@@ -410,67 +481,51 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             setMapboxCameraFollowUser();
             startLocation();  // onMapReady
 
-            mapboxMap.addOnCameraMoveListener(() -> {
-                updateCompassBearing();
-//                Log.d(APP_NAME_DEBUGGER + "_Camera", "move");
-            });
-
-            mapView.addOnCameraIsChangingListener(() -> updateCompassBearing());
-
+            mapboxMap.addOnCameraMoveListener(this::updateCompassBearing);
+            mapView.addOnCameraIsChangingListener(this::updateCompassBearing);
             mapView.addOnCameraDidChangeListener(animated -> updateCompassBearing());
 
             mapboxMap.addOnMoveListener(new MapboxMap.OnMoveListener() {
                 @Override
                 public void onMoveBegin(@NonNull MoveGestureDetector detector) {
-
                 }
 
                 @Override
                 public void onMove(@NonNull MoveGestureDetector detector) {
                     setMapboxCameraFree();
-                    updateCurrentLocationBtn("onCameraTrackingChanged");
+                    updateCurrentLocationBtn();
                 }
 
                 @Override
                 public void onMoveEnd(@NonNull MoveGestureDetector detector) {
-
                 }
-
             });
 
-
-            FloatingActionButton map_current_location_btn = findViewById(R.id.btn_map_current_location);
-
-            map_current_location_btn.setOnClickListener(view -> {
-
+            FloatingActionButton currentLocationBtn = findViewById(R.id.btn_map_current_location);
+            currentLocationBtn.setOnClickListener(view -> {
                 switch (trackingMode) {
                     case FREE:
                     default:
                         setMapboxCameraFollowUser();
                         break;
+
                     case FOLLOW_USER:
                         setMapboxCameraFollowUserWithHeading();
                         break;
+
                     case FOLLOW_USER_WITH_BEARING:
                         setMapboxCameraFollowUser();
                         pointToNorth();
                         new Handler().postDelayed(this::startLocation , 800); // onLocBtnClick delayed
                         return;
                 }
-
                 startLocation(); // onLocBtnClick
             });
 
-            FloatingActionButton btn_map_bearing = findViewById(R.id.btn_map_bearing);
+            FloatingActionButton bearingBtn = findViewById(R.id.btn_map_bearing);
+            bearingBtn.setOnClickListener(view -> pointToNorth());
 
-            btn_map_bearing.setOnClickListener(view -> {
-
-               pointToNorth();
-            });
-
-            MaterialToolbar toolbar = (MaterialToolbar) findViewById(R.id.topAppBar);
-
-
+            MaterialToolbar toolbar = findViewById(R.id.topAppBar); // FIXME: prob noutro sitio era melhor
             toolbar.setOnMenuItemClickListener(item -> {
                 // Handle item selection
                 Log.d(TAG + "_menu", "Click \"" + item.getTitle() + "\"");
@@ -488,6 +543,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     Utils.keepMenuOpen(item, getApplicationContext());
 
                     return false;
+
                 } else if (id == R.id.filter_gira) {
                     try {
                         Layer giraLayer = mapboxMap.getStyle().getLayer(GIRA_STATION_LAYER_ID);
@@ -507,80 +563,31 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     Utils.keepMenuOpen(item, getApplicationContext());
 
                     return false;
+
                 } else {
                     return false;
                 }
             });
-
             // Map is set up and the style has loaded. Now you can add data or make other map adjustments
-
         });
     }
 
-
-    Handler hideCompassBtn = new Handler();
-
-    private void updateCompassBearing() {
-        long bearing = Math.round(mapboxMap.getCameraPosition().bearing) % 360;
-        FloatingActionButton btn_map_bearing = findViewById(R.id.btn_map_bearing);
-
-
-        if (bearing == 0) {
-            btn_map_bearing.setRotation(0f);
-            btn_map_bearing.setImageResource(R.drawable.ic_north);
-
-            hideCompassBtn.postDelayed(() -> btn_map_bearing.setVisibility(View.GONE), 4000);
-
-        } else {
-            hideCompassBtn.removeCallbacksAndMessages(null);
-
-            btn_map_bearing.setVisibility(View.VISIBLE);
-            btn_map_bearing.setImageResource(R.drawable.ic_compass);
-            btn_map_bearing.setRotation((float) - bearing);
-        }
-
-    }
-
-    private void updateCurrentLocationBtn(String debugger) {
-//        Log.d(APP_NAME_DEBUGGER, "Update Btn " + debugger);
-        FloatingActionButton map_current_location_btn = findViewById(R.id.btn_map_current_location);
-
-        if (!isGpsOn()) {
-            // GPS off
-            map_current_location_btn.setImageResource(R.drawable.ic_round_gps_off_24);
-            map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.danger)));
-        } else if (trackingMode == TrackingMode.FOLLOW_USER) {
-            // following_user
-            map_current_location_btn.setImageResource(R.drawable.ic_round_gps_fixed_24);
-            map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.gps_blue)));
-        } else if (trackingMode == TrackingMode.FOLLOW_USER_WITH_BEARING) {
-            // following_user
-            map_current_location_btn.setImageResource(R.drawable.ic_round_explore_24);
-            map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.gps_blue)));
-        } else {
-            // free
-            map_current_location_btn.setImageResource(R.drawable.ic_round_gps_fixed_24);
-            map_current_location_btn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.dark)));
-        }
-    }
-
-
+    @SuppressLint("UseCompatLoadingForDrawables")
     private void addIcons(@NonNull Style loadedMapStyle) {
         loadedMapStyle.addImage(GIRA_ICON_ID, Objects.requireNonNull(BitmapUtils.getBitmapFromDrawable(
                 getResources().getDrawable(R.drawable.ic_gira_marker))));
     }
 
-
     private void addGiraStations(@NonNull Style loadedMapStyle) {
         try {
             loadedMapStyle.addSource(
-                    new GeoJsonSource(GIRA_SOURCE_ID,
-                            new URI(GIRA_DATA_URL),
-                            new GeoJsonOptions()
-                                    .withCluster(true)
-                                    .withClusterMaxZoom(14)
-                                    .withClusterRadius(50)
-                    )
+                new GeoJsonSource(GIRA_SOURCE_ID,
+                    new URI(GIRA_DATA_URL),
+                    new GeoJsonOptions()
+                        .withCluster(true)
+                        .withClusterMaxZoom(14)
+                        .withClusterRadius(50)
+                )
             );
         } catch (URISyntaxException uriSyntaxException) {
             System.err.println("Check the URL " + uriSyntaxException.getMessage());
@@ -625,13 +632,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         loadedMapStyle.addLayer(count);
     }
 
-
     private void addCycleways(@NonNull Style loadedMapStyle) {
         try {
             loadedMapStyle.addSource(
-                    new GeoJsonSource(CYCLEWAYS_SOURCE_ID,
-                            new URI(CYCLEWAYS_DATA_URL),
-                            new GeoJsonOptions())
+                new GeoJsonSource(CYCLEWAYS_SOURCE_ID,
+                    new URI(CYCLEWAYS_DATA_URL),
+                    new GeoJsonOptions())
             );
         } catch (URISyntaxException uriSyntaxException) {
             System.err.println("Check the URL " + uriSyntaxException.getMessage());
@@ -651,36 +657,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         loadedMapStyle.addLayer(cycleways);
     }
 
-    private void initPathRecordedLayer(@NonNull Style style) {
-        style.addSource(new GeoJsonSource(PATH_RECORDED_SOURCE_ID,
-                FeatureCollection.fromFeatures(new Feature[] {Feature.fromGeometry(
-                        LineString.fromLngLats(pathRecorder.getPath())
-                )})));
 
-        LineLayer pathRecorded = new LineLayer(PATH_RECORDED_LAYER_ID, PATH_RECORDED_SOURCE_ID);
-        pathRecorded.setProperties(
-                lineJoin(Property.LINE_JOIN_ROUND),
-                lineCap(Property.LINE_CAP_ROUND),
-                lineColor(getResources().getColor(R.color.purple)),
-                lineWidth(5f),
-                lineOpacity(.8f)
-        );
-
-        style.addLayer(pathRecorded);
-    }
-
-    private void addPathRecorded() {
-        Log.d(TAG, "updating path on map");
-        GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
-        if (pathRecordedSource != null) {
-            pathRecordedSource.setGeoJson(FeatureCollection.fromFeatures(
-                    new Feature[] {Feature.fromGeometry(
-                            LineString.fromLngLats(pathRecorder.getPath())
-                    )}
-            ));
-        }
-    }
-
+    /*** -------------------------------------------- ***/
+    /*** ---------------- LOCATION ------------------ ***/
+    /*** -------------------------------------------- ***/
 
     protected void createLocationRequest() {
         locationRequest = LocationRequest.create();
@@ -735,6 +715,124 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
+    @SuppressLint("MissingPermission")
+    private void turnOnLocationTrackerMapbox() {
+        // Get an instance of the component
+        LocationComponent locationComponent = mapboxMap.getLocationComponent();
+
+        // Set the LocationComponent activation options
+        LocationComponentActivationOptions locationComponentActivationOptions =
+                LocationComponentActivationOptions.builder(this, mapboxMap.getStyle())
+                        .useDefaultLocationEngine(false)
+                        .build();
+
+        // Activate with the LocationComponentActivationOptions object
+        locationComponent.activateLocationComponent(locationComponentActivationOptions);
+
+        // Enable to make component visible
+        locationComponent.setLocationComponentEnabled(true);
+
+        updateMapboxCamera(locationComponent);
+
+        // start location updates
+        startLocationUpdates();
+
+        updateCurrentLocationBtn();
+    }
+
+    @SuppressLint("MissingPermission")
+    private void startLocationUpdates() {
+        fusedLocationClient.requestLocationUpdates(locationRequest,
+                locationCallback,
+                Looper.getMainLooper());
+
+        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+            if (mapboxMap != null && location != null) {
+                mapboxMap.getLocationComponent().forceLocationUpdate(location);
+                userLocation = location;
+            }
+        });
+    }
+
+    private void stopLocationUpdates() {
+        fusedLocationClient.removeLocationUpdates(locationCallback);
+    }
+
+    @SuppressLint("MissingPermission")
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CHECK_LOCATION_SETTINGS) {
+            if (resultCode == -1) {
+                startLocation();  // afterGpsEnabled
+            } else {
+                LocationComponent locationComponent = mapboxMap.getLocationComponent();
+                if (locationComponent.isLocationComponentActivated() && locationComponent.isLocationComponentEnabled()) {
+                    locationComponent.setLocationComponentEnabled(false);
+                }
+                updateCurrentLocationBtn();
+            }
+        }
+    }
+
+    private boolean isGpsOn() {
+        try {
+            LocationComponent locationComponent = mapboxMap.getLocationComponent();
+            return locationComponent.isLocationComponentActivated() && locationComponent.isLocationComponentEnabled();
+        } catch (Exception e) {
+            Log.e(TAG + "_isGpsOn()", e.getMessage());
+            return false;
+        }
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ------------ CAMERA & CONTROLS ------------- ***/
+    /*** -------------------------------------------- ***/
+
+    Handler hideCompassBtn = new Handler();
+
+    private void updateCompassBearing() {
+        long bearing = Math.round(mapboxMap.getCameraPosition().bearing) % 360;
+        FloatingActionButton btn_map_bearing = findViewById(R.id.btn_map_bearing);
+
+        if (bearing == 0) {
+            btn_map_bearing.setRotation(0f);
+            btn_map_bearing.setImageResource(R.drawable.ic_north);
+
+            hideCompassBtn.postDelayed(() -> btn_map_bearing.setVisibility(View.GONE), 4000);
+
+        } else {
+            hideCompassBtn.removeCallbacksAndMessages(null);
+
+            btn_map_bearing.setVisibility(View.VISIBLE);
+            btn_map_bearing.setImageResource(R.drawable.ic_compass);
+            btn_map_bearing.setRotation((float) - bearing);
+        }
+
+    }
+
+    private void updateCurrentLocationBtn() {
+        FloatingActionButton currentLocationBtn = findViewById(R.id.btn_map_current_location);
+
+        if (!isGpsOn()) {
+            // GPS off
+            currentLocationBtn.setImageResource(R.drawable.ic_round_gps_off_24);
+            currentLocationBtn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.danger)));
+        } else if (trackingMode == TrackingMode.FOLLOW_USER) {
+            // following_user
+            currentLocationBtn.setImageResource(R.drawable.ic_round_gps_fixed_24);
+            currentLocationBtn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.gps_blue)));
+        } else if (trackingMode == TrackingMode.FOLLOW_USER_WITH_BEARING) {
+            // following_user
+            currentLocationBtn.setImageResource(R.drawable.ic_round_explore_24);
+            currentLocationBtn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.gps_blue)));
+        } else {
+            // free
+            currentLocationBtn.setImageResource(R.drawable.ic_round_gps_fixed_24);
+            currentLocationBtn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.dark)));
+        }
+    }
+
     private void pointToNorth() {
         mapboxMap.resetNorth();
     }
@@ -766,6 +864,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 // Set the component's render mode
                 locationComponent.setRenderMode(RenderMode.COMPASS);
                 break;
+
             case FOLLOW_USER_WITH_BEARING:
                 // Set the component's camera mode
                 locationComponent.setCameraMode(CameraMode.TRACKING_COMPASS	, 750L /*duration*/,
@@ -779,181 +878,104 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 // Set the component's render mode
                 locationComponent.setRenderMode(RenderMode.COMPASS);
                 break;
+
             case FREE:
+            default:
                 break;
         }
 
     }
 
 
-    @SuppressLint("MissingPermission")
-    private void turnOnLocationTrackerMapbox() {
-        // Get an instance of the component
-        LocationComponent locationComponent = mapboxMap.getLocationComponent();
+    /*** -------------------------------------------- ***/
+    /*** ------------- RECORDING ROUTE -------------- ***/
+    /*** -------------------------------------------- ***/
 
-        // Set the LocationComponent activation options
-        LocationComponentActivationOptions locationComponentActivationOptions =
-                LocationComponentActivationOptions.builder(this, mapboxMap.getStyle())
-                        .useDefaultLocationEngine(false)
-                        .build();
+    private void recordNewRoute(View view) {
+        // Start recording
+        pathRecorder.startRecording();
+        pathRecorder.setPreparingToRecord(false);
+        setMapboxCameraFollowUser();
 
-        // Activate with the LocationComponentActivationOptions object
-        locationComponent.activateLocationComponent(locationComponentActivationOptions);
+        // Update view
+        ExtendedFloatingActionButton recordBtn = findViewById(R.id.btn_map_record_route);
+        recordBtn.setVisibility(View.GONE);
 
-        // Enable to make component visible
-        locationComponent.setLocationComponentEnabled(true);
+        FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
+        addPOIBtn.setVisibility(View.VISIBLE);
+        // TODO: add click listener
 
-        updateMapboxCamera(locationComponent);
+        FloatingActionButton stopRecordingBtn = findViewById(R.id.btn_map_stop_recording);
+        stopRecordingBtn.setVisibility(View.VISIBLE);
+        stopRecordingBtn.setOnClickListener(this::stopRecordingRoute);
 
-        // start location updates
-        startLocationUpdates();
-
-        updateCurrentLocationBtn("turnOnLocationTrackerMapbox");
+        ExtendedFloatingActionButton recordingFlag = findViewById(R.id.flag_recording);
+        recordingFlag.setVisibility(View.VISIBLE);
     }
 
-    @SuppressLint("MissingPermission")
-    private void startLocationUpdates() {
-        fusedLocationClient.requestLocationUpdates(locationRequest,
-                locationCallback,
-                Looper.getMainLooper());
+    private void stopRecordingRoute(View view) {
+        // Stop recording
+        pathRecorder.stopRecording();
 
+        // Update view
+        FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
+        addPOIBtn.setVisibility(View.GONE);
 
-        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
-            if (mapboxMap != null && location != null) {
-                mapboxMap.getLocationComponent().forceLocationUpdate(location);
-                userLocation = location;
-            }
-        });
+        FloatingActionButton stopRecordingBtn = findViewById(R.id.btn_map_stop_recording);
+        stopRecordingBtn.setVisibility(View.GONE);
+
+        ExtendedFloatingActionButton recordingFlag = findViewById(R.id.flag_recording);
+        recordingFlag.setVisibility(View.GONE);
+
+        // Show dialog for saving/deleting route
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.route_recorded)
+                .setMessage(R.string.route_recorded_message)
+                .setNeutralButton(R.string.delete, (dialog, which) -> {
+                    // Respond to neutral button press
+                })
+                .setPositiveButton(R.string.save, (dialog, which) -> {
+                    // Respond to positive button press
+                    //TODO: create dialog for saving route
+                    pathRecorder.saveRecording();
+                })
+                .show();
     }
 
-    private void stopLocationUpdates() {
-        fusedLocationClient.removeLocationUpdates(locationCallback);
+    private void initPathRecordedLayer(@NonNull Style style) {
+        style.addSource(new GeoJsonSource(PATH_RECORDED_SOURCE_ID,
+                FeatureCollection.fromFeatures(new Feature[] {Feature.fromGeometry(
+                        LineString.fromLngLats(pathRecorder.getPath())
+                )})));
+
+        LineLayer pathRecorded = new LineLayer(PATH_RECORDED_LAYER_ID, PATH_RECORDED_SOURCE_ID);
+        pathRecorded.setProperties(
+                lineJoin(Property.LINE_JOIN_ROUND),
+                lineCap(Property.LINE_CAP_ROUND),
+                lineColor(getResources().getColor(R.color.purple)),
+                lineWidth(5f),
+                lineOpacity(.8f)
+        );
+
+        style.addLayer(pathRecorded);
     }
 
-
-    @SuppressLint("MissingPermission")
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CHECK_LOCATION_SETTINGS) {
-            if (resultCode == -1) {
-                Log.e(TAG, "aqui tou eu " + pathRecorder.isRecording());
-                startLocation();  // afterGpsEnabled
-            } else {
-                LocationComponent locationComponent = mapboxMap.getLocationComponent();
-                if (locationComponent.isLocationComponentActivated() && locationComponent.isLocationComponentEnabled()) {
-                    locationComponent.setLocationComponentEnabled(false);
-                }
-                updateCurrentLocationBtn("onActivityResult");
-            }
+    private void addPathRecorded() {
+        Log.d(TAG, "updating path recorded on map");
+        GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
+        if (pathRecordedSource != null) {
+            pathRecordedSource.setGeoJson(FeatureCollection.fromFeatures(
+                    new Feature[] {Feature.fromGeometry(
+                            LineString.fromLngLats(pathRecorder.getPath())
+                    )}
+            ));
         }
     }
 
-    private boolean isGpsOn() {
-        try {
-            LocationComponent locationComponent = mapboxMap.getLocationComponent();
-            return locationComponent.isLocationComponentActivated() && locationComponent.isLocationComponentEnabled();
-        } catch (Exception e) {
-            Log.e(TAG + "_isGpsOn()", e.getMessage());
-            return false;
-        }
-    }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private void toggleSidebar(View v) {
-        NavigationView sidebar = (NavigationView) findViewById(R.id.sidebar);
-        RelativeLayout overlay = (RelativeLayout) findViewById(R.id.overlay);
-        FloatingActionButton bearingBtn = (FloatingActionButton) findViewById(R.id.btn_map_bearing);
-        FloatingActionButton locationBtn = (FloatingActionButton) findViewById(R.id.btn_map_current_location);
-        FloatingActionButton addPOIBtn = (FloatingActionButton) findViewById(R.id.btn_map_add_poi);
-        FloatingActionButton stopRecordingBtn = (FloatingActionButton) findViewById(R.id.btn_map_stop_recording);
-        ExtendedFloatingActionButton flagRecording = (ExtendedFloatingActionButton) findViewById(R.id.flag_recording);
-        ExtendedFloatingActionButton startRecordingBtn = (ExtendedFloatingActionButton) findViewById(R.id.btn_map_record_route);
-        View rentingMenu = findViewById(R.id.renting_info);
-
-        if (sidebarOpen) {
-            sidebar.animate().translationX(-(sidebar.getWidth()));
-            overlay.setVisibility(View.GONE);
-            locationBtn.setVisibility(View.VISIBLE);
-            if (pathRecorder.isRecording()) {
-                addPOIBtn.setVisibility(View.VISIBLE);
-                stopRecordingBtn.setVisibility(View.VISIBLE);
-                flagRecording.setVisibility(View.VISIBLE);
-            } else if (pathRecorder.isPreparingToRecord()) {
-                startRecordingBtn.setVisibility(View.VISIBLE);
-            }
-            checkIfRenting();
-        } else {
-            sidebar.animate().translationX(0);
-            overlay.setVisibility(View.VISIBLE);
-            bearingBtn.setVisibility(View.GONE);
-            locationBtn.setVisibility(View.GONE);
-            rentingMenu.setVisibility(View.GONE);
-            addPOIBtn.setVisibility(View.GONE);
-            stopRecordingBtn.setVisibility(View.GONE);
-            flagRecording.setVisibility(View.GONE);
-            startRecordingBtn.setVisibility(View.GONE);
-            overlay.setOnClickListener(item -> { toggleSidebar(null); });
-            LinearLayout sidebarUser = (LinearLayout) findViewById(R.id.sidebar_user);
-
-            changeUserUI();
-            sidebarUser.setOnClickListener(view -> {
-
-                if (mAuth.getCurrentUser() == null) {
-                    Intent intent = new Intent(this, LoginActivity.class);
-                    startActivity(intent);
-                    overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
-                }
-
-            });
-
-        }
-        sidebarOpen = !sidebarOpen;
-    }
-
-    void changeUserUI() {
-        TextView userEmail = findViewById(R.id.logged_user_email);
-        TextView userName = findViewById(R.id.logged_user_name);
-        ImageView userAvatar = findViewById(R.id.logged_user_avatar);
-
-        NavigationMenuItemView logoutBtn = findViewById(R.id.sidebar_logout);
-
-        if (userEmail == null || userName == null || userAvatar == null || logoutBtn == null) {
-            return;
-        }
-
-        FirebaseUser user = mAuth.getCurrentUser();
-
-        if (user == null) {
-            userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_default_avatar));
-            userEmail.setText(R.string.sign_in_msg);
-            userName.setText(R.string.sign_in);
-            logoutBtn.setVisibility(View.GONE);
-
-        } else {
-            if (user.getPhotoUrl() != null) {
-                (new Utils.httpRequestImage(userAvatar::setImageBitmap)).execute(user.getPhotoUrl().toString());
-            } else {
-                userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_default_avatar));
-            }
-            userEmail.setText(user.getEmail());
-            userName.setText(user.getDisplayName() != null && !user.getDisplayName().isEmpty() ? user.getDisplayName() : Utils.capitalize(Objects.requireNonNull(user.getEmail()).split("@")[0]));
-            logoutBtn.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private void uiUpdateCard(View card, @DrawableRes int iconId, CharSequence textTitle, CharSequence textSubtitle) {
-        // Set card icon
-        ImageView icon = card.findViewById(R.id.card_icon);
-        icon.setImageResource(iconId);
-
-        // Set card title
-        TextView title = card.findViewById(R.id.card_title);
-        title.setText(textTitle);
-
-        // Set card subtitle
-        TextView subtitle = card.findViewById(R.id.card_subtitle);
-        subtitle.setText(textSubtitle);
-    }
+    /*** -------------------------------------------- ***/
+    /*** ------------------ RENTING ----------------- ***/
+    /*** -------------------------------------------- ***/
 
     private void checkIfRenting() {
         FirebaseUser user = mAuth.getCurrentUser();
@@ -968,32 +990,34 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         JsonObject data = obj.get("data").getAsJsonObject();
 
                         boolean renting = data.get("renting").getAsBoolean();
-
-                        Log.d(TAG, String.valueOf(obj));
-
                         View rentingView = findViewById(R.id.renting_info);
+
                         if (renting) {
                             sharedState.setRenting(true);
                             rentingView.setVisibility(View.VISIBLE);
-                            Chronometer rentChronometer = findViewById(R.id.time_counter);
 
                             long rentTimestamp = data.get("rent_timestamp").getAsLong();
                             long timeElapsedInMilSeconds = System.currentTimeMillis() - rentTimestamp;
 
+                            // Start timer
+                            Chronometer rentChronometer = findViewById(R.id.time_counter);
                             rentChronometer.setBase(SystemClock.elapsedRealtime() - timeElapsedInMilSeconds);
                             rentChronometer.start();
 
+                            // Set end ride btn listener
                             MaterialButton btnStop = findViewById(R.id.end_ride);
                             btnStop.setOnClickListener(this::checkForStationsInRange);
 
+                            // Set lock bike listener
                             MaterialButton btnLock = findViewById(R.id.lock_bike);
-
-                            if (data.get("bike_status").getAsInt() == 0) {  // unlocked
+                            int bikeStatus = data.get("bike_status").getAsInt();
+                            if (bikeStatus == BikeLocking.UNLOCKED.getState()) {
                                 btnLock.setText(R.string.lock_bike);
                                 btnLock.setIconResource(R.drawable.ic_round_lock_24);
                                 findViewById(R.id.locked_status).setVisibility(View.GONE);
                                 btnLock.setOnClickListener(this::lockBike);
-                            } else { // locked
+
+                            } else if (bikeStatus == BikeLocking.LOCKED.getState()) {
                                 btnLock.setText(R.string.unlock_bike);
                                 btnLock.setIconResource(R.drawable.ic_round_lock_open_24);
                                 findViewById(R.id.locked_status).setVisibility(View.VISIBLE);
@@ -1023,11 +1047,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     if (obj.get("status").getAsString().equals("success")) {
                         sharedState.setRenting(false);
 
-                        long tripTime = obj.get("data").getAsJsonObject().get("trip_time").getAsLong();
-                        String originStationID = obj.get("data").getAsJsonObject().get("start_station_id").getAsString();
-                        String destinationStationID = obj.get("data").getAsJsonObject().get("end_station_id").getAsString();
-                        String originStationName = obj.get("data").getAsJsonObject().get("start_station_name").getAsString();
-                        String destinationStationName = obj.get("data").getAsJsonObject().get("end_station_name").getAsString();
+                        JsonObject data = obj.get("data").getAsJsonObject();
+                        long tripTime = data.get("trip_time").getAsLong();
+                        String originStationID = data.get("start_station_id").getAsString();
+                        String destinationStationID = data.get("end_station_id").getAsString();
+                        String originStationName = data.get("start_station_name").getAsString();
+                        String destinationStationName = data.get("end_station_name").getAsString();
 
                         // Remove renting view
                         View rentingView = findViewById(R.id.renting_info);
@@ -1045,7 +1070,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         uiUpdateCard(customDialog.findViewById(R.id.end_trip_destination), R.drawable.ic_end_trip_destination,
                                 destinationStationID, destinationStationName);
 
-                        // Show dialog
+                        // Show end trip dialog
                         new MaterialAlertDialogBuilder(this)
                             .setView(customDialog)
                             .setTitle(R.string.bike_delivered)
@@ -1115,7 +1140,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_PEERS_CHANGED_ACTION);
         filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_NETWORK_MEMBERSHIP_CHANGED_ACTION);
         filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_GROUP_OWNERSHIP_CHANGED_ACTION);
-        mReceiver = new SimWifiP2pBroadcastReceiver(this);
+        SimWifiP2pBroadcastReceiver mReceiver = new SimWifiP2pBroadcastReceiver(this);
         registerReceiver(mReceiver, filter); // FIXME: onde dar unregister?
     }
 
@@ -1177,6 +1202,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             break;
         }
     }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ------------ ACTIVITY LIFECYCLE ------------ ***/
+    /*** -------------------------------------------- ***/
 
     @Override
     protected void onStart() {
