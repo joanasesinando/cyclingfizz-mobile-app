@@ -1,18 +1,12 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
-import android.content.Context;
-import android.text.TextWatcher;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
 import com.mapbox.geojson.Feature;
-import com.mapbox.geojson.GeoJson;
-import com.mapbox.geojson.Geometry;
 import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 public class PathRecorder {
@@ -21,6 +15,7 @@ public class PathRecorder {
 
     private static PathRecorder INSTANCE = null;
 
+    private boolean preparingToRecord;
     private boolean isRecording;
     private final ArrayList<Point> path = new ArrayList<>();
 
@@ -31,6 +26,14 @@ public class PathRecorder {
             INSTANCE = new PathRecorder();
         }
         return(INSTANCE);
+    }
+
+    public boolean isPreparingToRecord() {
+        return preparingToRecord;
+    }
+
+    public void setPreparingToRecord(boolean preparingToRecord) {
+        this.preparingToRecord = preparingToRecord;
     }
 
     public boolean isRecording() {
@@ -45,6 +48,9 @@ public class PathRecorder {
 
     public void stopRecording() {
         isRecording = false;
+    }
+
+    public void saveRecording() {
         printFeature();
         saveFeature();
     }

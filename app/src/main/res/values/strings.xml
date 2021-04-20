@@ -20,12 +20,22 @@
     <string name="sign_up">Sign up</string>
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
+    <string name="record">Record</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+
+    <!-- States -->
+    <string name="recording">Recording...</string>
 
     <!-- Warnings -->
     <string name="not_available">Not available</string>
     <string name="no_name">No name</string>
     <string name="sign_in_required">Sign in required</string>
     <string name="renting_dialog_warning">You need to be signed in to rent a bike.</string>
+
+    <!-- Messages -->
+    <string name="route_recorded">Route recorded</string>
+    <string name="route_recorded_message">Congratulations, you’ve just recorded a new route!</string>
 
     <!-- Welcome -->
     <string name="motto">Discover Lisbon’s attractions\nand hotspots by bike</string>

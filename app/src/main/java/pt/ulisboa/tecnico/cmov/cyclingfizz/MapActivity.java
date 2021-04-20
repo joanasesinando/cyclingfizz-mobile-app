@@ -54,6 +54,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.internal.NavigationMenuItemView;
 import com.google.android.material.navigation.NavigationView;
@@ -185,6 +186,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private SimWifiP2pBroadcastReceiver mReceiver;
 
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         checkFirstOpen();
@@ -255,10 +257,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     return false;
                 } else if (id == R.id.sidebar_routes) {
                     if (!pathRecorder.isRecording()) {
-                        pathRecorder.startRecording();
-                    } else {
-                        pathRecorder.stopRecording();
+                        // FIXME: should be done by the '+' btn on bike routes
+                        ExtendedFloatingActionButton recordBtn = (ExtendedFloatingActionButton) findViewById(R.id.btn_map_record_route);
+                        recordBtn.setVisibility(View.VISIBLE);
+                        pathRecorder.setPreparingToRecord(true);
+                        recordBtn.setOnClickListener(this::recordNewRoute);
                     }
+                    toggleSidebar(null);
                     return false;
                 } else {
                     return false;
@@ -268,6 +273,54 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         initWifiDirect();
         turnWifiOn();
+    }
+
+    private void recordNewRoute(View view) {
+        // Start recording
+        pathRecorder.startRecording();
+        pathRecorder.setPreparingToRecord(false);
+
+        // Update view
+        ExtendedFloatingActionButton recordBtn = (ExtendedFloatingActionButton) findViewById(R.id.btn_map_record_route);
+        recordBtn.setVisibility(View.GONE);
+
+        FloatingActionButton addPOIBtn = (FloatingActionButton) findViewById(R.id.btn_map_add_poi);
+        addPOIBtn.setVisibility(View.VISIBLE);
+
+        FloatingActionButton stopRecordingBtn = (FloatingActionButton) findViewById(R.id.btn_map_stop_recording);
+        stopRecordingBtn.setVisibility(View.VISIBLE);
+        stopRecordingBtn.setOnClickListener(this::stopRecordingRoute);
+
+        ExtendedFloatingActionButton recordingFlag = (ExtendedFloatingActionButton) findViewById(R.id.flag_recording);
+        recordingFlag.setVisibility(View.VISIBLE);
+    }
+
+    private void stopRecordingRoute(View view) {
+        // Stop recording
+        pathRecorder.stopRecording();
+
+        // Update view
+        FloatingActionButton addPOIBtn = (FloatingActionButton) findViewById(R.id.btn_map_add_poi);
+        addPOIBtn.setVisibility(View.GONE);
+
+        FloatingActionButton stopRecordingBtn = (FloatingActionButton) findViewById(R.id.btn_map_stop_recording);
+        stopRecordingBtn.setVisibility(View.GONE);
+
+        ExtendedFloatingActionButton recordingFlag = (ExtendedFloatingActionButton) findViewById(R.id.flag_recording);
+        recordingFlag.setVisibility(View.GONE);
+
+        // Show dialog
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.route_recorded)
+                .setMessage(R.string.route_recorded_message)
+                .setNeutralButton(R.string.delete, (dialog, which) -> {
+                    // Respond to neutral button press
+                })
+                .setPositiveButton(R.string.save, (dialog, which) -> {
+                    // Respond to positive button press
+                    pathRecorder.saveRecording();
+                })
+                .show();
     }
 
     private void checkFirstOpen() {
@@ -768,12 +821,23 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         RelativeLayout overlay = (RelativeLayout) findViewById(R.id.overlay);
         FloatingActionButton bearingBtn = (FloatingActionButton) findViewById(R.id.btn_map_bearing);
         FloatingActionButton locationBtn = (FloatingActionButton) findViewById(R.id.btn_map_current_location);
+        FloatingActionButton addPOIBtn = (FloatingActionButton) findViewById(R.id.btn_map_add_poi);
+        FloatingActionButton stopRecordingBtn = (FloatingActionButton) findViewById(R.id.btn_map_stop_recording);
+        ExtendedFloatingActionButton flagRecording = (ExtendedFloatingActionButton) findViewById(R.id.flag_recording);
+        ExtendedFloatingActionButton startRecordingBtn = (ExtendedFloatingActionButton) findViewById(R.id.btn_map_record_route);
         View rentingMenu = findViewById(R.id.renting_info);
 
         if (sidebarOpen) {
             sidebar.animate().translationX(-(sidebar.getWidth()));
             overlay.setVisibility(View.GONE);
             locationBtn.setVisibility(View.VISIBLE);
+            if (pathRecorder.isRecording()) {
+                addPOIBtn.setVisibility(View.VISIBLE);
+                stopRecordingBtn.setVisibility(View.VISIBLE);
+                flagRecording.setVisibility(View.VISIBLE);
+            } else if (pathRecorder.isPreparingToRecord()) {
+                startRecordingBtn.setVisibility(View.VISIBLE);
+            }
             checkIfRenting();
         } else {
             sidebar.animate().translationX(0);
@@ -781,6 +845,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             bearingBtn.setVisibility(View.GONE);
             locationBtn.setVisibility(View.GONE);
             rentingMenu.setVisibility(View.GONE);
+            addPOIBtn.setVisibility(View.GONE);
+            stopRecordingBtn.setVisibility(View.GONE);
+            flagRecording.setVisibility(View.GONE);
+            startRecordingBtn.setVisibility(View.GONE);
             overlay.setOnClickListener(item -> { toggleSidebar(null); });
             LinearLayout sidebarUser = (LinearLayout) findViewById(R.id.sidebar_user);
 
