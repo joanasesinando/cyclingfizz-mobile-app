@@ -35,8 +35,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Chronometer;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -56,8 +54,6 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.internal.NavigationMenuItemView;
-import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonObject;
@@ -79,10 +75,8 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.expressions.Expression;
 import com.mapbox.mapboxsdk.style.layers.CircleLayer;
-import com.mapbox.mapboxsdk.style.layers.Layer;
 import com.mapbox.mapboxsdk.style.layers.LineLayer;
 import com.mapbox.mapboxsdk.style.layers.Property;
-import com.mapbox.mapboxsdk.style.layers.PropertyValue;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.layers.TransitionOptions;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonOptions;
@@ -123,7 +117,6 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textField;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textFont;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textIgnorePlacement;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textSize;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.visibility;
 
 enum TrackingMode {
     FREE, FOLLOW_USER, FOLLOW_USER_WITH_BEARING
@@ -145,12 +138,11 @@ enum BikeLocking {
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, SimWifiP2pManager.PeerListListener {
 
-    SharedState sharedState;
-
     static String TAG = "Cycling_Fizz@MapActivity";
 
+    SharedState sharedState;
     private FirebaseAuth mAuth;
-    private boolean sidebarOpen = false; // FIXME: refactor; more general
+    Sidebar sidebar;
 
     /// -------------- MAP RELATED -------------- ///
 
@@ -266,39 +258,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
+        // Set sidebar
+        sidebar = new Sidebar(this);
+
         // Set menu click listener for sidebar opening/closing
-        MaterialToolbar toolbar = findViewById(R.id.topAppBar);
-        toolbar.setNavigationOnClickListener(this::toggleSidebar);
+        MaterialToolbar toolbar = findViewById(R.id.map_toolbar).findViewById(R.id.topAppBar);
+        toolbar.setNavigationOnClickListener(v -> sidebar.toggleSidebar(v));
 
-        NavigationView sidebar = findViewById(R.id.sidebar);
-
-        if (sidebar != null) {
-            sidebar.setNavigationItemSelectedListener(item -> {
-                Log.d(TAG + "_sidebar", "Click \"" + item.getTitle() + "\"");
-
-                int id = item.getItemId();
-                if (id == R.id.sidebar_logout) {
-                    mAuth.signOut();
-                    changeUserUI();
-                    return false;
-
-                } else if (id == R.id.sidebar_routes) {
-                    if (!pathRecorder.isRecording()) {
-                        // FIXME: should be done by the '+' btn on bike routes
-                        ExtendedFloatingActionButton recordBtn = findViewById(R.id.btn_map_record_route);
-                        recordBtn.setVisibility(View.VISIBLE);
-                        pathRecorder.setPreparingToRecord(true);
-                        recordBtn.setOnClickListener(this::recordNewRoute);
-                    }
-                    toggleSidebar(null);
-                    return false;
-
-                } else {
-                    return false;
-                }
-            });
-        }
-
+        // Init Wifi Direct
         initWifiDirect();
         turnWifiOn();
     }
@@ -326,86 +293,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             Intent intent = new Intent(this, WelcomeActivity.class);
             startActivity(intent);
             finish();
-        }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private void toggleSidebar(View v) { // FIXME: refactor; more general
-        NavigationView sidebar = findViewById(R.id.sidebar);
-        RelativeLayout overlay = findViewById(R.id.overlay);
-        FloatingActionButton bearingBtn = findViewById(R.id.btn_map_bearing);
-        FloatingActionButton locationBtn = findViewById(R.id.btn_map_current_location);
-        FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
-        FloatingActionButton stopRecordingBtn = findViewById(R.id.btn_map_stop_recording);
-        ExtendedFloatingActionButton flagRecording = findViewById(R.id.flag_recording);
-        ExtendedFloatingActionButton startRecordingBtn = findViewById(R.id.btn_map_record_route);
-        View rentingMenu = findViewById(R.id.renting_info);
-
-        if (sidebarOpen) {  // close it
-            sidebar.animate().translationX(-(sidebar.getWidth()));
-            overlay.setVisibility(View.GONE);
-            locationBtn.setVisibility(View.VISIBLE);
-
-            if (pathRecorder.isRecording()) {
-                addPOIBtn.setVisibility(View.VISIBLE);
-                stopRecordingBtn.setVisibility(View.VISIBLE);
-                flagRecording.setVisibility(View.VISIBLE);
-
-            } else if (pathRecorder.isPreparingToRecord()) {
-                startRecordingBtn.setVisibility(View.VISIBLE);
-            }
-            checkIfRenting();
-
-        } else {    // open it
-            sidebar.animate().translationX(0);
-            overlay.setVisibility(View.VISIBLE);
-            bearingBtn.setVisibility(View.GONE);
-            locationBtn.setVisibility(View.GONE);
-            rentingMenu.setVisibility(View.GONE);
-            addPOIBtn.setVisibility(View.GONE);
-            stopRecordingBtn.setVisibility(View.GONE);
-            flagRecording.setVisibility(View.GONE);
-            startRecordingBtn.setVisibility(View.GONE);
-            overlay.setOnClickListener(item -> toggleSidebar(null));
-            LinearLayout sidebarUser = findViewById(R.id.sidebar_user);
-
-            changeUserUI();
-            sidebarUser.setOnClickListener(view -> {
-                if (mAuth.getCurrentUser() == null) {
-                    Intent intent = new Intent(this, LoginActivity.class);
-                    startActivity(intent);
-                    overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
-                }
-            });
-        }
-        sidebarOpen = !sidebarOpen;
-    }
-
-    void changeUserUI() {
-        TextView userEmail = findViewById(R.id.logged_user_email);
-        TextView userName = findViewById(R.id.logged_user_name);
-        ImageView userAvatar = findViewById(R.id.logged_user_avatar);
-        NavigationMenuItemView logoutBtn = findViewById(R.id.sidebar_logout);
-
-        if (userEmail == null || userName == null || userAvatar == null || logoutBtn == null) return;
-
-        FirebaseUser user = mAuth.getCurrentUser();
-
-        if (user == null) {
-            userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_default_avatar));
-            userEmail.setText(R.string.sign_in_msg);
-            userName.setText(R.string.sign_in);
-            logoutBtn.setVisibility(View.GONE);
-
-        } else {
-            if (user.getPhotoUrl() != null) {
-                (new Utils.httpRequestImage(userAvatar::setImageBitmap)).execute(user.getPhotoUrl().toString());
-            } else {
-                userAvatar.setImageDrawable(ContextCompat.getDrawable(MapActivity.this, R.drawable.ic_default_avatar));
-            }
-            userEmail.setText(user.getEmail());
-            userName.setText(user.getDisplayName() != null && !user.getDisplayName().isEmpty() ? user.getDisplayName() : Utils.capitalize(Objects.requireNonNull(user.getEmail()).split("@")[0]));
-            logoutBtn.setVisibility(View.VISIBLE);
         }
     }
 
@@ -525,49 +412,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             FloatingActionButton bearingBtn = findViewById(R.id.btn_map_bearing);
             bearingBtn.setOnClickListener(view -> pointToNorth());
 
-            MaterialToolbar toolbar = findViewById(R.id.topAppBar); // FIXME: prob noutro sitio era melhor
-            toolbar.setOnMenuItemClickListener(item -> {
-                // Handle item selection
-                Log.d(TAG + "_menu", "Click \"" + item.getTitle() + "\"");
-
-                int id = item.getItemId();
-                if (id == R.id.filter_cycleways) {
-                    try {
-                        Layer cyclewaysLayer = mapboxMap.getStyle().getLayer(CYCLEWAYS_LAYER_ID);
-
-                        cyclewaysLayer.setProperties(visibility(item.isChecked() ? Property.NONE : Property.VISIBLE));
-                        item.setChecked(!item.isChecked());
-                    } catch (NullPointerException ignored) { }
-
-                    // Keep the popup menu open
-                    Utils.keepMenuOpen(item, getApplicationContext());
-
-                    return false;
-
-                } else if (id == R.id.filter_gira) {
-                    try {
-                        Layer giraLayer = mapboxMap.getStyle().getLayer(GIRA_STATION_LAYER_ID);
-                        Layer giraClustersLayer = mapboxMap.getStyle().getLayer(GIRA_CLUSTER_LAYER_ID);
-                        Layer giraCountLayer = mapboxMap.getStyle().getLayer(GIRA_COUNT_LAYER_ID);
-
-                        PropertyValue<String> visibility = visibility(item.isChecked() ? Property.NONE : Property.VISIBLE);
-
-                        giraLayer.setProperties(visibility);
-                        giraClustersLayer.setProperties(visibility);
-                        giraCountLayer.setProperties(visibility);
-                        item.setChecked(!item.isChecked());
-
-                    } catch (NullPointerException ignored) { }
-
-                    // Keep the popup menu open
-                    Utils.keepMenuOpen(item, getApplicationContext());
-
-                    return false;
-
-                } else {
-                    return false;
-                }
-            });
+            MaterialToolbar toolbar = findViewById(R.id.map_toolbar).findViewById(R.id.topAppBar);
+            toolbar.setOnMenuItemClickListener(item -> Toolbar.mapToolbarItemClicked(item, getApplicationContext(), mapboxMap));
             // Map is set up and the style has loaded. Now you can add data or make other map adjustments
         });
     }
@@ -1214,8 +1060,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     protected void onStart() {
         super.onStart();
 
-        changeUserUI();
+        sidebar.changeUserUI();
         mapView.onStart();
+
+        if (pathRecorder.isPreparingToRecord()) {
+            ExtendedFloatingActionButton recordBtn = findViewById(R.id.btn_map_record_route);
+            recordBtn.setVisibility(View.VISIBLE);
+            recordBtn.setOnClickListener(MapActivity.this::recordNewRoute);
+        }
     }
 
     @Override
@@ -1224,7 +1076,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (isGpsOn()) {
             startLocationUpdates();
         }
-        changeUserUI();
+        sidebar.changeUserUI();
         checkIfRenting();
         mapView.onResume();
     }

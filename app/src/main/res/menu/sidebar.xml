@@ -7,8 +7,7 @@
         <item
             android:id="@+id/sidebar_map"
             android:icon="@drawable/ic_round_map_24"
-            android:title="@string/sidebar_map"
-            android:checked="true" />
+            android:title="@string/sidebar_map" />
         <item
             android:id="@+id/sidebar_routes"
             android:icon="@drawable/ic_round_alt_route_24"

@@ -20,7 +20,7 @@ public class PathRecorder {
 
     private final ArrayList<Point> path = new ArrayList<>();
 
-    private PathRecorder() {};
+    private PathRecorder() {}
 
     public static PathRecorder getInstance() {
         if (INSTANCE == null) {

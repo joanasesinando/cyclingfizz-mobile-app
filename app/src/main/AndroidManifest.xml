@@ -8,15 +8,15 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".SharedState"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.CyclingFizz"
-        tools:replace="android:icon,android:theme"
-        android:name=".SharedState">
-
+        tools:replace="android:icon,android:theme">
+        <activity android:name=".RoutesListActivity"></activity>
         <activity android:name=".SignUpActivity" />
         <activity android:name=".LoginActivity" />
         <activity android:name=".StreetViewActivity" />

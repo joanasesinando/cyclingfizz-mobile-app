@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -24,8 +25,8 @@
         android:orientation="vertical">
 
         <include
-            android:id="@+id/action_bar"
-            layout="@layout/action_bar"
+            android:id="@+id/map_toolbar"
+            layout="@layout/map_action_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
@@ -60,14 +61,11 @@
                     android:translationZ="-10dp"/>
             </LinearLayout>
 
-            <com.google.android.material.navigation.NavigationView
-                android:id="@+id/sidebar"
+            <include
+                android:id="@+id/sidebar_layout"
+                layout="@layout/sidebar"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                app:itemTextAppearance="@style/SidebarTextViewStyle"
-                app:menu="@menu/sidebar"
-                app:headerLayout="@layout/sidebar_header"
-                android:translationX="-280dp" />
+                android:layout_height="wrap_content" />
 
         </RelativeLayout>
     </LinearLayout>
