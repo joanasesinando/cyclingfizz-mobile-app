@@ -1,7 +1,13 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
+import android.os.SystemClock;
 import android.util.Log;
+import android.view.View;
+import android.widget.Chronometer;
 
+import com.google.android.material.button.MaterialButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonObject;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.LineString;
@@ -11,7 +17,10 @@ import java.util.ArrayList;
 
 public class PathRecorder {
     static String TAG = "Cycling_Fizz@PathRecorder";
-    static String SERVER_URL = "https://9a5dd377f58b.ngrok.io";
+    static String SERVER_URL = "https://stations.cfservertest.ga";
+
+    private final FirebaseAuth mAuth;
+
 
     private static PathRecorder INSTANCE = null;
 
@@ -20,7 +29,9 @@ public class PathRecorder {
 
     private final ArrayList<Point> path = new ArrayList<>();
 
-    private PathRecorder() {};
+    private PathRecorder() {
+        mAuth = FirebaseAuth.getInstance();
+    };
 
     public static PathRecorder getInstance() {
         if (INSTANCE == null) {
@@ -82,7 +93,7 @@ public class PathRecorder {
     }
 
     private void printFeature() {
-        if (path.isEmpty()) return;
+        if (path.size() < 2) return;
 
 
         String jsonString = getFeature().toJson();
@@ -90,14 +101,30 @@ public class PathRecorder {
     }
 
     public void saveFeature() {
-        if (path.isEmpty()) return;
+        if (path.size() < 2) return;
 
         JsonObject data = new JsonObject();
         data.addProperty("route", getFeature().toJson());
 
-        (new Utils.httpPostRequestJson(response -> {
-            Log.d(TAG, String.valueOf(response));
-        }, data.toString())).execute(SERVER_URL + "/save-route");
+
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+                data.addProperty("id_token", idToken);
+
+                (new Utils.httpPostRequestJson(response -> {
+                    Log.d(TAG, String.valueOf(response));
+                }, data.toString())).execute(SERVER_URL + "/save-route");
+
+            });
+        } else {
+            Log.d(TAG, "Null User");
+        }
+
+
+
     }
 
 
