@@ -17,6 +17,7 @@ public class PathRecorder {
 
     private boolean preparingToRecord;
     private boolean isRecording;
+
     private final ArrayList<Point> path = new ArrayList<>();
 
     private PathRecorder() {};
@@ -40,6 +41,10 @@ public class PathRecorder {
         return isRecording;
     }
 
+    public ArrayList<Point> getPath() {
+        return path;
+    }
+
     public void startRecording() {
         cleanGeoJson();
         isRecording = true;
@@ -55,14 +60,14 @@ public class PathRecorder {
         saveFeature();
     }
 
-    public void addPointToPath(Point point) {
-
+    public boolean addPointToPath(Point point) {
         if (path.size() > 0 && Utils.distanceBetweenPointsInMeters(path.get(path.size() - 1), point) < 5) {
             Log.v(TAG, "ponto ignorado, menos de 5 metros");
-            return;
+            return false;
         }
         path.add(point);
         Log.v(TAG, "add " + point.toString());
+        return true;
     }
 
     public void cleanGeoJson() {

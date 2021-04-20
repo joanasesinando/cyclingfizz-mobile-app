@@ -32,6 +32,7 @@ import android.os.Messenger;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Chronometer;
 import android.widget.ImageView;
@@ -63,6 +64,8 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonObject;
 import com.mapbox.android.gestures.MoveGestureDetector;
 import com.mapbox.geojson.Feature;
+import com.mapbox.geojson.FeatureCollection;
+import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
@@ -147,6 +150,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     String CYCLEWAYS_DATA_URL = MAP_SERVER_URL + "/get-cycleways";
     static String CYCLEWAYS_LAYER_ID = "cycleways-layer";
 
+    static String PATH_RECORDED_SOURCE_ID = "path-recorded-source";
+    static String PATH_RECORDED_LAYER_ID = "path-recorded-layer";
+
     static Long LOCATION_UPDATE_INTERVAL = 1000L;
     static Long LOCATION_UPDATE_MAX_WAIT_INTERVAL = LOCATION_UPDATE_INTERVAL * 5;
 
@@ -218,7 +224,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                 (new Thread(() -> {
                     if (pathRecorder.isRecording()) {
-                        pathRecorder.addPointToPath(Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude()));
+                        boolean added = pathRecorder.addPointToPath(Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude()));
+                        if (added) {
+                            runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                addPathRecorded();
+                            }
+                        });
+                        }
                     }
                 })).start();
             }
@@ -279,6 +293,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Start recording
         pathRecorder.startRecording();
         pathRecorder.setPreparingToRecord(false);
+        setMapboxCameraFollowUser();
 
         // Update view
         ExtendedFloatingActionButton recordBtn = (ExtendedFloatingActionButton) findViewById(R.id.btn_map_record_route);
@@ -355,6 +370,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             addIcons(style);
             addCycleways(style);
             addGiraStations(style);
+            initPathRecordedLayer(style);
 
             mapboxMap.addOnMapClickListener(point -> {
 
@@ -502,9 +518,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
 
-
-
-
     Handler hideCompassBtn = new Handler();
 
     private void updateCompassBearing() {
@@ -636,6 +649,36 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         );
 
         loadedMapStyle.addLayer(cycleways);
+    }
+
+    private void initPathRecordedLayer(@NonNull Style style) {
+        style.addSource(new GeoJsonSource(PATH_RECORDED_SOURCE_ID,
+                FeatureCollection.fromFeatures(new Feature[] {Feature.fromGeometry(
+                        LineString.fromLngLats(pathRecorder.getPath())
+                )})));
+
+        LineLayer pathRecorded = new LineLayer(PATH_RECORDED_LAYER_ID, PATH_RECORDED_SOURCE_ID);
+        pathRecorded.setProperties(
+                lineJoin(Property.LINE_JOIN_ROUND),
+                lineCap(Property.LINE_CAP_ROUND),
+                lineColor(getResources().getColor(R.color.purple)),
+                lineWidth(5f),
+                lineOpacity(.8f)
+        );
+
+        style.addLayer(pathRecorded);
+    }
+
+    private void addPathRecorded() {
+        Log.d(TAG, "updating path on map");
+        GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
+        if (pathRecordedSource != null) {
+            pathRecordedSource.setGeoJson(FeatureCollection.fromFeatures(
+                    new Feature[] {Feature.fromGeometry(
+                            LineString.fromLngLats(pathRecorder.getPath())
+                    )}
+            ));
+        }
     }
 
 
