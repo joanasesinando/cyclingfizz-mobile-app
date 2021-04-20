@@ -19,10 +19,9 @@ public class PathRecorder {
     static String TAG = "Cycling_Fizz@PathRecorder";
     static String SERVER_URL = "https://stations.cfservertest.ga";
 
-    private final FirebaseAuth mAuth;
-
-
     private static PathRecorder INSTANCE = null;
+
+    private final FirebaseAuth mAuth;
 
     private boolean preparingToRecord;
     private boolean isRecording;
