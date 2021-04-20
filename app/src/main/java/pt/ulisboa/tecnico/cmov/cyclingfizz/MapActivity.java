@@ -510,7 +510,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         break;
 
                     case FOLLOW_USER:
-                        setMapboxCameraFollowUserWithHeading();
+                        setMapboxCameraFollowUserWithBearing();
                         break;
 
                     case FOLLOW_USER_WITH_BEARING:
@@ -823,7 +823,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             currentLocationBtn.setImageResource(R.drawable.ic_round_gps_fixed_24);
             currentLocationBtn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.gps_blue)));
         } else if (trackingMode == TrackingMode.FOLLOW_USER_WITH_BEARING) {
-            // following_user
+            // following_user_with_bearing
             currentLocationBtn.setImageResource(R.drawable.ic_round_explore_24);
             currentLocationBtn.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.gps_blue)));
         } else {
@@ -841,7 +841,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         this.trackingMode = TrackingMode.FOLLOW_USER;
     }
 
-    private void setMapboxCameraFollowUserWithHeading() {
+    private void setMapboxCameraFollowUserWithBearing() {
         this.trackingMode = TrackingMode.FOLLOW_USER_WITH_BEARING;
     }
 
@@ -895,7 +895,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Start recording
         pathRecorder.startRecording();
         pathRecorder.setPreparingToRecord(false);
-        setMapboxCameraFollowUser();
+        setMapboxCameraFollowUserWithBearing();
+        updateCurrentLocationBtn();
+        updateMapboxCamera(mapboxMap.getLocationComponent());
 
         // Update view
         ExtendedFloatingActionButton recordBtn = findViewById(R.id.btn_map_record_route);
