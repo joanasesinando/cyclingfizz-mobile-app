@@ -137,7 +137,8 @@ enum BikeLocking {
     }
 }
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, SimWifiP2pManager.PeerListListener {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback,
+        SimWifiP2pManager.PeerListListener, SimWifiP2PActivityListener {
 
     static String TAG = "Cycling_Fizz@MapActivity";
 
@@ -197,6 +198,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     /// -------------- WIFI DIRECT -------------- ///
 
+    SimWifiP2pBroadcastReceiver mReceiver = null;
     static SimWifiP2pManager mManager = null;
     static SimWifiP2pManager.Channel mChannel = null;
     static boolean mBound = false;
@@ -271,7 +273,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         toolbar.setNavigationOnClickListener(v -> sidebar.toggleSidebar(v));
 
         // Init Wifi Direct
-        initWifiDirect();
+        registerBroadcastReceiver();
         turnWifiOn();
     }
 
@@ -882,7 +884,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                             // Set end ride btn listener
                             MaterialButton btnStop = findViewById(R.id.end_ride);
-                            btnStop.setOnClickListener(this::checkForStationsInRange);
+                            btnStop.setOnClickListener(v -> checkForStationsInRange());
 
                             // Set lock bike listener
                             MaterialButton btnLock = findViewById(R.id.lock_bike);
@@ -1009,15 +1011,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     /*** ------- (WIFI DIRECT) STATIONS IN RANGE ---- ***/
     /*** -------------------------------------------- ***/
 
-    private void initWifiDirect() {
+    private void registerBroadcastReceiver() {
         // Register broadcast receiver
         IntentFilter filter = new IntentFilter();
         filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_STATE_CHANGED_ACTION);
         filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_PEERS_CHANGED_ACTION);
         filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_NETWORK_MEMBERSHIP_CHANGED_ACTION);
         filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_GROUP_OWNERSHIP_CHANGED_ACTION);
-        SimWifiP2pBroadcastReceiver mReceiver = new SimWifiP2pBroadcastReceiver(this);
-        registerReceiver(mReceiver, filter); // FIXME: onde dar unregister?
+        mReceiver = new SimWifiP2pBroadcastReceiver(this);
+        registerReceiver(mReceiver, filter);
     }
 
     private void turnWifiOn() {
@@ -1033,7 +1035,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
-    private void checkForStationsInRange(View view) {
+    @Override
+    public void checkForStationsInRange() {
         if (mBound) {
             mManager.requestPeers(mChannel, MapActivity.this);
         } else {
@@ -1061,6 +1064,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     public void onPeersAvailable(SimWifiP2pDeviceList peers) {
+        Log.e("Cycling_Fizz_peers", "onPeersAvailable - map activity");
         boolean isClose = peers.getDeviceList().size() > 0;
 
         if (!isClose) {
@@ -1115,15 +1119,21 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         sidebar.changeUserUI();
         checkIfRenting();
         mapView.onResume();
+        registerBroadcastReceiver();
     }
 
     @Override
     protected void onPause() {
+        Log.d(TAG, "onPause - map activity");
         super.onPause();
         if (isGpsOn() && !pathRecorder.isRecording()) {
             stopLocationUpdates();
         }
         mapView.onPause();
+        if (mReceiver != null ) {
+            Log.d(TAG, "unregistering - map activity");
+            unregisterReceiver(mReceiver);
+        }
     }
 
     @Override

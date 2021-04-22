@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -39,11 +40,13 @@ import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
+import pt.inesc.termite.wifidirect.SimWifiP2pBroadcast;
 import pt.inesc.termite.wifidirect.SimWifiP2pDevice;
 import pt.inesc.termite.wifidirect.SimWifiP2pDeviceList;
 import pt.inesc.termite.wifidirect.SimWifiP2pManager;
 
-public class StationActivity extends AppCompatActivity implements SimWifiP2pManager.PeerListListener {
+public class StationActivity extends AppCompatActivity implements SimWifiP2pManager.PeerListListener,
+                                                                SimWifiP2PActivityListener{
 
     SharedState sharedState;
 
@@ -61,6 +64,8 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
 
     int numBikes;
     int numFreeDocks;
+
+    SimWifiP2pBroadcastReceiver mReceiver;
 
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -359,7 +364,19 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
     /*** ------- (WIFI DIRECT) STATIONS IN RANGE ---- ***/
     /*** -------------------------------------------- ***/
 
-    private void checkForStationsInRange() {
+    private void registerBroadcastReceiver() {
+        // Register broadcast receiver
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_STATE_CHANGED_ACTION);
+        filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_PEERS_CHANGED_ACTION);
+        filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_NETWORK_MEMBERSHIP_CHANGED_ACTION);
+        filter.addAction(SimWifiP2pBroadcast.WIFI_P2P_GROUP_OWNERSHIP_CHANGED_ACTION);
+        mReceiver = new SimWifiP2pBroadcastReceiver(this);
+        registerReceiver(mReceiver, filter);
+    }
+
+    @Override
+    public void checkForStationsInRange() {
         if (MapActivity.mBound) {
             MapActivity.mManager.requestPeers(MapActivity.mChannel, StationActivity.this);
         } else {
@@ -369,6 +386,7 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
 
     @Override
     public void onPeersAvailable(SimWifiP2pDeviceList peers) {
+        Log.e("Cycling_Fizz_peers", "onPeersAvailable - station activity");
         boolean isClose = false;
 
         for (SimWifiP2pDevice device : peers.getDeviceList()) {
@@ -389,5 +407,23 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
         // Update rent btn
         MaterialButton rentBtn = findViewById(R.id.rent_bike);
         rentBtn.setEnabled(isClose && !sharedState.isRenting() && numBikes > 0);
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ------------ ACTIVITY LIFECYCLE ------------ ***/
+    /*** -------------------------------------------- ***/
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerBroadcastReceiver();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mReceiver != null )
+            unregisterReceiver(mReceiver);
     }
 }
