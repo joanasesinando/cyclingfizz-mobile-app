@@ -47,10 +47,25 @@
                     android:visibility="gone"/>
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/btn_map_bearing"
+                    android:id="@+id/btn_map_layers"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="25dp"
+                    android:layout_marginEnd="25dp"
+                    android:layout_gravity="end"
+                    android:backgroundTint="@color/white"
+                    android:src="@drawable/ic_round_layers_24"
+                    android:tint="@color/dark"
+                    app:backgroundTint="@color/offWhite"
+                    app:fabSize="mini"
+                    app:tint="@null"
+                    android:translationZ="-10dp"/>
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btn_map_bearing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
                     android:layout_marginEnd="25dp"
                     android:layout_gravity="end"
                     android:backgroundTint="@color/white"

@@ -259,6 +259,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
+        // Set layers btn click listener
+        FloatingActionButton layersBtn = findViewById(R.id.btn_map_layers);
+        layersBtn.setOnClickListener(this::changeLayerStyle);
+
         // Set sidebar
         sidebar = new Sidebar(this);
 
@@ -635,6 +639,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     /*** -------------------------------------------- ***/
     /*** ------------ CAMERA & CONTROLS ------------- ***/
     /*** -------------------------------------------- ***/
+
+    private void changeLayerStyle(View view) {
+        //TODO
+    }
 
     Handler hideCompassBtn = new Handler();
 

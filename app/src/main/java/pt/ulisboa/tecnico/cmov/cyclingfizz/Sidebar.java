@@ -76,6 +76,7 @@ public final class Sidebar {
         RelativeLayout overlay = activity.findViewById(R.id.overlay);
 
         // MapActivity
+        FloatingActionButton layersBtn = activity.findViewById(R.id.btn_map_layers);
         FloatingActionButton bearingBtn = activity.findViewById(R.id.btn_map_bearing);
         FloatingActionButton locationBtn = activity.findViewById(R.id.btn_map_current_location);
         FloatingActionButton addPOIBtn = activity.findViewById(R.id.btn_map_add_poi);
@@ -93,6 +94,7 @@ public final class Sidebar {
             overlay.setVisibility(View.GONE);
 
             if (activity instanceof MapActivity) {
+                layersBtn.setVisibility(View.VISIBLE);
                 locationBtn.setVisibility(View.VISIBLE);
 
                 PathRecorder pathRecorder = PathRecorder.getInstance();
@@ -121,6 +123,7 @@ public final class Sidebar {
 
             if (activity instanceof MapActivity) {
                 menuItem = activity.findViewById(R.id.sidebar_map);
+                layersBtn.setVisibility(View.GONE);
                 bearingBtn.setVisibility(View.GONE);
                 locationBtn.setVisibility(View.GONE);
                 rentingMenu.setVisibility(View.GONE);
