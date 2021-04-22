@@ -166,7 +166,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     static String PATH_RECORDED_LAYER_ID = "path-recorded-layer";
 
     static Long LOCATION_UPDATE_INTERVAL = 1000L;
-    static Long LOCATION_UPDATE_MAX_WAIT_INTERVAL = LOCATION_UPDATE_INTERVAL * 5;
+    static Long LOCATION_UPDATE_MAX_WAIT_INTERVAL = LOCATION_UPDATE_INTERVAL;
+//    static Long LOCATION_UPDATE_MAX_WAIT_INTERVAL = LOCATION_UPDATE_INTERVAL * 5;
 
     public final static String STATION_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.STATION_INFO";
     public final static String CYCLEWAY_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.CYCLEWAY_INFO";
@@ -214,6 +215,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         sharedState = (SharedState) getApplicationContext();
         mAuth = FirebaseAuth.getInstance();
 
+
         checkIfRenting();
 
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
@@ -239,12 +241,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     if (pathRecorder.isRecording()) {
                         boolean pointAdded = pathRecorder.addPointToPath(Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude()));
                         if (pointAdded) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    addPathRecorded();
-                                }
-                            });
+                            addPathRecorded();
                         }
                     }
                 })).start();
@@ -522,6 +519,16 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
+
+    void updateLocationRequestRecording() {
+        locationRequest.setMaxWaitTime(LOCATION_UPDATE_INTERVAL);
+    }
+
+    void updateLocationRequestNotRecording() {
+        locationRequest.setMaxWaitTime(LOCATION_UPDATE_MAX_WAIT_INTERVAL);
+    }
+
+
     void checkIfLocationOn() {
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(locationRequest);
@@ -751,6 +758,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void recordNewRoute(View view) {
         // Start recording
         pathRecorder.startRecording();
+        updateLocationRequestRecording();
         pathRecorder.setPreparingToRecord(false);
         setMapboxCameraFollowUserWithBearing();
         updateCurrentLocationBtn();
@@ -764,7 +772,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
         addPOIBtn.setVisibility(View.VISIBLE);
-        // TODO: add click listener
+        addPOIBtn.setOnClickListener(this::addPOI);
 
         FloatingActionButton stopRecordingBtn = findViewById(R.id.btn_map_stop_recording);
         stopRecordingBtn.setVisibility(View.VISIBLE);
@@ -782,7 +790,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         updateCurrentLocationBtn();
         updateMapboxCamera(mapboxMap.getLocationComponent());
         pointToNorth();
-
+        updateLocationRequestNotRecording();
         // Update view
         FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
         addPOIBtn.setVisibility(View.GONE);
@@ -828,13 +836,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void addPathRecorded() {
         Log.d(TAG, "updating path recorded on map");
+
         GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
         if (pathRecordedSource != null) {
-            pathRecordedSource.setGeoJson(FeatureCollection.fromFeatures(
+
+            FeatureCollection featureCollection = FeatureCollection.fromFeatures(
                     new Feature[] {Feature.fromGeometry(
                             LineString.fromLngLats(pathRecorder.getPath())
                     )}
-            ));
+            );
+
+            runOnUiThread(() -> pathRecordedSource.setGeoJson(featureCollection));
         }
     }
 
@@ -848,6 +860,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     )}
             ));
         }
+    }
+
+    private void addPOI(View view) {
+        pathRecorder.addPOI("https://storage.googleapis.com/cycling-fizz-pt.appspot.com/tte.jpg", "Doggo", "Thats a good boi", Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude()));
     }
 
 
