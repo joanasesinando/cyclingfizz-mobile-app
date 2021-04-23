@@ -175,6 +175,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private MapView mapView;
     private MapboxMap mapboxMap;
+    private String mapStyle;
     private PathRecorder pathRecorder;
 
     /// -------------- PERMISSIONS -------------- ///
@@ -214,7 +215,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         sharedState = (SharedState) getApplicationContext();
         mAuth = FirebaseAuth.getInstance();
-
 
         checkIfRenting();
 
@@ -260,7 +260,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // Set layers btn click listener
         FloatingActionButton layersBtn = findViewById(R.id.btn_map_layers);
-        layersBtn.setOnClickListener(this::changeLayerStyle);
+        layersBtn.setOnClickListener(v -> changeLayerStyle(this.mapStyle.equals(Style.MAPBOX_STREETS) ?
+                Style.SATELLITE_STREETS : Style.MAPBOX_STREETS));
 
         // Set sidebar
         sidebar = new Sidebar(this);
@@ -322,8 +323,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(@NonNull final MapboxMap mapboxMap) {
         this.mapboxMap = mapboxMap;
+        this.mapStyle = Style.MAPBOX_STREETS;
 
-        mapboxMap.setStyle(Style.MAPBOX_STREETS, style -> {
+        mapboxMap.setStyle(this.mapStyle, style -> {
             style.setTransition(new TransitionOptions(0, 0, false));
 
             mapboxMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(
@@ -649,8 +651,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     /*** ------------ CAMERA & CONTROLS ------------- ***/
     /*** -------------------------------------------- ***/
 
-    private void changeLayerStyle(View view) {
-        //TODO
+    private void changeLayerStyle(String styleType) {
+        this.mapStyle = styleType;
+        mapboxMap.setStyle(styleType, style -> {
+            addIcons(style);
+            addCycleways(style);
+            addGiraStations(style);
+            initPathRecordedLayer(style);
+        });
     }
 
     Handler hideCompassBtn = new Handler();
