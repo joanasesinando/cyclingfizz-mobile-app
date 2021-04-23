@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Message;
 import android.util.JsonReader;
 import android.util.Log;
+import android.util.LruCache;
 import android.util.Patterns;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,11 +21,13 @@ import android.widget.TextView;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.common.util.IOUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mapbox.geojson.Point;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -34,10 +37,12 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
@@ -186,6 +191,8 @@ public final class Utils {
     /*** --------------- HTTP REQUESTS -------------- ***/
     /*** -------------------------------------------- ***/
 
+
+
     public interface OnTaskCompleted<T> {
         void onTaskCompleted(T obj);
     }
@@ -193,9 +200,11 @@ public final class Utils {
     public static class httpRequestJson extends AsyncTask<String, Void, JsonObject> {
 
         private final OnTaskCompleted<JsonObject> callback;
+        private final Cache cache;
 
         public httpRequestJson(OnTaskCompleted<JsonObject> callback) {
             this.callback = callback;
+            this.cache = Cache.getInstance();
         }
 
         @Override
@@ -205,6 +214,9 @@ public final class Utils {
         @Override
         protected JsonObject doInBackground(String[] urls) {
             URL url;
+
+
+
             try {
                 url = new URL(urls[0]);
                 HttpURLConnection connection;
@@ -213,10 +225,19 @@ public final class Utils {
                 connection.connect();
                 InputStream input = connection.getInputStream();
 
-                return JsonParser.parseReader( new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
+                JsonObject jsonObject = JsonParser.parseReader( new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
+
+                cache.save(urls[0], jsonObject.toString().getBytes(StandardCharsets.UTF_8));
+                return jsonObject;
 
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage());
+
+                byte[] cachedValue = cache.get(urls[0]);
+
+                if (cachedValue != null && cachedValue.length > 0) {
+                    return JsonParser.parseString(new String(cachedValue, StandardCharsets.UTF_8)).getAsJsonObject();
+                }
             }
             return null;
         }
@@ -230,9 +251,12 @@ public final class Utils {
     public static class httpRequestImage extends AsyncTask<String, Void, Bitmap> {
 
         private final OnTaskCompleted<Bitmap> callback;
+        private final Cache cache;
+
 
         public httpRequestImage(OnTaskCompleted<Bitmap> callback) {
             this.callback = callback;
+            this.cache = Cache.getInstance();
         }
 
         @Override
@@ -242,6 +266,15 @@ public final class Utils {
         @Override
         protected Bitmap doInBackground(String[] urls) {
             URL url;
+            byte[] cachedValue = cache.get(urls[0]);
+
+            if (cachedValue != null && cachedValue.length > 0) {
+                Log.d(TAG, "Got " + urls[0] + " from cache");
+                Log.d(TAG, "Got value -> " + Arrays.toString(cachedValue));
+
+                return BitmapFactory.decodeByteArray(cachedValue, 0, cachedValue.length);
+            }
+
             try {
                 url = new URL(urls[0]);
                 HttpURLConnection connection;
@@ -250,10 +283,22 @@ public final class Utils {
                 connection.connect();
                 InputStream input = connection.getInputStream();
 
-                return BitmapFactory.decodeStream(input);
+                byte[] bytes = IOUtils.toByteArray(input);
+
+                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+
+                cache.save(urls[0], bytes);
+
+                return bitmap;
 
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage());
+
+                cachedValue = cache.get(urls[0]);
+
+                if (cachedValue != null && cachedValue.length > 0) {
+                    return BitmapFactory.decodeByteArray(cachedValue, 0, cachedValue.length);
+                }
             }
             return null;
         }
@@ -281,6 +326,7 @@ public final class Utils {
         @Override
         protected JsonObject doInBackground(String[] urls) {
             URL url;
+
             try {
                 url = new URL(urls[0]);
                 HttpURLConnection connection;

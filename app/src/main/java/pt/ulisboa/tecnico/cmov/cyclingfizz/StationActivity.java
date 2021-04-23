@@ -140,13 +140,10 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
                         setTravelingModeEstimates(userLocation, coord, mode.getLabel());
                     } catch (IOException e) {
                         Log.e(TAG, e.getMessage());
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                View modeCounter = findViewById(getResources()
-                                        .getIdentifier("mode_" + mode.getLabel(), null, null));
-                                modeCounter.setVisibility(View.GONE);
-                            }
+                        runOnUiThread(() -> {
+                            View modeCounter = findViewById(getResources()
+                                    .getIdentifier("mode_" + mode.getLabel(), null, null));
+                            if (modeCounter != null) modeCounter.setVisibility(View.GONE);
                         });
                     }
                 }
@@ -253,51 +250,48 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
         String durationText = status.equals("OK") ? info.get("duration").getAsJsonObject().get("text").getAsString() : null;
 
         // Update views
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                View item = null;
-                ImageView icon;
-                TextView duration;
-                TextView distance;
+        runOnUiThread(() -> {
+            View item = null;
+            ImageView icon;
+            TextView duration;
+            TextView distance;
 
-                switch (mode) {
-                    case "driving":
-                        item = findViewById(R.id.mode_driving);
-                        icon = item.findViewById(R.id.map_info_counter_icon);
-                        icon.setImageResource(R.drawable.ic_baseline_directions_car_24);
-                        break;
+            switch (mode) {
+                case "driving":
+                    item = findViewById(R.id.mode_driving);
+                    icon = item.findViewById(R.id.map_info_counter_icon);
+                    icon.setImageResource(R.drawable.ic_baseline_directions_car_24);
+                    break;
 
-                    case "walking":
-                        item = findViewById(R.id.mode_walking);
-                        icon = item.findViewById(R.id.map_info_counter_icon);
-                        icon.setImageResource(R.drawable.ic_round_directions_walk_24);
-                        break;
+                case "walking":
+                    item = findViewById(R.id.mode_walking);
+                    icon = item.findViewById(R.id.map_info_counter_icon);
+                    icon.setImageResource(R.drawable.ic_round_directions_walk_24);
+                    break;
 
-                    case "transit":
-                        item = findViewById(R.id.mode_transit);
-                        icon = item.findViewById(R.id.map_info_counter_icon);
-                        icon.setImageResource(R.drawable.ic_round_directions_bus_24);
-                        break;
+                case "transit":
+                    item = findViewById(R.id.mode_transit);
+                    icon = item.findViewById(R.id.map_info_counter_icon);
+                    icon.setImageResource(R.drawable.ic_round_directions_bus_24);
+                    break;
 
-                    case "bicycling":
-                        item = findViewById(R.id.mode_bicycling);
-                        icon = item.findViewById(R.id.map_info_counter_icon);
-                        icon.setImageResource(R.drawable.ic_round_directions_bike_24);
-                        break;
-                }
-
-                urlConnection.disconnect();
-                if (!status.equals("OK")) {
-                    item.setVisibility(View.GONE);
-                    return;
-                }
-
-                duration = item.findViewById(R.id.map_info_counter_duration);
-                duration.setText(durationText);
-                distance = item.findViewById(R.id.map_info_counter_distance);
-                distance.setText(distanceText);
+                case "bicycling":
+                    item = findViewById(R.id.mode_bicycling);
+                    icon = item.findViewById(R.id.map_info_counter_icon);
+                    icon.setImageResource(R.drawable.ic_round_directions_bike_24);
+                    break;
             }
+
+            urlConnection.disconnect();
+            if (!status.equals("OK")) {
+                item.setVisibility(View.GONE);
+                return;
+            }
+
+            duration = item.findViewById(R.id.map_info_counter_duration);
+            duration.setText(durationText);
+            distance = item.findViewById(R.id.map_info_counter_distance);
+            distance.setText(distanceText);
         });
     }
 
@@ -308,6 +302,8 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
 
     private void getCurrentBikesAndFreeDocks() {
         (new Utils.httpRequestJson(obj -> {
+            if (obj == null) return;
+
             if (obj.get("status").getAsString().equals("success")) {
                 JsonObject data = obj.get("data").getAsJsonObject();
 
