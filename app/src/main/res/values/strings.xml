@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Cycling Fizz</string>
     <string name="street_view">Street view</string>
+    <string name="new_poi">New point of interest</string>
 
     <!-- Actions -->
     <string name="get_started">Get Started</string>
@@ -24,6 +25,7 @@
     <string name="record">Record</string>
     <string name="save">Save</string>
     <string name="delete">Delete</string>
+    <string name="pick_photos">Pick photos</string>
 
     <!-- States -->
     <string name="recording">Recording...</string>
@@ -34,6 +36,8 @@
     <string name="sign_in_required">Sign in required</string>
     <string name="renting_dialog_warning">You need to be signed in to rent a bike.</string>
     <string name="creating_route_dialog_warning">You need to be signed in to create a route.</string>
+    <string name="name_required">Name required</string>
+    <string name="description_required">Description required</string>
 
     <!-- Messages -->
     <string name="route_recorded">Route recorded</string>
@@ -108,6 +112,10 @@
     <string name="create_failed">Could not create account.</string>
     <string name="passwords_not_match">Passwords don\'t match</string>
     <string name="email_duplicated">This email already have an account registered.</string>
+
+    <!-- Routes -->
+    <string name="name">Name</string>
+    <string name="description">Description</string>
 
 
     <!-- Location Permissions -->

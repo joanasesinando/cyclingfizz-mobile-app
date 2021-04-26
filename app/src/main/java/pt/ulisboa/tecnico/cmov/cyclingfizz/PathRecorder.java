@@ -1,11 +1,7 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
-import android.os.SystemClock;
 import android.util.Log;
-import android.view.View;
-import android.widget.Chronometer;
 
-import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonArray;
@@ -44,7 +40,7 @@ public class PathRecorder {
     }
 
     public boolean isPreparingToRecord() {
-        cleanGeoJson();
+        cleanGeoJson(); //FIXME: remove from here
         return preparingToRecord;
     }
 
@@ -85,9 +81,8 @@ public class PathRecorder {
         return true;
     }
 
-    public void addPOI(String mediaLink, String title, String text, Point point) {
-
-        PointOfInterest pointOfInterest = new PointOfInterest(mediaLink, title, text, point);
+    public void addPOI(String mediaLink, String name, String description, Point coord) {
+        PointOfInterest pointOfInterest = new PointOfInterest(mediaLink, name, description, coord);
         POIs.add(pointOfInterest);
         Log.v(TAG, "add POI -> " + pointOfInterest.toJson().toString());
     }
@@ -170,24 +165,23 @@ public class PathRecorder {
     private static class PointOfInterest {
 
         private final String mediaLink;
-        private final String title;
-        private final String text;
-        private final Point point;
+        private final String name;
+        private final String description;
+        private final Point coord;
 
-        public PointOfInterest(String mediaLink, String title, String text, Point point) {
+        public PointOfInterest(String mediaLink, String name, String description, Point coord) {
             this.mediaLink = mediaLink;
-            this.title = title;
-            this.text = text;
-            this.point = point;
+            this.name = name;
+            this.description = description;
+            this.coord = coord;
         }
 
         public JsonObject toJson() {
             JsonObject data = new JsonObject();
             data.addProperty("mediaLink", mediaLink);
-            data.addProperty("title", title);
-            data.addProperty("text", text);
-            data.addProperty("point", Feature.fromGeometry(point).toJson());
-
+            data.addProperty("title", name);
+            data.addProperty("text", description);
+            data.addProperty("point", Feature.fromGeometry(coord).toJson());
             return data;
         }
 

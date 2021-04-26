@@ -172,6 +172,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public final static String STATION_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.STATION_INFO";
     public final static String CYCLEWAY_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.CYCLEWAY_INFO";
     public final static String USER_LOCATION = "pt.ulisboa.tecnico.cmov.cyclingfizz.USER_LOCATION";
+    public final static String POI_LOCATION = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI_LOCATION";
 
     private MapView mapView;
     private MapboxMap mapboxMap;
@@ -780,25 +781,26 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
         addPOIBtn.setVisibility(View.VISIBLE);
-        addPOIBtn.setOnClickListener(this::addPOI);
+        addPOIBtn.setOnClickListener(v -> addPOI());
 
         FloatingActionButton stopRecordingBtn = findViewById(R.id.btn_map_stop_recording);
         stopRecordingBtn.setVisibility(View.VISIBLE);
-        stopRecordingBtn.setOnClickListener(this::stopRecordingRoute);
+        stopRecordingBtn.setOnClickListener(v -> stopRecordingRoute());
 
         ExtendedFloatingActionButton recordingFlag = findViewById(R.id.flag_recording);
         recordingFlag.setVisibility(View.VISIBLE);
     }
 
-    private void stopRecordingRoute(View view) {
+    private void stopRecordingRoute() {
         // Stop recording
         pathRecorder.stopRecording();
         cleanPathRecorded();
         setMapboxCameraFollowUser();
         updateCurrentLocationBtn();
         updateMapboxCamera(mapboxMap.getLocationComponent());
-        pointToNorth();
         updateLocationRequestNotRecording();
+        pointToNorth();
+
         // Update view
         FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
         addPOIBtn.setVisibility(View.GONE);
@@ -818,8 +820,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 })
                 .setPositiveButton(R.string.save, (dialog, which) -> {
                     // Respond to positive button press
-                    //TODO: create dialog for saving route
                     pathRecorder.saveRecording();
+                    //TODO: go to save activity
                 })
                 .show();
     }
@@ -870,8 +872,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
-    private void addPOI(View view) {
-        pathRecorder.addPOI("https://storage.googleapis.com/cycling-fizz-pt.appspot.com/tte.jpg", "Doggo", "Thats a good boi", Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude()));
+    private void addPOI() {
+        Intent intent = new Intent(this, AddPOIActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(POI_LOCATION, userLocation);
+        intent.putExtras(bundle);
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
     }
 
 
