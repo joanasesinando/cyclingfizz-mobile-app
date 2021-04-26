@@ -10,7 +10,7 @@
 
     <include
         android:id="@+id/include"
-        layout="@layout/back_bar"
+        layout="@layout/street_view_action_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
