@@ -40,11 +40,12 @@ public class PathRecorder {
     }
 
     public boolean isPreparingToRecord() {
-        cleanGeoJson(); //FIXME: remove from here
         return preparingToRecord;
     }
 
     public void setPreparingToRecord(boolean preparingToRecord) {
+        if (preparingToRecord)
+            cleanGeoJson();
         this.preparingToRecord = preparingToRecord;
     }
 
