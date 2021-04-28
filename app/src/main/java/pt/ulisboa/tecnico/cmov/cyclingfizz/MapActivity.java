@@ -856,8 +856,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         style.addLayer(pathRecorded);
 
         // Init POIs layer
+        ArrayList<Feature> features = new ArrayList<>();
+        for (Point poi : pathRecorder.getPOIsAsPoints()) {
+            features.add(Feature.fromGeometry(poi));
+        }
         style.addSource(new GeoJsonSource(POI_SOURCE_ID,
-                FeatureCollection.fromFeatures(new Feature[] {}),
+                FeatureCollection.fromFeatures(features.toArray(new Feature[0])),
                 new GeoJsonOptions()
                     .withCluster(true)
                     .withClusterMaxZoom(14)
