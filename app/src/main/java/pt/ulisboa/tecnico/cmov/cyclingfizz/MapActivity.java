@@ -376,22 +376,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 Bundle bundle;
                 switch (itemSelected) {
                     case "POI":
-                        Point POICoord = (Point) feature.geometry();
-                        int POIIndex = pathRecorder.getPOIIndexFromCoordinates(POICoord.latitude(), POICoord.longitude());
-                        if (POIIndex == -1) {
-                            Log.e(TAG, "POI not found");
-                            return true;
-                        }
+                        int poiIndex = feature.getNumberProperty("id").intValue();
 
                         new MaterialAlertDialogBuilder(this)
-                                .setTitle(pathRecorder.getPOIName(POIIndex))
+                                .setTitle(pathRecorder.getPOIs().get(poiIndex).getName())
                                 .setMessage(R.string.deleting_poi_dialog_warning)
                                 .setNeutralButton(R.string.cancel, (dialog, which) -> {
                                     // Respond to neutral button press
                                 })
                                 .setPositiveButton(R.string.delete, (dialog, which) -> {
                                     // Respond to positive button press
-                                    pathRecorder.removePOI(POIIndex);
+                                    pathRecorder.removePOI(poiIndex);
                                     updatePOIsOnMap();
                                 })
                                 .show();
@@ -902,8 +897,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // Init POIs layer
         ArrayList<Feature> features = new ArrayList<>();
-        for (Point poi : pathRecorder.getPOIsAsPoints()) {
-            features.add(Feature.fromGeometry(poi));
+        int i = 0;
+        for (PathRecorder.PointOfInterest poi : pathRecorder.getPOIs()) {
+            Feature poiFeature = Feature.fromGeometry(poi.getCoord());
+            poiFeature.addNumberProperty("id", i++);
+            features.add(poiFeature);
         }
         style.addSource(new GeoJsonSource(POI_SOURCE_ID,
                 FeatureCollection.fromFeatures(features.toArray(new Feature[0])),
@@ -976,8 +974,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         GeoJsonSource POIsSource = mapboxMap.getStyle().getSourceAs(POI_SOURCE_ID);
         if (POIsSource != null) {
             ArrayList<Feature> features = new ArrayList<>();
-            for (Point poi : pathRecorder.getPOIsAsPoints()) {
-                features.add(Feature.fromGeometry(poi));
+            int i = 0;
+            for (PathRecorder.PointOfInterest poi : pathRecorder.getPOIs()) {
+                Feature poiFeature = Feature.fromGeometry(poi.getCoord());
+                poiFeature.addNumberProperty("id", i++);
+                features.add(poiFeature);
             }
             FeatureCollection featureCollection = FeatureCollection.fromFeatures(
                     features.toArray(new Feature[0])

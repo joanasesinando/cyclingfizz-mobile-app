@@ -68,22 +68,13 @@ public class PathRecorder {
         return path;
     }
 
-    public ArrayList<Point> getPOIsAsPoints() {
-        ArrayList<Point> pois = new ArrayList<>();
-        for (PointOfInterest poi : POIs) {
-            pois.add(poi.getCoord());
-        }
-        return pois;
-    }
-
-    public String getPOIName(int index) {
-        return POIs.get(index).name;
+    public ArrayList<PointOfInterest> getPOIs() {
+        return POIs;
     }
 
     public void startRecording() {
         cleanGeoJson();
         isRecording = true;
-        Log.v(TAG, "Gravando");
     }
 
     public void stopRecording() {
@@ -97,11 +88,9 @@ public class PathRecorder {
 
     public boolean addPointToPath(Point point) {
         if (path.size() > 0 && Utils.distanceBetweenPointsInMeters(path.get(path.size() - 1), point) < 5) {
-            Log.v(TAG, "ponto ignorado, menos de 5 metros");
             return false;
         }
         path.add(point);
-        Log.v(TAG, "add -> " + point.toString());
         return true;
     }
 
@@ -109,22 +98,12 @@ public class PathRecorder {
         PointOfInterest pointOfInterest = new PointOfInterest(mediaLink, name, description, coord);
         POIs.add(pointOfInterest);
         POIAdded = true;
-        Log.v(TAG, "add POI -> " + pointOfInterest.toJson().toString());
     }
 
     public void removePOI(int index) {
         POIs.remove(index);
     }
 
-    public int getPOIIndexFromCoordinates(double lat, double lon) {
-        final double THRESHOLD = .0001;
-        for (int i = 0; i < POIs.size(); i++) {
-            PointOfInterest poi = POIs.get(i);
-            if (Math.abs(poi.coord.latitude() - lat) < THRESHOLD && Math.abs(poi.coord.longitude() - lon) < THRESHOLD)
-                return i;
-        }
-        return -1;
-    }
 
     public void cleanGeoJson() {
         path.clear();
@@ -165,7 +144,7 @@ public class PathRecorder {
         }
     }
 
-    private static class Route {
+    public static class Route {
 
         private final String routeJson;
         private final String idToken;
@@ -195,7 +174,7 @@ public class PathRecorder {
         }
     }
 
-    private static class PointOfInterest {
+    public static class PointOfInterest {
 
         private final String mediaLink;
         private final String name;
@@ -211,6 +190,10 @@ public class PathRecorder {
 
         public Point getCoord() {
             return coord;
+        }
+
+        public String getName() {
+            return name;
         }
 
         public JsonObject toJson() {
