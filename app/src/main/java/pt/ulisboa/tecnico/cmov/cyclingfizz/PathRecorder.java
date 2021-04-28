@@ -16,6 +16,7 @@ import java.util.ArrayList;
 public class PathRecorder {
     static String TAG = "Cycling_Fizz@PathRecorder";
     static String SERVER_URL = "https://stations.cfservertest.ga";
+//    static String SERVER_URL = "https://40e6706df2fb.ngrok.io";
 
     private static PathRecorder INSTANCE = null;
 
@@ -216,7 +217,7 @@ public class PathRecorder {
             JsonObject data = new JsonObject();
             data.addProperty("mediaLink", mediaLink);
             data.addProperty("title", name);
-            data.addProperty("text", description);
+            data.addProperty("description", description);
             data.addProperty("point", Feature.fromGeometry(coord).toJson());
             return data;
         }

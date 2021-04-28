@@ -53,7 +53,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/end_ride"
-                style="@style/Widget.MaterialComponents.Button.Icon"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:paddingVertical="8dp"
@@ -66,6 +66,8 @@
                 android:backgroundTint="@color/white"
                 android:layout_marginStart="8dp"
                 android:layout_weight="0.5"/>
+
+
         </LinearLayout>
 
     </LinearLayout>

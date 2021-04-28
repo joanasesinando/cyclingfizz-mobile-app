@@ -185,6 +185,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private String mapStyle;
     private PathRecorder pathRecorder;
 
+    private boolean endTripFlag = false;
+
     /// -------------- PERMISSIONS -------------- ///
 
     private final ActivityResultLauncher<String> requestPermissionLauncher =
@@ -1047,7 +1049,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                             // Set end ride btn listener
                             MaterialButton btnStop = findViewById(R.id.end_ride);
-                            btnStop.setOnClickListener(v -> checkForStationsInRange());
+                            btnStop.setOnClickListener(v -> {
+                                endTripFlag = true;
+                                checkForStationsInRange();
+                            });
 
                             // Set lock bike listener
                             MaterialButton btnLock = findViewById(R.id.lock_bike);
@@ -1230,10 +1235,16 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         Log.e("Cycling_Fizz_peers", "onPeersAvailable - map activity");
         boolean isClose = peers.getDeviceList().size() > 0;
 
+        MaterialButton btnStop = findViewById(R.id.end_ride);
+        btnStop.setEnabled(isClose);
+        btnStop.setAlpha(isClose ? 1f : 0.5f);
+
         if (!isClose) {
             Toast.makeText(this, "No stations nearby", Toast.LENGTH_SHORT).show();
+            endTripFlag = false;
             return;
         }
+
 
         for (SimWifiP2pDevice device : peers.getDeviceList()) {
             // Get beacon ID
@@ -1241,9 +1252,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             String beaconID = beaconName.contains("_") ? beaconName.split("_")[1] : beaconName;
 
             Toast.makeText(this, "Station " + beaconID + " is in range", Toast.LENGTH_SHORT).show();
-            endTrip(beaconID);
+
+            if (endTripFlag)
+                endTrip(beaconID);
             break;
         }
+
+        endTripFlag = false;
     }
 
 
