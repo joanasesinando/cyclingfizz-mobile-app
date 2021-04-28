@@ -165,6 +165,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     static String PATH_RECORDED_SOURCE_ID = "path-recorded-source";
     static String PATH_RECORDED_LAYER_ID = "path-recorded-layer";
 
+    static String POI_SOURCE_ID = "poi-source";
+    static String POI_ICON_ID = "poi-icon";
+    static String POI_LAYER_ID = "poi-layer";
+    static String POI_CLUSTER_LAYER_ID = "poi-cluster-layer";
+    static String POI_COUNT_LAYER_ID = "poi-count-layer";
+
     static Long LOCATION_UPDATE_INTERVAL = 1000L;
     static Long LOCATION_UPDATE_MAX_WAIT_INTERVAL = LOCATION_UPDATE_INTERVAL;
 //    static Long LOCATION_UPDATE_MAX_WAIT_INTERVAL = LOCATION_UPDATE_INTERVAL * 5;
@@ -241,8 +247,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 (new Thread(() -> {
                     if (pathRecorder.isRecording()) {
                         boolean pointAdded = pathRecorder.addPointToPath(Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude()));
-                        if (pointAdded) {
-                            addPathRecorded();
+                        if (pointAdded || pathRecorder.POIAdded()) {
+                            updateRoute();
+                            pathRecorder.setPOIAdded(false);
                         }
                     }
                 })).start();
@@ -335,7 +342,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             addIcons(style);
             addCycleways(style);
             addGiraStations(style);
-            initPathRecordedLayer(style);
+            initRouteLayer(style);
 
             mapboxMap.addOnMapClickListener(point -> {
 
@@ -429,6 +436,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void addIcons(@NonNull Style loadedMapStyle) {
         loadedMapStyle.addImage(GIRA_ICON_ID, Objects.requireNonNull(BitmapUtils.getBitmapFromDrawable(
                 getResources().getDrawable(R.drawable.ic_gira_marker))));
+
+        loadedMapStyle.addImage(POI_ICON_ID, Objects.requireNonNull(BitmapUtils.getBitmapFromDrawable(
+                getResources().getDrawable(R.drawable.ic_poi_marker))));
     }
 
     private void addGiraStations(@NonNull Style loadedMapStyle) {
@@ -658,7 +668,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             addIcons(style);
             addCycleways(style);
             addGiraStations(style);
-            initPathRecordedLayer(style);
+            initRouteLayer(style);
         });
     }
 
@@ -794,7 +804,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void stopRecordingRoute() {
         // Stop recording
         pathRecorder.stopRecording();
-        cleanPathRecorded();
+        cleanRoute();
         setMapboxCameraFollowUser();
         updateCurrentLocationBtn();
         updateMapboxCamera(mapboxMap.getLocationComponent());
@@ -817,6 +827,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .setMessage(R.string.route_recorded_message)
                 .setNeutralButton(R.string.delete, (dialog, which) -> {
                     // Respond to neutral button press
+                    pathRecorder.cleanGeoJson();
                 })
                 .setPositiveButton(R.string.save, (dialog, which) -> {
                     // Respond to positive button press
@@ -826,7 +837,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .show();
     }
 
-    private void initPathRecordedLayer(@NonNull Style style) {
+    private void initRouteLayer(@NonNull Style style) {
+        // Init path recorded layer
         style.addSource(new GeoJsonSource(PATH_RECORDED_SOURCE_ID,
                 FeatureCollection.fromFeatures(new Feature[] {Feature.fromGeometry(
                         LineString.fromLngLats(pathRecorder.getPath())
@@ -842,26 +854,93 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         );
 
         style.addLayer(pathRecorded);
+
+        // Init POIs layer
+        style.addSource(new GeoJsonSource(POI_SOURCE_ID,
+                FeatureCollection.fromFeatures(new Feature[] {}),
+                new GeoJsonOptions()
+                    .withCluster(true)
+                    .withClusterMaxZoom(14)
+                    .withClusterRadius(50)
+            )
+        );
+
+        //Creating a marker layer for single data points
+        SymbolLayer unclustered = new SymbolLayer(POI_LAYER_ID, POI_SOURCE_ID);
+
+        unclustered.setProperties(
+                iconImage(POI_ICON_ID),
+                iconAnchor(Property.ICON_ANCHOR_BOTTOM),
+                iconSize(literal(.5f))
+        );
+
+        unclustered.setFilter(not(has("point_count")));
+        style.addLayer(unclustered);
+
+        CircleLayer circles = new CircleLayer(POI_CLUSTER_LAYER_ID, POI_SOURCE_ID);
+
+        //Add clusters' circles
+        circles.setProperties(
+                circleColor(getResources().getColor(R.color.purple)),
+                circleRadius(step(get("point_count"), 25,
+                        stop(5, 35),
+                        stop(10, 45),
+                        stop(20, 55))),
+                circleOpacity(0.8f)
+        );
+        circles.setFilter(has("point_count"));
+        style.addLayer(circles);
+
+        //Add the count labels
+        SymbolLayer count = new SymbolLayer(POI_COUNT_LAYER_ID, POI_SOURCE_ID);
+        count.setProperties(
+                textField(Expression.toString(get("point_count"))),
+                textSize(12f),
+                textColor(getResources().getColor(R.color.white)),
+                textIgnorePlacement(true),
+                textAllowOverlap(true),
+                textFont(Expression.literal(R.font.quicksand_bold))
+        );
+        style.addLayer(count);
     }
 
-    private void addPathRecorded() {
-        Log.d(TAG, "updating path recorded on map");
+    private void updateRoute() {
+        updatePathRecordedOnMap();
+        updatePOIsOnMap();
+    }
 
+    private void updatePathRecordedOnMap() {
+        Log.d(TAG, "Updating path recorded on map");
         GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
         if (pathRecordedSource != null) {
-
             FeatureCollection featureCollection = FeatureCollection.fromFeatures(
                     new Feature[] {Feature.fromGeometry(
                             LineString.fromLngLats(pathRecorder.getPath())
                     )}
             );
-
             runOnUiThread(() -> pathRecordedSource.setGeoJson(featureCollection));
         }
     }
 
-    private void cleanPathRecorded() {
-        Log.d(TAG, "cleaning path recorded on map");
+    private void updatePOIsOnMap() {
+        Log.d(TAG, "Updating POIs on map");
+        GeoJsonSource POIsSource = mapboxMap.getStyle().getSourceAs(POI_SOURCE_ID);
+        if (POIsSource != null) {
+            ArrayList<Feature> features = new ArrayList<>();
+            for (Point poi : pathRecorder.getPOIsAsPoints()) {
+                features.add(Feature.fromGeometry(poi));
+            }
+            FeatureCollection featureCollection = FeatureCollection.fromFeatures(
+                    features.toArray(new Feature[0])
+            );
+            runOnUiThread(() -> POIsSource.setGeoJson(featureCollection));
+        }
+    }
+
+    private void cleanRoute() {
+        Log.d(TAG, "Cleaning route");
+
+        // Cleaning path recorded
         GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
         if (pathRecordedSource != null) {
             pathRecordedSource.setGeoJson(FeatureCollection.fromFeatures(
@@ -869,6 +948,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                             LineString.fromLngLats(new ArrayList<Point>())
                     )}
             ));
+        }
+
+        // Cleaning POIs
+        GeoJsonSource POIsSource = mapboxMap.getStyle().getSourceAs(POI_SOURCE_ID);
+        if (POIsSource != null) {
+            POIsSource.setGeoJson(FeatureCollection.fromFeatures(new Feature[] {}));
         }
     }
 

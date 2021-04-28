@@ -6,14 +6,12 @@ import android.location.Location;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
 import com.mapbox.geojson.Point;
 
-import java.nio.file.Path;
 import java.util.Objects;
 
 public class AddPOIActivity extends AppCompatActivity {
@@ -116,7 +114,6 @@ public class AddPOIActivity extends AppCompatActivity {
 
     private void savePOI() {
         // Clean error messages
-        boolean error = false;
         nameInputLayout.setError(null);
         descriptionInputLayout.setError(null);
 
@@ -125,7 +122,7 @@ public class AddPOIActivity extends AppCompatActivity {
         String description = Objects.requireNonNull(descriptionInputLayout.getEditText()).getText().toString();
 
         // Check for errors
-        error = checkForErrors(name, description);
+        boolean error = checkForErrors(name, description);
 
         if (!error) {
             pathRecorder.addPOI(DEFAULT_MEDIA_LINK, name, description, coordPOI);

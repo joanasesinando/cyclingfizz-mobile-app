@@ -24,6 +24,8 @@ public class PathRecorder {
     private boolean preparingToRecord;
     private boolean isRecording;
 
+    private boolean POIAdded;
+
     private final ArrayList<Point> path = new ArrayList<>();
 
     private final ArrayList<PointOfInterest> POIs = new ArrayList<>();
@@ -53,8 +55,24 @@ public class PathRecorder {
         return isRecording;
     }
 
+    public boolean POIAdded() {
+        return POIAdded;
+    }
+
+    public void setPOIAdded(boolean POIadded) {
+        this.POIAdded = POIadded;
+    }
+
     public ArrayList<Point> getPath() {
         return path;
+    }
+
+    public ArrayList<Point> getPOIsAsPoints() {
+        ArrayList<Point> pois = new ArrayList<>();
+        for (PointOfInterest poi : POIs) {
+            pois.add(poi.getCoord());
+        }
+        return pois;
     }
 
     public void startRecording() {
@@ -85,6 +103,7 @@ public class PathRecorder {
     public void addPOI(String mediaLink, String name, String description, Point coord) {
         PointOfInterest pointOfInterest = new PointOfInterest(mediaLink, name, description, coord);
         POIs.add(pointOfInterest);
+        POIAdded = true;
         Log.v(TAG, "add POI -> " + pointOfInterest.toJson().toString());
     }
 
@@ -96,14 +115,11 @@ public class PathRecorder {
     private Feature getFeature() {
         Feature feature = Feature.fromGeometry(LineString.fromLngLats(path));
         feature.addStringProperty("", "");
-
         return feature;
     }
 
     private void printFeature() {
         if (path.size() < 2) return;
-
-
         String jsonString = getFeature().toJson();
         Log.d(TAG, jsonString);
     }
@@ -128,9 +144,6 @@ public class PathRecorder {
         } else {
             Log.d(TAG, "Null User");
         }
-
-
-
     }
 
     private static class Route {
@@ -175,6 +188,10 @@ public class PathRecorder {
             this.name = name;
             this.description = description;
             this.coord = coord;
+        }
+
+        public Point getCoord() {
+            return coord;
         }
 
         public JsonObject toJson() {
