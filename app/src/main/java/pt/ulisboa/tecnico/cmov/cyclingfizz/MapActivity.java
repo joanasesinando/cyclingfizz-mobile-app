@@ -351,31 +351,74 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                 List<Feature> giraFeatureList = mapboxMap.queryRenderedFeatures(rectF, GIRA_STATION_LAYER_ID);
                 List<Feature> cyclewaysFeatureList = mapboxMap.queryRenderedFeatures(rectF, CYCLEWAYS_LAYER_ID);
+                List<Feature> poisFeatureList = mapboxMap.queryRenderedFeatures(rectF, POI_LAYER_ID);
 
                 // Open only one
-                Feature feature = giraFeatureList.size() > 0 ? giraFeatureList.get(0) : null;
+                // Priority: POI > Gira > cycleway
+                String itemSelected = "";
+                Feature feature = null;
+                if (poisFeatureList.size() > 0) {
+                    itemSelected = "POI";
+                    feature = poisFeatureList.get(0);
 
-                if (feature != null) {
-                    Intent intent = new Intent(this, StationActivity.class);
-                    intent.putExtra(STATION_INFO, feature.toJson());
-                    Bundle bundle = new Bundle();
-                    bundle.putParcelable(USER_LOCATION, userLocation);
-                    intent.putExtras(bundle);
-                    startActivity(intent);
+                } else if (giraFeatureList.size() > 0) {
+                    itemSelected = "gira-station";
+                    feature = giraFeatureList.get(0);
 
-                } else {
-                    feature = cyclewaysFeatureList.size() > 0 ? cyclewaysFeatureList.get(0) : null;
-                    if (feature == null) return true;
-
-                    Intent intent = new Intent(this, CyclewayActivity.class);
-                    intent.putExtra(CYCLEWAY_INFO, feature.toJson());
-                    intent.putExtra(CYCLEWAY_INFO + ".point", (Point.fromLngLat(point.getLongitude(), point.getLatitude())).toJson());
-                    Bundle bundle = new Bundle();
-                    bundle.putParcelable(USER_LOCATION, userLocation);
-                    intent.putExtras(bundle);
-                    startActivity(intent);
+                } else if (cyclewaysFeatureList.size() > 0){
+                    itemSelected = "cycleway";
+                    feature = cyclewaysFeatureList.get(0);
                 }
-                overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+
+                Intent intent;
+                Bundle bundle;
+                switch (itemSelected) {
+                    case "POI":
+                        Point POICoord = (Point) feature.geometry();
+                        int POIIndex = pathRecorder.getPOIIndexFromCoordinates(POICoord.latitude(), POICoord.longitude());
+                        if (POIIndex == -1) {
+                            Log.e(TAG, "POI not found");
+                            return true;
+                        }
+
+                        new MaterialAlertDialogBuilder(this)
+                                .setTitle(pathRecorder.getPOIName(POIIndex))
+                                .setMessage(R.string.deleting_poi_dialog_warning)
+                                .setNeutralButton(R.string.cancel, (dialog, which) -> {
+                                    // Respond to neutral button press
+                                })
+                                .setPositiveButton(R.string.delete, (dialog, which) -> {
+                                    // Respond to positive button press
+                                    pathRecorder.removePOI(POIIndex);
+                                    updatePOIsOnMap();
+                                })
+                                .show();
+                        break;
+
+                    case "gira-station":
+                        intent = new Intent(this, StationActivity.class);
+                        intent.putExtra(STATION_INFO, feature.toJson());
+                        bundle = new Bundle();
+                        bundle.putParcelable(USER_LOCATION, userLocation);
+                        intent.putExtras(bundle);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                        break;
+
+                    case "cycleway":
+                        intent = new Intent(this, CyclewayActivity.class);
+                        intent.putExtra(CYCLEWAY_INFO, feature.toJson());
+                        intent.putExtra(CYCLEWAY_INFO + ".point", (Point.fromLngLat(point.getLongitude(), point.getLatitude())).toJson());
+                        bundle = new Bundle();
+                        bundle.putParcelable(USER_LOCATION, userLocation);
+                        intent.putExtras(bundle);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                        break;
+
+                    default:
+                        return true;
+                }
                 return true;
             });
 

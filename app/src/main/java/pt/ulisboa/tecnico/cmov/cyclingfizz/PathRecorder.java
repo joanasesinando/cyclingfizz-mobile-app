@@ -75,6 +75,10 @@ public class PathRecorder {
         return pois;
     }
 
+    public String getPOIName(int index) {
+        return POIs.get(index).name;
+    }
+
     public void startRecording() {
         cleanGeoJson();
         isRecording = true;
@@ -105,6 +109,20 @@ public class PathRecorder {
         POIs.add(pointOfInterest);
         POIAdded = true;
         Log.v(TAG, "add POI -> " + pointOfInterest.toJson().toString());
+    }
+
+    public void removePOI(int index) {
+        POIs.remove(index);
+    }
+
+    public int getPOIIndexFromCoordinates(double lat, double lon) {
+        final double THRESHOLD = .0001;
+        for (int i = 0; i < POIs.size(); i++) {
+            PointOfInterest poi = POIs.get(i);
+            if (Math.abs(poi.coord.latitude() - lat) < THRESHOLD && Math.abs(poi.coord.longitude() - lon) < THRESHOLD)
+                return i;
+        }
+        return -1;
     }
 
     public void cleanGeoJson() {
