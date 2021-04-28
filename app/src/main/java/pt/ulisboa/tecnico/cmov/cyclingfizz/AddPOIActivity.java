@@ -2,22 +2,38 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
+import android.content.ClipData;
+import android.content.Intent;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.GridLayout;
+import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
 import com.mapbox.geojson.Point;
 
+import java.util.Arrays;
 import java.util.Objects;
+
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
 public class AddPOIActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@AddPOI";
     final String DEFAULT_MEDIA_LINK = "https://storage.googleapis.com/cycling-fizz-pt.appspot.com/crane.jpg"; //FIXME: change
+    static final int PICK_IMAGES = 1;
 
     TextInputLayout nameInputLayout;
     TextInputLayout descriptionInputLayout;
@@ -38,15 +54,66 @@ public class AddPOIActivity extends AppCompatActivity {
         setInputs();
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        try {
+            if (requestCode == PICK_IMAGES && resultCode == RESULT_OK && data != null) {
+                GridLayout gallery = findViewById(R.id.new_poi_gallery);
+                final float scale = getResources().getDisplayMetrics().density;
+                int column = 3;
+                int c = 0, r = 0;
+
+                for (int i = 0; i < data.getClipData().getItemCount(); i++, c++) {
+                    // Get URI
+                    ClipData.Item item = data.getClipData().getItemAt(i);
+                    Uri uri = item.getUri();
+
+                    // Update view
+                    ImageView newImg = new ImageView(this);
+                    newImg.setImageURI(uri);
+                    GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+                    params.width = WRAP_CONTENT;
+                    params.height = (int) (100 * scale);
+                    if (c == column) {
+                        c = 0;
+                        r++;
+                    }
+                    params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+                    params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+                    newImg.setLayoutParams(params);
+                    newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    Log.d(TAG, "adding.....");
+                    gallery.addView(newImg, params);
+                }
+
+            } else {
+                Toast.makeText(this, "No photos selected", Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, Arrays.toString(e.getStackTrace()));
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
 
     /*** -------------------------------------------- ***/
     /*** -------------- USER INTERFACE -------------- ***/
     /*** -------------------------------------------- ***/
 
+    @SuppressLint("IntentReset")
     private void uiSetClickListeners() {
         // Set close btn click listener
         MaterialToolbar toolbar = findViewById(R.id.new_poi_toolbar).findViewById(R.id.topAppBar);
         toolbar.setNavigationOnClickListener(v -> finish());
+
+        // Set pick photos btn listener
+        MaterialButton pickPhotosBtn = findViewById(R.id.new_poi_pick_photos);
+        pickPhotosBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            intent.setType("image/*"); //FIXME: add video support
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            startActivityForResult(intent, PICK_IMAGES);
+        });
 
         // Set save btn click listener
         MaterialButton saveBtn = findViewById(R.id.save_poi);

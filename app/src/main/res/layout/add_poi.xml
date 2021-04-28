@@ -56,6 +56,25 @@
                     android:fontFamily="@font/quicksand" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <GridLayout
+                android:id="@+id/new_poi_gallery"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:columnCount="3"
+                android:layout_marginTop="20dp"
+                android:useDefaultMargins="true">
+
+<!--                <ImageView-->
+<!--                    android:id="@+id/new_poi_img_default"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="100dp"-->
+<!--                    android:src="@drawable/ic_default"-->
+<!--                    android:layout_columnWeight="1"-->
+<!--                    android:layout_rowWeight="1"-->
+<!--                    android:scaleType="centerCrop" />-->
+            </GridLayout>
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/new_poi_pick_photos"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"

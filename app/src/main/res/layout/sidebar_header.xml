@@ -18,7 +18,7 @@
             android:id="@+id/logged_user_avatar"
             android:layout_width="55dp"
             android:layout_height="55dp"
-            android:scaleType="fitXY"
+            android:scaleType="centerCrop"
             android:src="@drawable/ic_default_avatar"/>
     </androidx.cardview.widget.CardView>
 
