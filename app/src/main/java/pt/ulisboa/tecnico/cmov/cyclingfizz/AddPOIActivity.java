@@ -60,10 +60,9 @@ public class AddPOIActivity extends AppCompatActivity {
             if (requestCode == PICK_IMAGES && resultCode == RESULT_OK && data != null) {
                 GridLayout gallery = findViewById(R.id.new_poi_gallery);
                 final float scale = getResources().getDisplayMetrics().density;
-                int column = 3;
-                int c = 0, r = 0;
 
-                for (int i = 0; i < data.getClipData().getItemCount(); i++, c++) {
+
+                for (int i = 0; i < data.getClipData().getItemCount(); i++) {
                     // Get URI
                     ClipData.Item item = data.getClipData().getItemAt(i);
                     Uri uri = item.getUri();
@@ -72,17 +71,14 @@ public class AddPOIActivity extends AppCompatActivity {
                     ImageView newImg = new ImageView(this);
                     newImg.setImageURI(uri);
                     GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-                    params.width = WRAP_CONTENT;
+                    params.width = 0                                                                                                    ;
                     params.height = (int) (100 * scale);
-                    if (c == column) {
-                        c = 0;
-                        r++;
-                    }
+
                     params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
                     params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
                     newImg.setLayoutParams(params);
+
                     newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                    Log.d(TAG, "adding.....");
                     gallery.addView(newImg, params);
                 }
 

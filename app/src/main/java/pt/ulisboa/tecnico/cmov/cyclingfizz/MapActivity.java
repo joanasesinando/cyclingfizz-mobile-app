@@ -304,7 +304,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             editor.putBoolean("firstOpenSaved", false);
             editor.apply();
 
-            // Redirect to the welcome creen
+            // Redirect to the welcome screen
             Intent intent = new Intent(this, WelcomeActivity.class);
             startActivity(intent);
             finish();
