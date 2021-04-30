@@ -12,6 +12,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+    <include
+        android:id="@+id/new_poi_select_items_toolbar"
+        layout="@layout/select_items_action_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"/>
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -63,16 +70,36 @@
                 android:orientation="horizontal"
                 android:columnCount="3"
                 android:layout_marginTop="20dp"
-                android:useDefaultMargins="true">
+                android:useDefaultMargins="true"
+                android:visibility="gone">
 
-<!--                <ImageView-->
-<!--                    android:id="@+id/new_poi_img_default"-->
+<!--                <androidx.constraintlayout.widget.ConstraintLayout-->
 <!--                    android:layout_width="wrap_content"-->
 <!--                    android:layout_height="100dp"-->
-<!--                    android:src="@drawable/ic_default"-->
 <!--                    android:layout_columnWeight="1"-->
-<!--                    android:layout_rowWeight="1"-->
-<!--                    android:scaleType="centerCrop" />-->
+<!--                    android:layout_rowWeight="1">-->
+
+<!--                    <ImageView-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="match_parent"-->
+<!--                        android:src="@drawable/ic_default"-->
+<!--                        android:scaleType="centerCrop" />-->
+
+<!--                    <LinearLayout-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="match_parent"-->
+<!--                        android:background="@color/orange_500"-->
+<!--                        android:alpha=".4" />-->
+
+<!--                    <ImageView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:padding="10dp"-->
+<!--                        android:src="@drawable/ic_round_check_circle_24"-->
+<!--                        app:layout_constraintEnd_toEndOf="parent"-->
+<!--                        app:layout_constraintTop_toTopOf="parent"-->
+<!--                        app:tint="@color/white" />-->
+<!--                </androidx.constraintlayout.widget.ConstraintLayout>-->
             </GridLayout>
 
             <com.google.android.material.button.MaterialButton
