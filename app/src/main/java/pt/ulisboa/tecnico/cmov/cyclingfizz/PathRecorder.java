@@ -12,11 +12,12 @@ import com.mapbox.geojson.Point;
 
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class PathRecorder {
     static String TAG = "Cycling_Fizz@PathRecorder";
     static String SERVER_URL = "https://stations.cfservertest.ga";
-//    static String SERVER_URL = "https://40e6706df2fb.ngrok.io";
+//    static String SERVER_URL = "https://747a427e9dc3.ngrok.io";
 
     private static PathRecorder INSTANCE = null;
 
@@ -94,8 +95,8 @@ public class PathRecorder {
         return true;
     }
 
-    public void addPOI(String mediaLink, String name, String description, Point coord) {
-        PointOfInterest pointOfInterest = new PointOfInterest(mediaLink, name, description, coord);
+    public void addPOI(List<String> mediaBase64Array, String name, String description, Point coord) {
+        PointOfInterest pointOfInterest = new PointOfInterest(mediaBase64Array, name, description, coord);
         POIs.add(pointOfInterest);
         POIAdded = true;
     }
@@ -165,7 +166,6 @@ public class PathRecorder {
             JsonArray jsonPOIArray = new JsonArray();
 
             for (PointOfInterest POI : POIs) {
-                Log.d(TAG, "POI -> " + POI.toJson().toString());
                 jsonPOIArray.add(POI.toJson());
             }
 
@@ -176,13 +176,13 @@ public class PathRecorder {
 
     public static class PointOfInterest {
 
-        private final String mediaLink;
+        private final ArrayList<String> mediaBase64Array;
         private final String name;
         private final String description;
         private final Point coord;
 
-        public PointOfInterest(String mediaLink, String name, String description, Point coord) {
-            this.mediaLink = mediaLink;
+        public PointOfInterest(List<String> mediaBase64Array, String name, String description, Point coord) {
+            this.mediaBase64Array = new ArrayList<>(mediaBase64Array);
             this.name = name;
             this.description = description;
             this.coord = coord;
@@ -198,10 +198,15 @@ public class PathRecorder {
 
         public JsonObject toJson() {
             JsonObject data = new JsonObject();
-            data.addProperty("mediaLink", mediaLink);
             data.addProperty("title", name);
             data.addProperty("description", description);
             data.addProperty("point", Feature.fromGeometry(coord).toJson());
+
+            JsonArray jsonMediaBase64Array = new JsonArray();
+            for (String mediaBase64 : mediaBase64Array) {
+                jsonMediaBase64Array.add(mediaBase64);
+            }
+            data.addProperty("mediaBase64Array", jsonMediaBase64Array.toString());
             return data;
         }
 

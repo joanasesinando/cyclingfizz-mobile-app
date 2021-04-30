@@ -5,11 +5,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +27,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
 import com.mapbox.geojson.Point;
 
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -32,7 +37,6 @@ import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 public class AddPOIActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@AddPOI";
-    final String DEFAULT_MEDIA_LINK = "https://storage.googleapis.com/cycling-fizz-pt.appspot.com/crane.jpg"; //FIXME: change
     static final int PICK_IMAGES = 1;
 
     TextInputLayout nameInputLayout;
@@ -40,6 +44,8 @@ public class AddPOIActivity extends AppCompatActivity {
 
     PathRecorder pathRecorder;
     Point coordPOI;
+
+    ArrayList<String> mediaBase64Array = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +72,15 @@ public class AddPOIActivity extends AppCompatActivity {
                     // Get URI
                     ClipData.Item item = data.getClipData().getItemAt(i);
                     Uri uri = item.getUri();
+
+//                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
+//
+//                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+//                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+//                    byte[] byteArray = outputStream.toByteArray();
+//
+//                    mediaBase64Array.add(Base64.encodeToString(byteArray, Base64.DEFAULT));
+
 
                     // Update view
                     ImageView newImg = new ImageView(this);
@@ -188,7 +203,7 @@ public class AddPOIActivity extends AppCompatActivity {
         boolean error = checkForErrors(name, description);
 
         if (!error) {
-            pathRecorder.addPOI(DEFAULT_MEDIA_LINK, name, description, coordPOI);
+            pathRecorder.addPOI(mediaBase64Array, name, description, coordPOI);
             finish();
         }
     }
