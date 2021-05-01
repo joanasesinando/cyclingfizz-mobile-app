@@ -19,8 +19,8 @@ import java.util.List;
 
 public class PathRecorder {
     static String TAG = "Cycling_Fizz@PathRecorder";
-//    static String SERVER_URL = "https://stations.cfservertest.ga";
-    static String SERVER_URL = "https://f6dc465a4ed3.ngrok.io";
+    static String SERVER_URL = "https://stations.cfservertest.ga";
+//    static String SERVER_URL = "https://f6dc465a4ed3.ngrok.io";
 
     private static PathRecorder INSTANCE = null;
 
