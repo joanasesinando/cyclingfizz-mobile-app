@@ -53,7 +53,7 @@ public class AddPOIActivity extends AppCompatActivity {
     int selectedImgs = 0;
     boolean deletingImgs = false;
 
-    ArrayList<String> mediaBase64Array = new ArrayList<>();
+    ArrayList<Bitmap> images = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,14 +78,8 @@ public class AddPOIActivity extends AppCompatActivity {
                     ClipData.Item item = data.getClipData().getItemAt(i);
                     Uri uri = item.getUri();
 
-//                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
-//
-//                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-//                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
-//                    byte[] byteArray = outputStream.toByteArray();
-//
-//                    mediaBase64Array.add(Base64.encodeToString(byteArray, Base64.DEFAULT));
-
+                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
+                    images.add(bitmap);
 
                     // Update view
                     addImageToGallery(uri);
@@ -319,7 +313,7 @@ public class AddPOIActivity extends AppCompatActivity {
         boolean error = checkForErrors(name, description);
 
         if (!error) {
-            pathRecorder.addPOI(mediaBase64Array, name, description, coordPOI);
+            pathRecorder.addPOI(images, name, description, coordPOI);
             finish();
         }
     }

@@ -1,5 +1,7 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
+import android.graphics.Bitmap;
+import android.util.Base64;
 import android.util.Log;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -11,13 +13,14 @@ import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PathRecorder {
     static String TAG = "Cycling_Fizz@PathRecorder";
-    static String SERVER_URL = "https://stations.cfservertest.ga";
-//    static String SERVER_URL = "https://747a427e9dc3.ngrok.io";
+//    static String SERVER_URL = "https://stations.cfservertest.ga";
+    static String SERVER_URL = "https://f6dc465a4ed3.ngrok.io";
 
     private static PathRecorder INSTANCE = null;
 
@@ -95,8 +98,8 @@ public class PathRecorder {
         return true;
     }
 
-    public void addPOI(List<String> mediaBase64Array, String name, String description, Point coord) {
-        PointOfInterest pointOfInterest = new PointOfInterest(mediaBase64Array, name, description, coord);
+    public void addPOI(List<Bitmap> images, String name, String description, Point coord) {
+        PointOfInterest pointOfInterest = new PointOfInterest(images, name, description, coord);
         POIs.add(pointOfInterest);
         POIAdded = true;
     }
@@ -133,11 +136,13 @@ public class PathRecorder {
                 String idToken = result.getToken();
 
                 Route route = new Route(getFeature().toJson(), idToken, POIs);
-                JsonObject data = route.toJson();
 
-                (new Utils.httpPostRequestJson(response -> {
-                    Log.d(TAG, String.valueOf(response));
-                }, data.toString())).execute(SERVER_URL + "/save-route");
+                route.getJsonAsync(data -> {
+                    (new Utils.httpPostRequestJson(response -> {
+                        Log.d(TAG, String.valueOf(response));
+                    }, data.toString())).execute(SERVER_URL + "/save-route");
+                });
+
 
             });
         } else {
@@ -158,7 +163,7 @@ public class PathRecorder {
             this.POIs = POIs;
         }
 
-        public JsonObject toJson() {
+        public void getJsonAsync(Utils.OnTaskCompleted<JsonObject> callback) {
             JsonObject data = new JsonObject();
             data.addProperty("route", routeJson);
             data.addProperty("id_token", idToken);
@@ -166,26 +171,68 @@ public class PathRecorder {
             JsonArray jsonPOIArray = new JsonArray();
 
             for (PointOfInterest POI : POIs) {
-                jsonPOIArray.add(POI.toJson());
-            }
 
-            data.addProperty("POIs", jsonPOIArray.toString());
-            return data;
+                POI.getJsonAsync(json -> {
+                    jsonPOIArray.add(json);
+                    if (jsonPOIArray.size() == POIs.size()) {
+                        data.addProperty("POIs", jsonPOIArray.toString());
+                        callback.onTaskCompleted(data);
+                    }
+                });
+            }
         }
     }
 
     public static class PointOfInterest {
 
-        private final ArrayList<String> mediaBase64Array;
+        private final ArrayList<Bitmap> images;
+        private final ArrayList<String> mediaLinks = new ArrayList<>();
         private final String name;
         private final String description;
         private final Point coord;
 
-        public PointOfInterest(List<String> mediaBase64Array, String name, String description, Point coord) {
-            this.mediaBase64Array = new ArrayList<>(mediaBase64Array);
+        public PointOfInterest(List<Bitmap> images, String name, String description, Point coord) {
+            this.images = new ArrayList<>(images);
             this.name = name;
             this.description = description;
             this.coord = coord;
+        }
+
+        public void uploadImages(Utils.OnTaskCompleted<Void> callback) {
+            for (Bitmap image : images) {
+
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+                if (user != null) {
+                    user.getIdToken(true).addOnSuccessListener(result -> {
+                        String idToken = result.getToken();
+
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        image.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
+                        byte[] byteArray = outputStream.toByteArray();
+
+                        String mediaBase64 = Base64.encodeToString(byteArray, Base64.DEFAULT);
+
+
+                        JsonObject data = new JsonObject();
+                        data.addProperty("media_base64", mediaBase64);
+                        data.addProperty("id_token", idToken);
+
+                        (new Utils.httpPostRequestJson(response -> {
+                            if (response.get("status").getAsString().equals("success"))
+                            mediaLinks.add(response.get("media_link").getAsString());
+
+                            if (images.size() == mediaLinks.size()) {
+                                callback.onTaskCompleted(null);
+                            }
+                            }, data.toString())).execute(SERVER_URL + "/upload-media");
+
+                    });
+                } else {
+                    Log.d(TAG, "Null User");
+                }
+
+            }
         }
 
         public Point getCoord() {
@@ -196,18 +243,23 @@ public class PathRecorder {
             return name;
         }
 
-        public JsonObject toJson() {
+        public void getJsonAsync(Utils.OnTaskCompleted<JsonObject> callback) {
             JsonObject data = new JsonObject();
             data.addProperty("title", name);
             data.addProperty("description", description);
             data.addProperty("point", Feature.fromGeometry(coord).toJson());
 
-            JsonArray jsonMediaBase64Array = new JsonArray();
-            for (String mediaBase64 : mediaBase64Array) {
-                jsonMediaBase64Array.add(mediaBase64);
-            }
-            data.addProperty("mediaBase64Array", jsonMediaBase64Array.toString());
-            return data;
+            uploadImages(res -> {
+                JsonArray jsonMediaLinks = new JsonArray();
+                for (String mediaLink : mediaLinks) {
+                    jsonMediaLinks.add(mediaLink);
+                }
+                data.addProperty("media_links", jsonMediaLinks.toString());
+
+                callback.onTaskCompleted(data);
+            });
+
+
         }
 
     }
