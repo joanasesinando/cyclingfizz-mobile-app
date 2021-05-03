@@ -27,11 +27,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mapbox.geojson.Point;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -197,6 +199,53 @@ public final class Utils {
         void onTaskCompleted(T obj);
     }
 
+    public static class httpRequestString extends AsyncTask<String, Void, String> {
+
+        private final OnTaskCompleted<String> callback;
+        private final Cache cache;
+
+        public httpRequestString(OnTaskCompleted<String> callback) {
+            this.callback = callback;
+            this.cache = Cache.getInstanceSmallFiles();
+        }
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected String doInBackground(String[] urls) {
+            URL url;
+
+            try {
+                url = new URL(urls[0]);
+                HttpURLConnection connection;
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+
+                BufferedReader r = new BufferedReader(new InputStreamReader(input));
+                StringBuilder total = new StringBuilder();
+                for (String line; (line = r.readLine()) != null; ) {
+                    total.append(line).append('\n');
+                }
+
+                return total.toString();
+
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            callback.onTaskCompleted(result);
+        }
+    }
+
     public static class httpRequestJson extends AsyncTask<String, Void, JsonObject> {
 
         private final OnTaskCompleted<JsonObject> callback;
@@ -204,7 +253,7 @@ public final class Utils {
 
         public httpRequestJson(OnTaskCompleted<JsonObject> callback) {
             this.callback = callback;
-            this.cache = Cache.getInstance();
+            this.cache = Cache.getInstanceSmallFiles();
         }
 
         @Override
@@ -256,7 +305,7 @@ public final class Utils {
 
         public httpRequestImage(OnTaskCompleted<Bitmap> callback) {
             this.callback = callback;
-            this.cache = Cache.getInstance();
+            this.cache = Cache.getInstanceBigFiles();
         }
 
         @Override

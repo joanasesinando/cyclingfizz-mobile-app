@@ -224,6 +224,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         sharedState = (SharedState) getApplicationContext();
         mAuth = FirebaseAuth.getInstance();
+        Cache.getInstanceBigFiles(getApplicationContext());
+        Cache.getInstanceSmallFiles(getApplicationContext());
 
         checkIfRenting();
 

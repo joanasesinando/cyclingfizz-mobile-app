@@ -15,7 +15,6 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,7 +39,6 @@ import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 public class AddPOIActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@AddPOI";
-    final String DEFAULT_MEDIA_LINK = "https://storage.googleapis.com/cycling-fizz-pt.appspot.com/crane.jpg"; //FIXME: change
     static final int PICK_IMAGES = 1;
 
     TextInputLayout nameInputLayout;
