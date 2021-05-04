@@ -4,19 +4,20 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import android.annotation.SuppressLint;
-import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.Arrays;
@@ -110,10 +111,12 @@ public class NewRouteActivity extends AppCompatActivity {
             boolean error = checkForErrors(name, description);
 
             if (!error) {
+                LinearProgressIndicator progressIndicator = findViewById(R.id.progress_indicator);
                 pathRecorder.saveRecording(name, description, result -> {
-                    //fixme do stuff
+                    progressIndicator.setVisibility(View.GONE);
                     finish();
                 });
+                progressIndicator.setVisibility(View.VISIBLE);
             }
         });
     }
