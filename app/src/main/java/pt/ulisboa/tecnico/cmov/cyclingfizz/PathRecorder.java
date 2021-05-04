@@ -85,9 +85,9 @@ public class PathRecorder {
         isRecording = false;
     }
 
-    public void saveRecording() {
+    public void saveRecording(String name, String description) {
         printFeature();
-        saveFeature();
+        saveFeature(name, description);
     }
 
     public boolean addPointToPath(Point point) {
@@ -126,8 +126,8 @@ public class PathRecorder {
         Log.d(TAG, jsonString);
     }
 
-    public void saveFeature() {
-        if (path.size() < 2) return;
+    public void saveFeature(String name, String description) {
+        if (path.size() < 2) return; // TODO: show dialog before if is
 
         FirebaseUser user = mAuth.getCurrentUser();
 
@@ -135,7 +135,7 @@ public class PathRecorder {
             user.getIdToken(true).addOnSuccessListener(result -> {
                 String idToken = result.getToken();
 
-                Route route = new Route(getFeature().toJson(), idToken, POIs);
+                Route route = new Route(getFeature().toJson(), idToken, name, description, POIs);
 
                 route.getJsonAsync(data -> {
                     (new Utils.httpPostRequestJson(response -> {
@@ -155,11 +155,15 @@ public class PathRecorder {
         private final String routeJson;
         private final String idToken;
         private final ArrayList<PointOfInterest> POIs;
+        private final String title;
+        private final String description;
 
 
-        public Route(String routeJson, String idToken, ArrayList<PointOfInterest> POIs) {
+        public Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs) {
             this.routeJson = routeJson;
             this.idToken = idToken;
+            this.title = title;
+            this.description = description;
             this.POIs = POIs;
         }
 
@@ -167,6 +171,8 @@ public class PathRecorder {
             JsonObject data = new JsonObject();
             data.addProperty("route", routeJson);
             data.addProperty("id_token", idToken);
+            data.addProperty("title", title);
+            data.addProperty("description", description);
 
             JsonArray jsonPOIArray = new JsonArray();
 

@@ -873,8 +873,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 })
                 .setPositiveButton(R.string.save, (dialog, which) -> {
                     // Respond to positive button press
-                    pathRecorder.saveRecording();
-                    //TODO: go to save activity
+                    Intent intent = new Intent(this, NewRouteActivity.class);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
                 })
                 .show();
     }
