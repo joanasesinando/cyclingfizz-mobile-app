@@ -26,6 +26,7 @@
     <string name="save">Save</string>
     <string name="delete">Delete</string>
     <string name="pick_photos">Pick photos</string>
+    <string name="take_photo">Take photo</string>
 
     <!-- States -->
     <string name="recording">Recording...</string>

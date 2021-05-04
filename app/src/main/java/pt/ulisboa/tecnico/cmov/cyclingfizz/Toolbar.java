@@ -11,7 +11,7 @@ import com.mapbox.mapboxsdk.style.layers.PropertyValue;
 
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.visibility;
 
-public final class Toolbar {
+public final class Toolbar { // FIXME: refactor this and delete
 
     static String TAG = "Cycling_Fizz@Toolbar";
 
@@ -47,6 +47,7 @@ public final class Toolbar {
 
             // Keep the popup menu open
             Utils.keepMenuOpen(item, context);
+
         }
         return false;
     }

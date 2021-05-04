@@ -1031,6 +1031,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 String idToken = result.getToken();
 
                 (new Utils.httpRequestJson(obj -> {
+                    if (obj == null) return;
 
                     if (obj.get("status").getAsString().equals("success")) {
                         JsonObject data = obj.get("data").getAsJsonObject();

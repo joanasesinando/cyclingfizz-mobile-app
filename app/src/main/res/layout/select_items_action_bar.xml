@@ -11,6 +11,7 @@
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/topAppBar"
+            android:background="@color/dark"
             app:menu="@menu/delete_items_bar"
             style="@style/Widget.MaterialComponents.Toolbar.Primary"
             app:navigationIcon="@drawable/ic_round_close_24"

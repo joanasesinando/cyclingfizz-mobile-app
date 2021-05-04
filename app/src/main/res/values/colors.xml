@@ -9,6 +9,7 @@
     <color name="orange_500">#FF9F3C</color>
     <color name="orange_700">#F48817</color>
     <color name="dark">#2F373D</color>
+    <color name="darker">#22282E</color>
     <color name="darkTransparent">#802F373D</color>
 
     <color name="danger">#EF5350</color>

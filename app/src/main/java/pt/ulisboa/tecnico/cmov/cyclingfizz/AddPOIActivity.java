@@ -1,17 +1,27 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Matrix;
 import android.location.Location;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.FileUtils;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -21,25 +31,31 @@ import android.view.ViewGroup;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
 import com.mapbox.geojson.Point;
+import com.mapbox.mapboxsdk.style.layers.Layer;
+import com.mapbox.mapboxsdk.style.layers.Property;
+import com.mapbox.mapboxsdk.style.layers.PropertyValue;
 
-import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Objects;
 
-import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.visibility;
 
 public class AddPOIActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@AddPOI";
-    static final int PICK_IMAGES = 1;
+    static final int TAKE_PHOTO = 1;
+    static final int PICK_IMAGES = 2;
 
     TextInputLayout nameInputLayout;
     TextInputLayout descriptionInputLayout;
@@ -47,19 +63,30 @@ public class AddPOIActivity extends AppCompatActivity {
     PathRecorder pathRecorder;
     Point coordPOI;
 
-    int totalImgs = 0;
-    int selectedImgs = 0;
-    boolean deletingImgs = false;
+    boolean isDeletingImages = false;
 
     ArrayList<Bitmap> images = new ArrayList<>();
+    ArrayList<Integer> imagesToDeleteIndexes = new ArrayList<>();
 
+    /// -------------- PERMISSIONS -------------- ///
+
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(intent, TAKE_PHOTO);
+
+                }
+            });
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.add_poi);
 
         pathRecorder = PathRecorder.getInstance();
-        Location poiLocation = (Location) getIntent().getParcelableExtra(MapActivity.POI_LOCATION);
+        Location poiLocation = getIntent().getParcelableExtra(MapActivity.POI_LOCATION);
         coordPOI = Point.fromLngLat(poiLocation.getLongitude(), poiLocation.getLatitude());
 
         uiSetClickListeners();
@@ -76,15 +103,27 @@ public class AddPOIActivity extends AppCompatActivity {
                     ClipData.Item item = data.getClipData().getItemAt(i);
                     Uri uri = item.getUri();
 
+                    // Get bitmap
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
+                    bitmap = fixImageRotation(uri, bitmap);
                     images.add(bitmap);
 
                     // Update view
-                    addImageToGallery(uri);
-                    totalImgs++;
+                    addImageToGallery(bitmap);
                 }
                 GridLayout gallery = findViewById(R.id.new_poi_gallery);
-                if (totalImgs > 0) gallery.setVisibility(View.VISIBLE);
+                if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
+
+            } else if (requestCode == TAKE_PHOTO && resultCode == RESULT_OK && data != null) {
+                // Get bitmap
+                Bundle extras = data.getExtras();
+                Bitmap bitmap = (Bitmap) extras.get("data");
+                images.add(bitmap);
+
+                // Update view
+                addImageToGallery(bitmap);
+                GridLayout gallery = findViewById(R.id.new_poi_gallery);
+                if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else {
                 Toast.makeText(this, "No photos selected", Toast.LENGTH_LONG).show();
@@ -100,11 +139,24 @@ public class AddPOIActivity extends AppCompatActivity {
     /*** -------------- USER INTERFACE -------------- ***/
     /*** -------------------------------------------- ***/
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @SuppressLint("IntentReset")
     private void uiSetClickListeners() {
         // Set close btn click listener
         MaterialToolbar toolbar = findViewById(R.id.new_poi_toolbar).findViewById(R.id.topAppBar);
         toolbar.setNavigationOnClickListener(v -> finish());
+
+        // Set take photo btn listener
+        MaterialButton takePhotoBtn = findViewById(R.id.new_poi_take_photo);
+        takePhotoBtn.setOnClickListener(v -> {
+            if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(intent, TAKE_PHOTO);
+
+            } else {
+                requestPermissionLauncher.launch(Manifest.permission.CAMERA);
+            }
+        });
 
         // Set pick photos btn listener
         MaterialButton pickPhotosBtn = findViewById(R.id.new_poi_pick_photos);
@@ -118,10 +170,66 @@ public class AddPOIActivity extends AppCompatActivity {
         // Set save btn click listener
         MaterialButton saveBtn = findViewById(R.id.save_poi);
         saveBtn.setOnClickListener(v -> savePOI());
+
+        // Set selecting items top bar btns listeners
+        MaterialToolbar selectItemsToolbar = findViewById(R.id.new_poi_select_items_toolbar).findViewById(R.id.topAppBar);
+        selectItemsToolbar.setNavigationOnClickListener(v -> quitDeletingImages());
+        selectItemsToolbar.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.delete_items) deleteImages();
+            return false;
+        });
+    }
+
+    private Bitmap fixImageRotation(Uri uri, Bitmap bitmap) {
+        Bitmap rotatedBitmap = bitmap;
+        String res = null;
+        Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DATA}, null, null, null);
+        if (cursor.moveToFirst()) {
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            res = cursor.getString(column_index);
+        }
+        cursor.close();
+
+        try {
+            ExifInterface ei = new ExifInterface(new File(res));
+
+            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_UNDEFINED);
+
+            switch(orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    rotatedBitmap = rotateImage(bitmap, 90);
+                    break;
+
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    rotatedBitmap = rotateImage(bitmap, 180);
+                    break;
+
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    rotatedBitmap = rotateImage(bitmap, 270);
+                    break;
+
+                case ExifInterface.ORIENTATION_NORMAL:
+                default:
+                    rotatedBitmap = bitmap;
+            }
+            return rotatedBitmap;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return rotatedBitmap;
+    }
+
+    public static Bitmap rotateImage(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
+                matrix, true);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
-    private void addImageToGallery(Uri uri) {
+    private void addImageToGallery(Bitmap bitmap) {
         GridLayout gallery = findViewById(R.id.new_poi_gallery);
         final float scale = getResources().getDisplayMetrics().density;
 
@@ -136,7 +244,7 @@ public class AddPOIActivity extends AppCompatActivity {
 
         // Create image
         ImageView newImg = new ImageView(this);
-        newImg.setImageURI(uri);
+        newImg.setImageBitmap(bitmap);
         newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
         imgWrapper.addView(newImg);
 
@@ -161,9 +269,8 @@ public class AddPOIActivity extends AppCompatActivity {
         // Set click listeners
         imgWrapper.setOnLongClickListener(v -> {
             Log.d(TAG, "long click");
-            if (!deletingImgs) toggleToolbar();
-            deletingImgs = true;
-            Log.d(TAG, String.valueOf(((ViewGroup) v).getChildCount()));
+            if (!isDeletingImages) toggleToolbar();
+            isDeletingImages = true;
             View overlayChild = ((ViewGroup) v).getChildAt(1);
             if (overlayChild.getVisibility() == View.VISIBLE) deselectImg(v);
             else if (overlayChild.getVisibility() == View.GONE) selectImg(v);
@@ -172,42 +279,44 @@ public class AddPOIActivity extends AppCompatActivity {
 
         imgWrapper.setOnClickListener(v -> {
             Log.d(TAG, "normal click");
-            if (deletingImgs) {
+            if (isDeletingImages) {
                 View overlayChild = ((ViewGroup) v).getChildAt(1);
+
                 if (overlayChild.getVisibility() == View.VISIBLE) deselectImg(v);
                 else if (overlayChild.getVisibility() == View.GONE) selectImg(v);
             }
         });
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void toggleToolbar() {
-        View toolbar = findViewById(R.id.new_poi_toolbar);
-        View selectItemsToolbar = findViewById(R.id.new_poi_select_items_toolbar);
+        View toolbarLayout = findViewById(R.id.new_poi_toolbar);
+        View selectItemsToolbarLayout = findViewById(R.id.new_poi_select_items_toolbar);
 
-        if (toolbar.getVisibility() == View.VISIBLE) {
-            toolbar.setVisibility(View.GONE);
-            selectItemsToolbar.setVisibility(View.VISIBLE);
-
-            // Set selecting items top bar close btn click listener
-//            ((MaterialToolbar) selectItemsToolbar).setNavigationOnClickListener(v -> {
-//                selectedImgs = 0;
-//                deselectAllImgs();
-//            }); //FIXME
+        if (toolbarLayout.getVisibility() == View.VISIBLE) {
+            toolbarLayout.setVisibility(View.GONE);
+            selectItemsToolbarLayout.setVisibility(View.VISIBLE);
+            getWindow().setStatusBarColor(getColor(R.color.darker));
 
         } else {
-            toolbar.setVisibility(View.VISIBLE);
-            selectItemsToolbar.setVisibility(View.GONE);
+            toolbarLayout.setVisibility(View.VISIBLE);
+            selectItemsToolbarLayout.setVisibility(View.GONE);
+            getWindow().setStatusBarColor(getColor(R.color.orange_700));
         }
     }
 
     private void selectImg(View view) {
-        // Update counter
-        selectedImgs++;
-        View toolbar = findViewById(R.id.new_poi_select_items_toolbar);
-        MaterialToolbar topBar = toolbar.findViewById(R.id.topAppBar);
-        topBar.setTitle(selectedImgs + " selected");
+        // Add index to delete
+        GridLayout gallery = findViewById(R.id.new_poi_gallery);
+        imagesToDeleteIndexes.add(gallery.indexOfChild(view));
+        Log.d(TAG, String.valueOf(gallery.indexOfChild(view)));
 
-        // Update image view
+        // Update toolbar
+        View toolbarLayout = findViewById(R.id.new_poi_select_items_toolbar);
+        MaterialToolbar toolbar = toolbarLayout.findViewById(R.id.topAppBar);
+        toolbar.setTitle(imagesToDeleteIndexes.size() + " selected");
+
+        // Show overlay and check
         for (int i = 1; i < ((ViewGroup) view).getChildCount(); i++) {
             View child = ((ViewGroup) view).getChildAt(i);
             child.setVisibility(View.VISIBLE);
@@ -215,28 +324,53 @@ public class AddPOIActivity extends AppCompatActivity {
     }
 
     private void deselectImg(View view) {
-        // Update counter
-        selectedImgs--;
+        // Remove index to delete
+        GridLayout gallery = findViewById(R.id.new_poi_gallery);
+        imagesToDeleteIndexes.remove(gallery.indexOfChild(view));
+        Log.d(TAG, String.valueOf(gallery.indexOfChild(view)));
+
+        // Update toolbar
         View toolbar = findViewById(R.id.new_poi_select_items_toolbar);
         MaterialToolbar topBar = toolbar.findViewById(R.id.topAppBar);
-        topBar.setTitle(selectedImgs + " selected");
+        topBar.setTitle(imagesToDeleteIndexes.size() + " selected");
 
-        // Update image view
+        // Hide overlay and check
         for (int i = 1; i < ((ViewGroup) view).getChildCount(); i++) {
             View child = ((ViewGroup) view).getChildAt(i);
             child.setVisibility(View.GONE);
         }
     }
 
-    private void deselectAllImgs() {
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void quitDeletingImages() {
+        isDeletingImages = false;
+        imagesToDeleteIndexes.clear();
+        toggleToolbar();
+
+        // Hide overlay and checks
         GridLayout gallery = findViewById(R.id.new_poi_gallery);
-        for (int i = 0; i < ((ViewGroup) gallery).getChildCount(); i++) {
-            View imgWrapper = ((ViewGroup) gallery).getChildAt(i);
+        for (int i = 0; i < gallery.getChildCount(); i++) {
+            View imgWrapper = gallery.getChildAt(i);
             for (int j = 1; j < ((ViewGroup) imgWrapper).getChildCount(); j++) {
                 View child = ((ViewGroup) imgWrapper).getChildAt(j);
                 child.setVisibility(View.GONE);
             }
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void deleteImages() {
+        GridLayout gallery = findViewById(R.id.new_poi_gallery);
+        Collections.sort(imagesToDeleteIndexes, Collections.reverseOrder());
+
+        for (int index : imagesToDeleteIndexes) {
+            images.remove(index);
+            gallery.removeViewAt(index);
+        }
+
+        isDeletingImages = false;
+        imagesToDeleteIndexes.clear();
+        toggleToolbar();
     }
 
 
