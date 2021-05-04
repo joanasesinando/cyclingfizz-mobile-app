@@ -33,6 +33,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Chronometer;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -325,6 +326,24 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Set card subtitle
         TextView subtitle = card.findViewById(R.id.card_subtitle);
         subtitle.setText(textSubtitle);
+    }
+
+    private void showRecordingUI() {
+        ExtendedFloatingActionButton recordBtn = findViewById(R.id.btn_map_record_route);
+        recordBtn.setVisibility(View.GONE);
+        FloatingActionButton cancelRecordingBtn = findViewById(R.id.btn_cancel_recording);
+        cancelRecordingBtn.setVisibility(View.GONE);
+
+        FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
+        addPOIBtn.setVisibility(View.VISIBLE);
+        addPOIBtn.setOnClickListener(v -> addPOI());
+
+        FloatingActionButton stopRecordingBtn = findViewById(R.id.btn_map_stop_recording);
+        stopRecordingBtn.setVisibility(View.VISIBLE);
+        stopRecordingBtn.setOnClickListener(v -> stopRecordingRoute());
+
+        ExtendedFloatingActionButton recordingFlag = findViewById(R.id.flag_recording);
+        recordingFlag.setVisibility(View.VISIBLE);
     }
 
 
@@ -635,6 +654,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Get an instance of the component
         LocationComponent locationComponent = mapboxMap.getLocationComponent();
 
+        if (mapboxMap.getStyle() == null) return;
+
         // Set the LocationComponent activation options
         LocationComponentActivationOptions locationComponentActivationOptions =
                 LocationComponentActivationOptions.builder(this, mapboxMap.getStyle())
@@ -825,22 +846,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         updateCurrentLocationBtn();
         updateMapboxCamera(mapboxMap.getLocationComponent());
 
+        // Prevent screen from turning off while recording
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         // Update view
-        ExtendedFloatingActionButton recordBtn = findViewById(R.id.btn_map_record_route);
-        recordBtn.setVisibility(View.GONE);
-        FloatingActionButton cancelRecordingBtn = findViewById(R.id.btn_cancel_recording);
-        cancelRecordingBtn.setVisibility(View.GONE);
-
-        FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
-        addPOIBtn.setVisibility(View.VISIBLE);
-        addPOIBtn.setOnClickListener(v -> addPOI());
-
-        FloatingActionButton stopRecordingBtn = findViewById(R.id.btn_map_stop_recording);
-        stopRecordingBtn.setVisibility(View.VISIBLE);
-        stopRecordingBtn.setOnClickListener(v -> stopRecordingRoute());
-
-        ExtendedFloatingActionButton recordingFlag = findViewById(R.id.flag_recording);
-        recordingFlag.setVisibility(View.VISIBLE);
+        showRecordingUI();
     }
 
     private void stopRecordingRoute() {
@@ -852,6 +862,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         updateMapboxCamera(mapboxMap.getLocationComponent());
         updateLocationRequestNotRecording();
         pointToNorth();
+
+        // Allow screen to turn off
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Update view
         FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
@@ -961,6 +974,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void updatePathRecordedOnMap() {
         Log.d(TAG, "Updating path recorded on map");
+        if (mapboxMap.getStyle() == null) return;
+
         GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
         if (pathRecordedSource != null) {
             FeatureCollection featureCollection = FeatureCollection.fromFeatures(
@@ -974,6 +989,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void updatePOIsOnMap() {
         Log.d(TAG, "Updating POIs on map");
+
+        if (mapboxMap.getStyle() == null) return;
+
         GeoJsonSource POIsSource = mapboxMap.getStyle().getSourceAs(POI_SOURCE_ID);
         if (POIsSource != null) {
             ArrayList<Feature> features = new ArrayList<>();
@@ -1278,6 +1296,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         sidebar.changeUserUI();
         mapView.onStart();
 
+        Log.e(TAG, "OnStart");
+
         if (pathRecorder.isPreparingToRecord()) {
             ExtendedFloatingActionButton recordBtn = findViewById(R.id.btn_map_record_route);
             recordBtn.setVisibility(View.VISIBLE);
@@ -1290,6 +1310,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 recordBtn.setVisibility(View.GONE);
                 cancelRecordingBtn.setVisibility(View.GONE);
             });
+        }
+
+        Log.e(TAG, "is recording: " + pathRecorder.isRecording());
+
+        if (pathRecorder.isRecording()) {
+            showRecordingUI();
         }
     }
 

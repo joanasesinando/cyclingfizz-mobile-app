@@ -19,8 +19,7 @@ import java.util.List;
 
 public class PathRecorder {
     static String TAG = "Cycling_Fizz@PathRecorder";
-    static String SERVER_URL = "https://stations.cfservertest.ga";
-//    static String SERVER_URL = "https://f6dc465a4ed3.ngrok.io";
+    static String SERVER_URL = "https://792a8734ccb0.ngrok.io";
 
     private static PathRecorder INSTANCE = null;
 
@@ -85,9 +84,9 @@ public class PathRecorder {
         isRecording = false;
     }
 
-    public void saveRecording(String name, String description) {
+    public void saveRecording(String name, String description, Utils.OnTaskCompleted<Boolean> callback) {
         printFeature();
-        saveFeature(name, description);
+        saveFeature(name, description, callback);
     }
 
     public boolean addPointToPath(Point point) {
@@ -126,7 +125,7 @@ public class PathRecorder {
         Log.d(TAG, jsonString);
     }
 
-    public void saveFeature(String name, String description) {
+    public void saveFeature(String name, String description, Utils.OnTaskCompleted<Boolean> callback) {
         if (path.size() < 2) return; // TODO: show dialog before if is
 
         FirebaseUser user = mAuth.getCurrentUser();
@@ -140,12 +139,14 @@ public class PathRecorder {
                 route.getJsonAsync(data -> {
                     (new Utils.httpPostRequestJson(response -> {
                         Log.d(TAG, String.valueOf(response));
+                        callback.onTaskCompleted(true);
                     }, data.toString())).execute(SERVER_URL + "/save-route");
                 });
 
 
             });
         } else {
+            callback.onTaskCompleted(false);
             Log.d(TAG, "Null User");
         }
     }
@@ -176,6 +177,11 @@ public class PathRecorder {
 
             JsonArray jsonPOIArray = new JsonArray();
 
+            if (jsonPOIArray.size() == POIs.size()) {
+                data.addProperty("POIs", jsonPOIArray.toString());
+                callback.onTaskCompleted(data);
+            }
+
             for (PointOfInterest POI : POIs) {
 
                 POI.getJsonAsync(json -> {
@@ -205,6 +211,9 @@ public class PathRecorder {
         }
 
         public void uploadImages(Utils.OnTaskCompleted<Void> callback) {
+            if (images.size() == mediaLinks.size()) {
+                callback.onTaskCompleted(null);
+            }
             for (Bitmap image : images) {
 
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -256,6 +265,8 @@ public class PathRecorder {
             data.addProperty("point", Feature.fromGeometry(coord).toJson());
 
             uploadImages(res -> {
+                Log.e(TAG, "Retorna do unload");
+
                 JsonArray jsonMediaLinks = new JsonArray();
                 for (String mediaLink : mediaLinks) {
                     jsonMediaLinks.add(mediaLink);

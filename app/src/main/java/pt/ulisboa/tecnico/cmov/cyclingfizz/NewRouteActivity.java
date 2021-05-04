@@ -110,8 +110,10 @@ public class NewRouteActivity extends AppCompatActivity {
             boolean error = checkForErrors(name, description);
 
             if (!error) {
-                pathRecorder.saveRecording(name, description);
-                finish();
+                pathRecorder.saveRecording(name, description, result -> {
+                    //fixme do stuff
+                    finish();
+                });
             }
         });
     }
