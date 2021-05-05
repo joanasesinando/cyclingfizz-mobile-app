@@ -16,6 +16,7 @@ import android.widget.Chronometer;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
@@ -99,6 +100,17 @@ public class RoutesListActivity extends AppCompatActivity {
                         routeCardRateIcon.setColorFilter(getColorFromRate(rateAvg));
                     }
 
+                    if (!routeJson.get("id").isJsonNull()) layout.setOnClickListener(v -> {
+                        //fixme ** JUST FOR TESTING! ** - change this to real on click
+
+                        PathPlayer.getInstance().playRouteFromRouteId(routeJson.get("id").getAsString(), success -> {
+                            if (success) {
+                                finish();
+                            } else {
+                                Toast.makeText(this, "Error: Could not play route", Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    });
                 }
 
 

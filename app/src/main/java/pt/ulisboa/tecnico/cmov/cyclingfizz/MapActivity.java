@@ -102,7 +102,6 @@ import pt.inesc.termite.wifidirect.service.SimWifiP2pService;
 
 import static com.mapbox.mapboxsdk.style.expressions.Expression.get;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.has;
-import static com.mapbox.mapboxsdk.style.expressions.Expression.in;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.not;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.step;
@@ -196,6 +195,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private boolean giraStationsVisible = true;
 
     private PathRecorder pathRecorder;
+    private PathPlayer pathPlayer;
+
     private boolean endTripFlag = false;
 
     /// -------------- PERMISSIONS -------------- ///
@@ -242,6 +243,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
         pathRecorder = PathRecorder.getInstance();
+        pathPlayer = PathPlayer.getInstance();
 
         setContentView(R.layout.map);
 
@@ -374,6 +376,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         ExtendedFloatingActionButton recordingFlag = findViewById(R.id.flag_recording);
         recordingFlag.setVisibility(View.VISIBLE);
+    }
+
+    private void showDisplayRouteUI() {
+        Log.e(TAG, "Mostrar Route");
     }
 
 
@@ -967,7 +973,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Init POIs layer
         ArrayList<Feature> features = new ArrayList<>();
         int i = 0;
-        for (PathRecorder.PointOfInterest poi : pathRecorder.getAllPOIs()) {
+        for (PointOfInterest poi : pathRecorder.getPOIs()) {
             Feature poiFeature = Feature.fromGeometry(poi.getCoord());
             poiFeature.addNumberProperty("id", i++);
             features.add(poiFeature);
@@ -1049,7 +1055,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (POIsSource != null) {
             ArrayList<Feature> features = new ArrayList<>();
             int i = 0;
-            for (PathRecorder.PointOfInterest poi : pathRecorder.getAllPOIs()) {
+            for (PointOfInterest poi : pathRecorder.getPOIs()) {
                 Feature poiFeature = Feature.fromGeometry(poi.getCoord());
                 poiFeature.addNumberProperty("id", i++);
                 features.add(poiFeature);
@@ -1370,6 +1376,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (pathRecorder.isRecording()) {
             showRecordingUI();
             updateRoute();
+        }
+
+        if (pathPlayer.isPlayingRoute()) {
+            showDisplayRouteUI();
         }
     }
 
