@@ -46,7 +46,7 @@ public class EditPOIActivity extends AppCompatActivity {
     TextInputLayout descriptionInputLayout;
 
     PathRecorder pathRecorder;
-    PathRecorder.PointOfInterest poi;
+    PointOfInterest poi;
     int poiIndex;
 
     boolean isDeletingImages = false;

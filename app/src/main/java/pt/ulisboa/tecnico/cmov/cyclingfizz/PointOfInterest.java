@@ -43,6 +43,27 @@ public class PointOfInterest {
         this.coord = coord;
     }
 
+    public Point getCoord() {
+        return coord;
+    }
+
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) { this.name = name; }
+
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) { this.description = description; }
+
+    public ArrayList<Bitmap> getImages() {
+        return images;
+    }
+    public void setImages(List<Bitmap> images) {
+        this.images = new ArrayList<>(images);
+    }
+
     public void uploadImages(Utils.OnTaskCompleted<Void> callback) {
         if (images.size() == mediaLinks.size()) {
             callback.onTaskCompleted(null);
@@ -82,22 +103,6 @@ public class PointOfInterest {
 
         }
     }
-
-    public Point getCoord() {
-        return coord;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) { this.name = name; }
-
-    public String getDescription() {
-        return description;
-    }
-    public void setDescription(String description) { this.description = description; }
-
 
     public void getJsonAsync(Utils.OnTaskCompleted<JsonObject> callback) {
         JsonObject data = new JsonObject();

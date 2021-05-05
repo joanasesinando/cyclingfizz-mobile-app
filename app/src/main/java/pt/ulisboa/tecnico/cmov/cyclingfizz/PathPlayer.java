@@ -70,7 +70,7 @@ public class PathPlayer {
 
         if (!isPlayingRoute()) return null;
 
-        for (PointOfInterest poi : routePlaying.getPOIs()) {
+        for (PointOfInterest poi : routePlaying.getAllPOIs()) {
             if (poi.notAlreadyVisited() && Utils.distanceBetweenPointsInMeters(poi.getCoord(), point) < 5) {
                 poi.setAlreadyVisited(true);
                 return poi;

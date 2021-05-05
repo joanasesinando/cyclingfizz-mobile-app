@@ -51,7 +51,7 @@ public class Route {
         }
     }
 
-    public ArrayList<PointOfInterest> getPOIs() {
+    public ArrayList<PointOfInterest> getAllPOIs() {
         return POIs;
     }
 

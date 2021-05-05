@@ -1,20 +1,14 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
 import android.graphics.Bitmap;
-import android.util.Base64;
 import android.util.Log;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 
-
-import java.io.ByteArrayOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -110,9 +104,9 @@ public class PathRecorder {
 
     public void editPOI(int index, String name, String description, ArrayList<Bitmap> images) {
         PointOfInterest poi = getPOI(index);
-        poi.name = name;
-        poi.description = description;
-        poi.images = images;
+        poi.setName(name);
+        poi.setDescription(description);
+        poi.setImages(images);
     }
 
     public void removePOI(int index) {

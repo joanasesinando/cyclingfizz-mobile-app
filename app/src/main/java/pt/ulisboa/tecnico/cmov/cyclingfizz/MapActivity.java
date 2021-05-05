@@ -973,7 +973,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Init POIs layer
         ArrayList<Feature> features = new ArrayList<>();
         int i = 0;
-        for (PointOfInterest poi : pathRecorder.getPOIs()) {
+        for (PointOfInterest poi : pathRecorder.getAllPOIs()) {
             Feature poiFeature = Feature.fromGeometry(poi.getCoord());
             poiFeature.addNumberProperty("id", i++);
             features.add(poiFeature);
@@ -1055,7 +1055,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (POIsSource != null) {
             ArrayList<Feature> features = new ArrayList<>();
             int i = 0;
-            for (PointOfInterest poi : pathRecorder.getPOIs()) {
+            for (PointOfInterest poi : pathRecorder.getAllPOIs()) {
                 Feature poiFeature = Feature.fromGeometry(poi.getCoord());
                 poiFeature.addNumberProperty("id", i++);
                 features.add(poiFeature);
