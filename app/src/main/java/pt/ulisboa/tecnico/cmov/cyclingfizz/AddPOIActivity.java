@@ -12,11 +12,8 @@ import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.location.Location;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,8 +33,6 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
 import com.mapbox.geojson.Point;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -97,13 +92,12 @@ public class AddPOIActivity extends AppCompatActivity {
 
                     // Get bitmap
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
-                    bitmap = fixImageRotation(uri, bitmap);
                     images.add(bitmap);
 
                     // Update view
                     addImageToGallery(bitmap);
                 }
-                GridLayout gallery = findViewById(R.id.new_poi_gallery);
+                GridLayout gallery = findViewById(R.id.poi_gallery);
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else if (requestCode == TAKE_PHOTO && resultCode == RESULT_OK && data != null) {
@@ -114,7 +108,7 @@ public class AddPOIActivity extends AppCompatActivity {
 
                 // Update view
                 addImageToGallery(bitmap);
-                GridLayout gallery = findViewById(R.id.new_poi_gallery);
+                GridLayout gallery = findViewById(R.id.poi_gallery);
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else {
@@ -203,7 +197,7 @@ public class AddPOIActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void addImageToGallery(Bitmap bitmap) {
-        GridLayout gallery = findViewById(R.id.new_poi_gallery);
+        GridLayout gallery = findViewById(R.id.poi_gallery);
         final float scale = getResources().getDisplayMetrics().density;
 
         // Create wrapper
@@ -263,7 +257,7 @@ public class AddPOIActivity extends AppCompatActivity {
 
     private void selectImg(View view) {
         // Add index to delete
-        GridLayout gallery = findViewById(R.id.new_poi_gallery);
+        GridLayout gallery = findViewById(R.id.poi_gallery);
         imagesToDeleteIndexes.add(gallery.indexOfChild(view));
         Log.d(TAG, String.valueOf(gallery.indexOfChild(view)));
 
@@ -281,7 +275,7 @@ public class AddPOIActivity extends AppCompatActivity {
 
     private void deselectImg(View view) {
         // Remove index to delete
-        GridLayout gallery = findViewById(R.id.new_poi_gallery);
+        GridLayout gallery = findViewById(R.id.poi_gallery);
         imagesToDeleteIndexes.remove(gallery.indexOfChild(view));
         Log.d(TAG, String.valueOf(gallery.indexOfChild(view)));
 
@@ -304,7 +298,7 @@ public class AddPOIActivity extends AppCompatActivity {
         toggleToolbar();
 
         // Hide overlay and checks
-        GridLayout gallery = findViewById(R.id.new_poi_gallery);
+        GridLayout gallery = findViewById(R.id.poi_gallery);
         for (int i = 0; i < gallery.getChildCount(); i++) {
             View imgWrapper = gallery.getChildAt(i);
             for (int j = 1; j < ((ViewGroup) imgWrapper).getChildCount(); j++) {
@@ -316,7 +310,7 @@ public class AddPOIActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void deleteImages() {
-        GridLayout gallery = findViewById(R.id.new_poi_gallery);
+        GridLayout gallery = findViewById(R.id.poi_gallery);
         Collections.sort(imagesToDeleteIndexes, Collections.reverseOrder());
 
         for (int index : imagesToDeleteIndexes) {
@@ -329,52 +323,52 @@ public class AddPOIActivity extends AppCompatActivity {
         toggleToolbar();
     }
 
-    private Bitmap fixImageRotation(Uri uri, Bitmap bitmap) {
-        Bitmap rotatedBitmap = bitmap;
-        String res = null;
-        Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DATA}, null, null, null);
-        if (cursor.moveToFirst()) {
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            res = cursor.getString(column_index);
-        }
-        cursor.close();
-
-        try {
-            ExifInterface ei = new ExifInterface(new File(res));
-
-            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
-                    ExifInterface.ORIENTATION_UNDEFINED);
-
-            switch(orientation) {
-                case ExifInterface.ORIENTATION_ROTATE_90:
-                    rotatedBitmap = rotateImage(bitmap, 90);
-                    break;
-
-                case ExifInterface.ORIENTATION_ROTATE_180:
-                    rotatedBitmap = rotateImage(bitmap, 180);
-                    break;
-
-                case ExifInterface.ORIENTATION_ROTATE_270:
-                    rotatedBitmap = rotateImage(bitmap, 270);
-                    break;
-
-                case ExifInterface.ORIENTATION_NORMAL:
-                default:
-                    rotatedBitmap = bitmap;
-            }
-            return rotatedBitmap;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return rotatedBitmap;
-    }
-
-    public static Bitmap rotateImage(Bitmap source, float angle) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
-                matrix, true);
-    }
+//    private Bitmap fixImageRotation(Uri uri, Bitmap bitmap) {
+//        Bitmap rotatedBitmap = bitmap;
+//        String res = null;
+//        Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DATA}, null, null, null);
+//        if (cursor.moveToFirst()) {
+//            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+//            res = cursor.getString(column_index);
+//        }
+//        cursor.close();
+//
+//        try {
+//            ExifInterface ei = new ExifInterface(new File(res));
+//
+//            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+//                    ExifInterface.ORIENTATION_UNDEFINED);
+//
+//            switch(orientation) {
+//                case ExifInterface.ORIENTATION_ROTATE_90:
+//                    rotatedBitmap = rotateImage(bitmap, 90);
+//                    break;
+//
+//                case ExifInterface.ORIENTATION_ROTATE_180:
+//                    rotatedBitmap = rotateImage(bitmap, 180);
+//                    break;
+//
+//                case ExifInterface.ORIENTATION_ROTATE_270:
+//                    rotatedBitmap = rotateImage(bitmap, 270);
+//                    break;
+//
+//                case ExifInterface.ORIENTATION_NORMAL:
+//                default:
+//                    rotatedBitmap = bitmap;
+//            }
+//            return rotatedBitmap;
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        return rotatedBitmap;
+//    }
+//
+//    public static Bitmap rotateImage(Bitmap source, float angle) {
+//        Matrix matrix = new Matrix();
+//        matrix.postRotate(angle);
+//        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
+//                matrix, true);
+//    }
 
 
     /*** -------------------------------------------- ***/

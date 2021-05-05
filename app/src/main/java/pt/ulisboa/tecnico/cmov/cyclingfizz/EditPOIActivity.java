@@ -78,7 +78,7 @@ public class EditPOIActivity extends AppCompatActivity {
         setUI();
         uiSetClickListeners();
         setInputs();
-//        setImages();
+        setImages();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -98,7 +98,7 @@ public class EditPOIActivity extends AppCompatActivity {
                     // Update view
                     addImageToGallery(bitmap);
                 }
-                GridLayout gallery = findViewById(R.id.new_poi_gallery);
+                GridLayout gallery = findViewById(R.id.poi_gallery);
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else if (requestCode == TAKE_PHOTO && resultCode == RESULT_OK && data != null) {
@@ -109,7 +109,7 @@ public class EditPOIActivity extends AppCompatActivity {
 
                 // Update view
                 addImageToGallery(bitmap);
-                GridLayout gallery = findViewById(R.id.new_poi_gallery);
+                GridLayout gallery = findViewById(R.id.poi_gallery);
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else {
@@ -211,8 +211,18 @@ public class EditPOIActivity extends AppCompatActivity {
     /*** -------------------------------------------- ***/
 
     @RequiresApi(api = Build.VERSION_CODES.M)
+    private void setImages() {
+        for (Bitmap bitmap : poi.getImages()) {
+            images.add(bitmap);
+            addImageToGallery(bitmap);
+        }
+        GridLayout gallery = findViewById(R.id.poi_gallery);
+        if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void addImageToGallery(Bitmap bitmap) {
-        GridLayout gallery = findViewById(R.id.new_poi_gallery);
+        GridLayout gallery = findViewById(R.id.poi_gallery);
         final float scale = getResources().getDisplayMetrics().density;
 
         // Create wrapper
@@ -272,7 +282,7 @@ public class EditPOIActivity extends AppCompatActivity {
 
     private void selectImg(View view) {
         // Add index to delete
-        GridLayout gallery = findViewById(R.id.new_poi_gallery);
+        GridLayout gallery = findViewById(R.id.poi_gallery);
         imagesToDeleteIndexes.add(gallery.indexOfChild(view));
         Log.d(TAG, String.valueOf(gallery.indexOfChild(view)));
 
@@ -290,7 +300,7 @@ public class EditPOIActivity extends AppCompatActivity {
 
     private void deselectImg(View view) {
         // Remove index to delete
-        GridLayout gallery = findViewById(R.id.new_poi_gallery);
+        GridLayout gallery = findViewById(R.id.poi_gallery);
         imagesToDeleteIndexes.remove(gallery.indexOfChild(view));
         Log.d(TAG, String.valueOf(gallery.indexOfChild(view)));
 
@@ -313,7 +323,7 @@ public class EditPOIActivity extends AppCompatActivity {
         toggleToolbar();
 
         // Hide overlay and checks
-        GridLayout gallery = findViewById(R.id.new_poi_gallery);
+        GridLayout gallery = findViewById(R.id.poi_gallery);
         for (int i = 0; i < gallery.getChildCount(); i++) {
             View imgWrapper = gallery.getChildAt(i);
             for (int j = 1; j < ((ViewGroup) imgWrapper).getChildCount(); j++) {
@@ -325,7 +335,7 @@ public class EditPOIActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void deleteImages() {
-        GridLayout gallery = findViewById(R.id.new_poi_gallery);
+        GridLayout gallery = findViewById(R.id.poi_gallery);
         Collections.sort(imagesToDeleteIndexes, Collections.reverseOrder());
 
         for (int index : imagesToDeleteIndexes) {
@@ -413,7 +423,7 @@ public class EditPOIActivity extends AppCompatActivity {
         boolean error = checkForErrors(name, description);
 
         if (!error) {
-            pathRecorder.editPOI(poiIndex, name, description, null); // TODO: update images
+            pathRecorder.editPOI(poiIndex, name, description, images);
             finish();
         }
     }

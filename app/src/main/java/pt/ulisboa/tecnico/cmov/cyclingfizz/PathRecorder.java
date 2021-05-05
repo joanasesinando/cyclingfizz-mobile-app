@@ -108,11 +108,11 @@ public class PathRecorder {
         POIAdded = true;
     }
 
-    public void editPOI(int index, String name, String description, List<Bitmap> images) {
+    public void editPOI(int index, String name, String description, ArrayList<Bitmap> images) {
         PointOfInterest poi = getPOI(index);
-        poi.setName(name);
-        poi.setDescription(description);
-        // TODO: update images
+        poi.name = name;
+        poi.description = description;
+        poi.images = images;
     }
 
     public void removePOI(int index) {
@@ -209,7 +209,7 @@ public class PathRecorder {
 
     public static class PointOfInterest {
 
-        private final ArrayList<Bitmap> images;
+        private ArrayList<Bitmap> images;
         private final ArrayList<String> mediaLinks = new ArrayList<>();
 
         private String name;
@@ -221,6 +221,24 @@ public class PathRecorder {
             this.name = name;
             this.description = description;
             this.coord = coord;
+        }
+
+        public Point getCoord() {
+            return coord;
+        }
+
+        public String getName() {
+            return name;
+        }
+        public void setName(String name) { this.name = name; }
+
+        public String getDescription() {
+            return description;
+        }
+        public void setDescription(String description) { this.description = description; }
+
+        public ArrayList<Bitmap> getImages() {
+            return images;
         }
 
         public void uploadImages(Utils.OnTaskCompleted<Void> callback) {
@@ -248,12 +266,12 @@ public class PathRecorder {
 
                         (new Utils.httpPostRequestJson(response -> {
                             if (response.get("status").getAsString().equals("success"))
-                            mediaLinks.add(response.get("media_link").getAsString());
+                                mediaLinks.add(response.get("media_link").getAsString());
 
                             if (images.size() == mediaLinks.size()) {
                                 callback.onTaskCompleted(null);
                             }
-                            }, data.toString())).execute(SERVER_URL + "/upload-media");
+                        }, data.toString())).execute(SERVER_URL + "/upload-media");
 
                     });
                 } else {
@@ -262,20 +280,6 @@ public class PathRecorder {
 
             }
         }
-
-        public Point getCoord() {
-            return coord;
-        }
-
-        public String getName() {
-            return name;
-        }
-        public void setName(String name) { this.name = name; }
-
-        public String getDescription() {
-            return description;
-        }
-        public void setDescription(String description) { this.description = description; }
 
         public void getJsonAsync(Utils.OnTaskCompleted<JsonObject> callback) {
             JsonObject data = new JsonObject();
