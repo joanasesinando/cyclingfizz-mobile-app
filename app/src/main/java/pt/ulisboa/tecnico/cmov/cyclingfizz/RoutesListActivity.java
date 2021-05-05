@@ -32,14 +32,12 @@ import java.text.DecimalFormat;
 
 public class RoutesListActivity extends AppCompatActivity {
 
+    static String TAG = "Cycling_Fizz@RoutesList";
+    static String SERVER_URL = "https://stations.cfservertest.ga";
+
     Sidebar sidebar;
     FirebaseAuth mAuth;
-    static String TAG = "Cycling_Fizz@RoutesList";
     DecimalFormat oneDecimalFormatter = new DecimalFormat("#.0");
-
-
-
-    static String SERVER_URL = "https://stations.cfservertest.ga";
 
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -128,8 +126,8 @@ public class RoutesListActivity extends AppCompatActivity {
         // Set create route btn click listener
         FloatingActionButton createRouteBtn = findViewById(R.id.btn_create_route);
         createRouteBtn.setOnClickListener(v -> {
-
             PathRecorder pathRecorder = PathRecorder.getInstance();
+
             if (!pathRecorder.isRecording()) {
                 FirebaseUser user = mAuth.getCurrentUser();
 
@@ -142,31 +140,31 @@ public class RoutesListActivity extends AppCompatActivity {
 
                 } else {
                     new MaterialAlertDialogBuilder(this)
-                            .setTitle(R.string.sign_in_required)
-                            .setMessage(R.string.creating_route_dialog_warning)
-                            .setNeutralButton(R.string.cancel, (dialog, which) -> {
-                                // Respond to neutral button press
-                            })
-                            .setPositiveButton(R.string.sign_in, (dialog, which) -> {
-                                // Respond to positive button press
-                                Intent intent = new Intent(this, LoginActivity.class);
-                                startActivity(intent);
-                                overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
-                            })
-                            .show();
+                        .setTitle(R.string.sign_in_required)
+                        .setMessage(R.string.creating_route_dialog_warning)
+                        .setNeutralButton(R.string.cancel, (dialog, which) -> {
+                            // Respond to neutral button press
+                        })
+                        .setPositiveButton(R.string.sign_in, (dialog, which) -> {
+                            // Respond to positive button press
+                            Intent intent = new Intent(this, LoginActivity.class);
+                            startActivity(intent);
+                            overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+                        })
+                        .show();
                 }
 
             } else {
                 new MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.already_recording)
-                        .setMessage(R.string.already_recording_warning)
-                        .setPositiveButton(R.string.ok, (dialog, which) -> {
-                            Intent intent = new Intent(this, MapActivity.class);
-                            startActivity(intent);
-                            finish();
-                            overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
-                        })
-                        .show();
+                    .setTitle(R.string.already_recording)
+                    .setMessage(R.string.already_recording_warning)
+                    .setPositiveButton(R.string.ok, (dialog, which) -> {
+                        Intent intent = new Intent(this, MapActivity.class);
+                        startActivity(intent);
+                        finish();
+                        overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+                    })
+                    .show();
             }
         });
     }

@@ -143,7 +143,10 @@ public final class Sidebar {
                 menuItem.getItemData().setChecked(true);
             }
 
-            overlay.setOnClickListener(item -> toggleSidebar());
+            overlay.setOnClickListener(item -> {
+                Log.d(TAG, String.valueOf(activity));
+                toggleSidebar();
+            });
             LinearLayout sidebarUser = activity.findViewById(R.id.sidebar_user);
 
             changeUserUI();
