@@ -29,6 +29,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Messenger;
+import android.os.Parcelable;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -101,6 +102,7 @@ import pt.inesc.termite.wifidirect.service.SimWifiP2pService;
 
 import static com.mapbox.mapboxsdk.style.expressions.Expression.get;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.has;
+import static com.mapbox.mapboxsdk.style.expressions.Expression.in;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.not;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.step;
@@ -183,6 +185,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public final static String STATION_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.STATION_INFO";
     public final static String CYCLEWAY_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.CYCLEWAY_INFO";
     public final static String USER_LOCATION = "pt.ulisboa.tecnico.cmov.cyclingfizz.USER_LOCATION";
+    public final static String POI_INDEX = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI_INDEX";
     public final static String POI_LOCATION = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI_LOCATION";
 
     private MapView mapView;
@@ -425,19 +428,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 switch (itemSelected) {
                     case "POI":
                         int poiIndex = feature.getNumberProperty("id").intValue();
-
-                        new MaterialAlertDialogBuilder(this)
-                                .setTitle(pathRecorder.getPOIs().get(poiIndex).getName())
-                                .setMessage(R.string.deleting_poi_dialog_warning)
-                                .setNeutralButton(R.string.cancel, (dialog, which) -> {
-                                    // Respond to neutral button press
-                                })
-                                .setPositiveButton(R.string.delete, (dialog, which) -> {
-                                    // Respond to positive button press
-                                    pathRecorder.removePOI(poiIndex);
-                                    updatePOIsOnMap();
-                                })
-                                .show();
+                        intent = new Intent(this, EditPOIActivity.class);
+                        intent.putExtra(POI_INDEX, poiIndex);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
                         break;
 
                     case "gira-station":
@@ -973,7 +967,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Init POIs layer
         ArrayList<Feature> features = new ArrayList<>();
         int i = 0;
-        for (PathRecorder.PointOfInterest poi : pathRecorder.getPOIs()) {
+        for (PathRecorder.PointOfInterest poi : pathRecorder.getAllPOIs()) {
             Feature poiFeature = Feature.fromGeometry(poi.getCoord());
             poiFeature.addNumberProperty("id", i++);
             features.add(poiFeature);
@@ -1055,7 +1049,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (POIsSource != null) {
             ArrayList<Feature> features = new ArrayList<>();
             int i = 0;
-            for (PathRecorder.PointOfInterest poi : pathRecorder.getPOIs()) {
+            for (PathRecorder.PointOfInterest poi : pathRecorder.getAllPOIs()) {
                 Feature poiFeature = Feature.fromGeometry(poi.getCoord());
                 poiFeature.addNumberProperty("id", i++);
                 features.add(poiFeature);
@@ -1375,6 +1369,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         if (pathRecorder.isRecording()) {
             showRecordingUI();
+            updateRoute();
         }
     }
 

@@ -12,11 +12,7 @@ import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
-import android.location.Location;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -34,19 +30,15 @@ import android.widget.Toast;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
-import com.mapbox.geojson.Point;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
 
+public class EditPOIActivity extends AppCompatActivity {
 
-public class AddPOIActivity extends AppCompatActivity {
-
-    static String TAG = "Cycling_Fizz@AddPOI";
+    static String TAG = "Cycling_Fizz@EditPOI";
     static final int TAKE_PHOTO = 1;
     static final int PICK_IMAGES = 2;
 
@@ -54,7 +46,8 @@ public class AddPOIActivity extends AppCompatActivity {
     TextInputLayout descriptionInputLayout;
 
     PathRecorder pathRecorder;
-    Point coordPOI;
+    PathRecorder.PointOfInterest poi;
+    int poiIndex;
 
     boolean isDeletingImages = false;
 
@@ -71,6 +64,7 @@ public class AddPOIActivity extends AppCompatActivity {
                 }
             });
 
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,11 +72,13 @@ public class AddPOIActivity extends AppCompatActivity {
         setContentView(R.layout.poi);
 
         pathRecorder = PathRecorder.getInstance();
-        Location poiLocation = getIntent().getParcelableExtra(MapActivity.POI_LOCATION);
-        coordPOI = Point.fromLngLat(poiLocation.getLongitude(), poiLocation.getLatitude());
+        poiIndex = getIntent().getIntExtra(MapActivity.POI_INDEX, -1);
+        if (poiIndex != -1) poi = pathRecorder.getPOI(poiIndex);
 
+        setUI();
         uiSetClickListeners();
         setInputs();
+//        setImages();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -97,7 +93,6 @@ public class AddPOIActivity extends AppCompatActivity {
 
                     // Get bitmap
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
-                    bitmap = fixImageRotation(uri, bitmap);
                     images.add(bitmap);
 
                     // Update view
@@ -130,6 +125,16 @@ public class AddPOIActivity extends AppCompatActivity {
     /*** -------------------------------------------- ***/
     /*** -------------- USER INTERFACE -------------- ***/
     /*** -------------------------------------------- ***/
+
+    private void setUI() {
+        // Show delete btn
+        MaterialButton deleteBtn = findViewById(R.id.delete_poi);
+        deleteBtn.setVisibility(View.VISIBLE);
+
+        // Set toolbar title as POI name
+        MaterialToolbar toolbar = findViewById(R.id.poi_toolbar).findViewById(R.id.topAppBar);
+        toolbar.setTitle(poi.getName());
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @SuppressLint("IntentReset")
@@ -168,6 +173,10 @@ public class AddPOIActivity extends AppCompatActivity {
         // Set save btn click listener
         MaterialButton saveBtn = findViewById(R.id.save_poi);
         saveBtn.setOnClickListener(v -> savePOI());
+
+        // Set delete btn click listener
+        MaterialButton deleteBtn = findViewById(R.id.delete_poi);
+        deleteBtn.setOnClickListener(v -> deletePOI());
 
         // Set selecting items top bar btns listeners
         MaterialToolbar selectItemsToolbar = findViewById(R.id.new_poi_select_items_toolbar).findViewById(R.id.topAppBar);
@@ -329,53 +338,6 @@ public class AddPOIActivity extends AppCompatActivity {
         toggleToolbar();
     }
 
-    private Bitmap fixImageRotation(Uri uri, Bitmap bitmap) {
-        Bitmap rotatedBitmap = bitmap;
-        String res = null;
-        Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DATA}, null, null, null);
-        if (cursor.moveToFirst()) {
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            res = cursor.getString(column_index);
-        }
-        cursor.close();
-
-        try {
-            ExifInterface ei = new ExifInterface(new File(res));
-
-            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
-                    ExifInterface.ORIENTATION_UNDEFINED);
-
-            switch(orientation) {
-                case ExifInterface.ORIENTATION_ROTATE_90:
-                    rotatedBitmap = rotateImage(bitmap, 90);
-                    break;
-
-                case ExifInterface.ORIENTATION_ROTATE_180:
-                    rotatedBitmap = rotateImage(bitmap, 180);
-                    break;
-
-                case ExifInterface.ORIENTATION_ROTATE_270:
-                    rotatedBitmap = rotateImage(bitmap, 270);
-                    break;
-
-                case ExifInterface.ORIENTATION_NORMAL:
-                default:
-                    rotatedBitmap = bitmap;
-            }
-            return rotatedBitmap;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return rotatedBitmap;
-    }
-
-    public static Bitmap rotateImage(Bitmap source, float angle) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
-                matrix, true);
-    }
-
 
     /*** -------------------------------------------- ***/
     /*** ------------------ INPUTS ------------------ ***/
@@ -384,6 +346,9 @@ public class AddPOIActivity extends AppCompatActivity {
     private void setInputs() {
         nameInputLayout = findViewById(R.id.new_poi_name);
         descriptionInputLayout = findViewById(R.id.new_poi_description);
+
+        Objects.requireNonNull(nameInputLayout.getEditText()).setText(poi.getName());
+        Objects.requireNonNull(descriptionInputLayout.getEditText()).setText(poi.getDescription());
 
         Objects.requireNonNull(nameInputLayout.getEditText()).addTextChangedListener(new TextWatcher() {
             @Override
@@ -448,8 +413,13 @@ public class AddPOIActivity extends AppCompatActivity {
         boolean error = checkForErrors(name, description);
 
         if (!error) {
-            pathRecorder.addPOI(images, name, description, coordPOI);
+            pathRecorder.editPOI(poiIndex, name, description, null); // TODO: update images
             finish();
         }
+    }
+
+    private void deletePOI() {
+        pathRecorder.removePOI(poiIndex);
+        finish();
     }
 }

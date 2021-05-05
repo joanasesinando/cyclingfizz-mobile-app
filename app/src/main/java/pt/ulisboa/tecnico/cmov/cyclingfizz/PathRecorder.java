@@ -14,6 +14,7 @@ import com.mapbox.geojson.Point;
 
 
 import java.io.ByteArrayOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,8 +72,12 @@ public class PathRecorder {
         return path;
     }
 
-    public ArrayList<PointOfInterest> getPOIs() {
+    public ArrayList<PointOfInterest> getAllPOIs() {
         return POIs;
+    }
+
+    public PointOfInterest getPOI(int index) {
+        return POIs.get(index);
     }
 
     public void startRecording() {
@@ -101,6 +106,13 @@ public class PathRecorder {
         PointOfInterest pointOfInterest = new PointOfInterest(images, name, description, coord);
         POIs.add(pointOfInterest);
         POIAdded = true;
+    }
+
+    public void editPOI(int index, String name, String description, List<Bitmap> images) {
+        PointOfInterest poi = getPOI(index);
+        poi.setName(name);
+        poi.setDescription(description);
+        // TODO: update images
     }
 
     public void removePOI(int index) {
@@ -199,8 +211,9 @@ public class PathRecorder {
 
         private final ArrayList<Bitmap> images;
         private final ArrayList<String> mediaLinks = new ArrayList<>();
-        private final String name;
-        private final String description;
+
+        private String name;
+        private String description;
         private final Point coord;
 
         public PointOfInterest(List<Bitmap> images, String name, String description, Point coord) {
@@ -257,6 +270,12 @@ public class PathRecorder {
         public String getName() {
             return name;
         }
+        public void setName(String name) { this.name = name; }
+
+        public String getDescription() {
+            return description;
+        }
+        public void setDescription(String description) { this.description = description; }
 
         public void getJsonAsync(Utils.OnTaskCompleted<JsonObject> callback) {
             JsonObject data = new JsonObject();

@@ -6,11 +6,6 @@
         android:id="@+id/delete_items"
         android:icon="@drawable/ic_round_delete_24"
         android:title="@string/delete"
-        app:showAsAction="ifRoom" />
-
-    <item
-        android:id="@+id/more"
-        android:title="@string/more"
-        app:showAsAction="never" />
+        app:showAsAction="always" />
 
 </menu>
