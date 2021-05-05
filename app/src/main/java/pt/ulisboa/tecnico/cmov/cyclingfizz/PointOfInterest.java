@@ -24,8 +24,8 @@ public class PointOfInterest {
 
     private ArrayList<Bitmap> images = new ArrayList<>();
     private ArrayList<String> mediaLinks = new ArrayList<>();
-    private final String name;
-    private final String description;
+    private String name;
+    private String description;
     private final Point coord;
     private boolean alreadyVisited = false;
 
@@ -90,6 +90,14 @@ public class PointOfInterest {
     public String getName() {
         return name;
     }
+
+    public void setName(String name) { this.name = name; }
+
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) { this.description = description; }
+
 
     public void getJsonAsync(Utils.OnTaskCompleted<JsonObject> callback) {
         JsonObject data = new JsonObject();
