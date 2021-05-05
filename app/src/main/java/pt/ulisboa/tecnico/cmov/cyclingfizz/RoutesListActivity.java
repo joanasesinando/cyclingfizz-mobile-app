@@ -155,6 +155,18 @@ public class RoutesListActivity extends AppCompatActivity {
                             })
                             .show();
                 }
+
+            } else {
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.already_recording)
+                        .setMessage(R.string.already_recording_warning)
+                        .setPositiveButton(R.string.ok, (dialog, which) -> {
+                            Intent intent = new Intent(this, MapActivity.class);
+                            startActivity(intent);
+                            finish();
+                            overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+                        })
+                        .show();
             }
         });
     }
