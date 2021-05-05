@@ -185,6 +185,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private MapboxMap mapboxMap;
     private String mapStyle;
     private PathRecorder pathRecorder;
+    private PathPlayer pathPlayer;
 
     private boolean endTripFlag = false;
 
@@ -232,6 +233,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
         pathRecorder = PathRecorder.getInstance();
+        pathPlayer = PathPlayer.getInstance();
 
         setContentView(R.layout.map);
 
@@ -344,6 +346,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         ExtendedFloatingActionButton recordingFlag = findViewById(R.id.flag_recording);
         recordingFlag.setVisibility(View.VISIBLE);
+    }
+
+    private void showDisplayRouteUI() {
+        Log.e(TAG, "Mostrar Route");
     }
 
 
@@ -914,7 +920,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Init POIs layer
         ArrayList<Feature> features = new ArrayList<>();
         int i = 0;
-        for (PathRecorder.PointOfInterest poi : pathRecorder.getPOIs()) {
+        for (PointOfInterest poi : pathRecorder.getPOIs()) {
             Feature poiFeature = Feature.fromGeometry(poi.getCoord());
             poiFeature.addNumberProperty("id", i++);
             features.add(poiFeature);
@@ -996,7 +1002,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (POIsSource != null) {
             ArrayList<Feature> features = new ArrayList<>();
             int i = 0;
-            for (PathRecorder.PointOfInterest poi : pathRecorder.getPOIs()) {
+            for (PointOfInterest poi : pathRecorder.getPOIs()) {
                 Feature poiFeature = Feature.fromGeometry(poi.getCoord());
                 poiFeature.addNumberProperty("id", i++);
                 features.add(poiFeature);
@@ -1316,6 +1322,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         if (pathRecorder.isRecording()) {
             showRecordingUI();
+        }
+
+        if (pathPlayer.isPlayingRoute()) {
+            showDisplayRouteUI();
         }
     }
 
