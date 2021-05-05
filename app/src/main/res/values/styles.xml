@@ -18,4 +18,8 @@
     <style name="SidebarTextViewStyle" parent="android:Widget.TextView">
         <item name="android:fontFamily">@font/quicksand_medium</item>
     </style>
+
+    <style name="PrimaryOutlinedButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="strokeColor">@color/orange_500</item>
+    </style>
 </resources>

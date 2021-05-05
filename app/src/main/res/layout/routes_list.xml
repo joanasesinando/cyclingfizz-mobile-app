@@ -7,13 +7,6 @@
     android:layout_height="match_parent"
     tools:context=".RoutesListActivity">
 
-    <RelativeLayout
-        android:id="@+id/overlay"
-        android:layout_height="match_parent"
-        android:layout_width="match_parent"
-        android:background="@color/darkTransparent"
-        android:visibility="gone"/>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -38,14 +31,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
-
-<!--                    <include-->
-<!--                        layout="@layout/route_card"-->
-<!--                        android:layout_width="match_parent"-->
-<!--                        android:layout_height="wrap_content" />-->
-
                 </LinearLayout>
             </ScrollView>
+
+            <RelativeLayout
+                android:id="@+id/overlay"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:background="@color/darkTransparent"
+                android:visibility="gone"/>
 
             <include
                 android:id="@+id/sidebar_layout"

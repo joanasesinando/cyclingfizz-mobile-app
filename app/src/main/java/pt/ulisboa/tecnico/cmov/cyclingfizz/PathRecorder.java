@@ -14,6 +14,7 @@ import com.mapbox.geojson.Point;
 
 
 import java.io.ByteArrayOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,6 +76,10 @@ public class PathRecorder {
         return POIs;
     }
 
+    public PointOfInterest getPOI(int index) {
+        return POIs.get(index);
+    }
+
     public void startRecording() {
         cleanGeoJson();
         isRecording = true;
@@ -101,6 +106,13 @@ public class PathRecorder {
         PointOfInterest pointOfInterest = new PointOfInterest(images, name, description, coord);
         POIs.add(pointOfInterest);
         POIAdded = true;
+    }
+
+    public void editPOI(int index, String name, String description, List<Bitmap> images) {
+        PointOfInterest poi = getPOI(index);
+        poi.setName(name);
+        poi.setDescription(description);
+        // TODO: update images
     }
 
     public void removePOI(int index) {

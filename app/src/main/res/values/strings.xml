@@ -45,6 +45,8 @@
     <string name="description_required">Description required</string>
     <string name="dangerous_action">Dangerous action</string>
     <string name="quit_new_route_warning">You won’t be able to recover this route. Are you sure you want to quit?</string>
+    <string name="already_recording">Already recording route</string>
+    <string name="already_recording_warning">You are already recording a route! Please end the current recording first.</string>
 
     <!-- Messages -->
     <string name="route_recorded">Route recorded</string>
