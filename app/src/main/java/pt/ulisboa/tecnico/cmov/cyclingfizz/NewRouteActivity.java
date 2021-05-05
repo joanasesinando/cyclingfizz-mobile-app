@@ -1,17 +1,26 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.GridLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
@@ -33,6 +42,7 @@ public class NewRouteActivity extends AppCompatActivity {
     TextInputLayout nameInputLayout;
     TextInputLayout descriptionInputLayout;
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,6 +52,7 @@ public class NewRouteActivity extends AppCompatActivity {
 
         uiSetClickListeners();
         setInputs();
+        setPOIs();
     }
 
     @Override
@@ -159,6 +170,75 @@ public class NewRouteActivity extends AppCompatActivity {
         }
 
         return error;
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ------------------- POIs ------------------- ***/
+    /*** -------------------------------------------- ***/
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void setPOIs() {
+        LinearLayout linearLayout = findViewById(R.id.poi_list);
+
+        for (PointOfInterest poi : pathRecorder.getAllPOIs()){
+            LayoutInflater inflater = LayoutInflater.from(this);
+            ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.poi_item, null, false);
+
+            //Set title for POI
+            TextView title = layout.findViewById(R.id.poi_item_title);
+            title.setText(poi.getName());
+            //Set description for POI
+            TextView description = layout.findViewById(R.id.route_card_description);
+            description.setText(poi.getDescription());
+            //Add POI's images
+            for (Bitmap bitmap: poi.getImages()) {
+                addImageToGallery(bitmap, layout);
+            }
+            GridLayout gallery = layout.findViewById(R.id.poi_gallery);
+            if (poi.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
+
+            linearLayout.addView(layout);
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void addImageToGallery(Bitmap bitmap, ConstraintLayout layout) {
+        GridLayout gallery = layout.findViewById(R.id.poi_gallery);
+        final float scale = getResources().getDisplayMetrics().density;
+
+        // Create wrapper
+        ConstraintLayout imgWrapper = new ConstraintLayout(this);
+        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+        params.width = 0;
+        params.height = (int) (100 * scale);
+        params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        imgWrapper.setLayoutParams(params);
+
+        // Create image
+        ImageView newImg = new ImageView(this);
+        newImg.setImageBitmap(bitmap);
+        newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imgWrapper.addView(newImg);
+
+        // Create overlay (when selected)
+        LinearLayout overlay = new LinearLayout(this);
+        LinearLayout.LayoutParams overlayParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        overlay.setBackgroundColor(getColor(R.color.orange_500));
+        overlay.setAlpha(0.4f);
+        overlay.setVisibility(View.GONE);
+        imgWrapper.addView(overlay, overlayParams);
+
+        // Create checked icon (when selected)
+        ImageView icon = new ImageView(this);
+        icon.setImageResource(R.drawable.ic_round_check_circle_24);
+        icon.setPadding((int) (10 * scale), (int) (10 * scale), (int) (10 * scale), (int) (10 * scale));
+        icon.setColorFilter(getColor(R.color.white));
+        icon.setVisibility(View.GONE);
+        imgWrapper.addView(icon);
+
+        gallery.addView(imgWrapper, params);
     }
 
 

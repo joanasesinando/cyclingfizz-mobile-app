@@ -25,14 +25,14 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginBottom="15dp">
+        android:layout_marginBottom="15dp"
+        android:layout_weight="1">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginHorizontal="16dp">
+            android:layout_marginHorizontal="16dp"
+            android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -68,9 +68,9 @@
                             android:id="@+id/linearLayout3"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:orientation="horizontal"
                             android:alpha=".25"
                             android:background="@color/black"
+                            android:orientation="horizontal"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
@@ -91,44 +91,44 @@
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/new_poi_name"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
                     android:layout_marginStart="20dp"
+                    android:layout_marginTop="20dp"
                     android:hint="@string/name"
-                    app:boxStrokeWidth="2dp"
                     app:boxStrokeColor="@color/orange_500"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                    app:boxStrokeWidth="2dp">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="text"
-                        android:fontFamily="@font/quicksand" />
+                        android:fontFamily="@font/quicksand"
+                        android:inputType="text" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/new_poi_description"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="@string/description"
-                app:boxStrokeWidth="2dp"
                 app:boxStrokeColor="@color/orange_500"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                app:boxStrokeWidth="2dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:fontFamily="@font/quicksand" />
+                    android:fontFamily="@font/quicksand"
+                    android:inputType="text" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp" >
+                android:layout_marginTop="16dp">
 
                 <com.mapbox.mapboxsdk.maps.MapView
                     android:id="@+id/previewRouteMapView"
@@ -157,10 +157,10 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 app:cardElevation="0dp"
                 app:strokeColor="@color/material_on_surface_stroke"
-                app:strokeWidth="1dp"
-                android:layout_marginTop="16dp">
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -178,8 +178,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginStart="12dp">
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
 
                         <TextView
                             android:id="@+id/card_title"
@@ -194,18 +194,7 @@
                             android:id="@+id/poi_list"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical">
-
-<!--                            <include-->
-<!--                                layout="@layout/poi_item"-->
-<!--                                android:layout_width="match_parent"-->
-<!--                                android:layout_height="wrap_content" />-->
-
-<!--                            <include-->
-<!--                                layout="@layout/poi_item"-->
-<!--                                android:layout_width="match_parent"-->
-<!--                                android:layout_height="wrap_content" />-->
-                        </LinearLayout>
+                            android:orientation="vertical" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
