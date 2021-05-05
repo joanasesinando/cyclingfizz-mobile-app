@@ -123,7 +123,7 @@ public class RoutesListActivity extends AppCompatActivity {
     private void uiSetClickListeners() {
         // Set menu click listener for sidebar opening/closing
         MaterialToolbar toolbar = findViewById(R.id.routes_list_toolbar).findViewById(R.id.topAppBar);
-        toolbar.setNavigationOnClickListener(v -> sidebar.toggleSidebar(v));
+        toolbar.setNavigationOnClickListener(v -> sidebar.toggleSidebar());
 
         // Set create route btn click listener
         FloatingActionButton createRouteBtn = findViewById(R.id.btn_create_route);

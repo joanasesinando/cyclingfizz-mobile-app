@@ -53,14 +53,14 @@ public final class Sidebar {
             return false;
 
         } else if (id == R.id.sidebar_routes) {
-            toggleSidebar(null);
+            toggleSidebar();
             Intent intent = new Intent(activity, RoutesListActivity.class);
             activity.startActivity(intent);
             activity.overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
             return true;
 
         } else if (id == R.id.sidebar_map) {
-            toggleSidebar(null);
+            toggleSidebar();
             Intent intent = new Intent(activity, MapActivity.class);
             activity.startActivity(intent);
             activity.overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
@@ -72,7 +72,7 @@ public final class Sidebar {
     }
 
     @SuppressLint("RestrictedApi")
-    public void toggleSidebar(View view) {
+    public void toggleSidebar() {
         RelativeLayout overlay = activity.findViewById(R.id.overlay);
 
         // MapActivity
@@ -143,7 +143,7 @@ public final class Sidebar {
                 menuItem.getItemData().setChecked(true);
             }
 
-            overlay.setOnClickListener(item -> toggleSidebar(null));
+            overlay.setOnClickListener(item -> toggleSidebar());
             LinearLayout sidebarUser = activity.findViewById(R.id.sidebar_user);
 
             changeUserUI();

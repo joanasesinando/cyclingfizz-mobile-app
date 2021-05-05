@@ -32,6 +32,7 @@ import android.os.Messenger;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Chronometer;
@@ -76,8 +77,10 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.expressions.Expression;
 import com.mapbox.mapboxsdk.style.layers.CircleLayer;
+import com.mapbox.mapboxsdk.style.layers.Layer;
 import com.mapbox.mapboxsdk.style.layers.LineLayer;
 import com.mapbox.mapboxsdk.style.layers.Property;
+import com.mapbox.mapboxsdk.style.layers.PropertyValue;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.layers.TransitionOptions;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonOptions;
@@ -119,6 +122,7 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textField;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textFont;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textIgnorePlacement;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textSize;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.visibility;
 
 enum TrackingMode {
     FREE, FOLLOW_USER, FOLLOW_USER_WITH_BEARING
@@ -184,8 +188,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private MapView mapView;
     private MapboxMap mapboxMap;
     private String mapStyle;
-    private PathRecorder pathRecorder;
 
+    private boolean cyclewaysVisible = true;
+    private boolean giraStationsVisible = true;
+
+    private PathRecorder pathRecorder;
     private boolean endTripFlag = false;
 
     /// -------------- PERMISSIONS -------------- ///
@@ -271,17 +278,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
-        // Set layers btn click listener
-        FloatingActionButton layersBtn = findViewById(R.id.btn_map_layers);
-        layersBtn.setOnClickListener(v -> changeLayerStyle(this.mapStyle.equals(Style.MAPBOX_STREETS) ?
-                Style.SATELLITE_STREETS : Style.MAPBOX_STREETS));
-
         // Set sidebar
         sidebar = new Sidebar(this);
 
-        // Set menu click listener for sidebar opening/closing
-        MaterialToolbar toolbar = findViewById(R.id.map_toolbar).findViewById(R.id.topAppBar);
-        toolbar.setNavigationOnClickListener(v -> sidebar.toggleSidebar(v));
+        // Set click listeners
+        uiSetClickListeners();
 
         // Init Wifi Direct
         registerBroadcastReceiver();
@@ -312,6 +313,32 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             startActivity(intent);
             finish();
         }
+    }
+
+    private void uiSetClickListeners() {
+        // Set layers btn click listener
+        FloatingActionButton layersBtn = findViewById(R.id.btn_map_layers);
+        layersBtn.setOnClickListener(v -> changeLayerStyle(this.mapStyle.equals(Style.MAPBOX_STREETS) ?
+                Style.SATELLITE_STREETS : Style.MAPBOX_STREETS));
+
+        // Set menu click listener for sidebar opening/closing
+        MaterialToolbar toolbar = findViewById(R.id.map_toolbar).findViewById(R.id.topAppBar);
+        toolbar.setNavigationOnClickListener(v -> sidebar.toggleSidebar());
+    }
+
+    private boolean toolbarItemClicked(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.filter_cycleways) {
+            filterItems("cycleways", !item.isChecked(), item);
+            // Keep the popup menu open
+            Utils.keepMenuOpen(item, this);
+
+        } else if (id == R.id.filter_gira) {
+            filterItems("gira-stations", !item.isChecked(), item);
+            // Keep the popup menu open
+            Utils.keepMenuOpen(item, this);
+        }
+        return false;
     }
 
     private void uiUpdateCard(View card, @DrawableRes int iconId, CharSequence textTitle, CharSequence textSubtitle) {
@@ -488,7 +515,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             bearingBtn.setOnClickListener(view -> pointToNorth());
 
             MaterialToolbar toolbar = findViewById(R.id.map_toolbar).findViewById(R.id.topAppBar);
-            toolbar.setOnMenuItemClickListener(item -> Toolbar.mapToolbarItemClicked(item, getApplicationContext(), mapboxMap));
+            toolbar.setOnMenuItemClickListener(this::toolbarItemClicked);
             // Map is set up and the style has loaded. Now you can add data or make other map adjustments
         });
     }
@@ -581,6 +608,35 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         loadedMapStyle.addLayer(cycleways);
     }
 
+    private void filterItems(String type, boolean visible, MenuItem item) {
+        try {
+            switch (type) {
+                case "cycleways":
+                    Layer cyclewaysLayer = mapboxMap.getStyle().getLayer(MapActivity.CYCLEWAYS_LAYER_ID);
+                    cyclewaysLayer.setProperties(visibility(visible ? Property.VISIBLE : Property.NONE));
+                    item.setChecked(visible);
+                    cyclewaysVisible = visible;
+                    break;
+
+                case "gira-stations":
+                    Layer giraLayer = mapboxMap.getStyle().getLayer(MapActivity.GIRA_STATION_LAYER_ID);
+                    Layer giraClustersLayer = mapboxMap.getStyle().getLayer(MapActivity.GIRA_CLUSTER_LAYER_ID);
+                    Layer giraCountLayer = mapboxMap.getStyle().getLayer(MapActivity.GIRA_COUNT_LAYER_ID);
+
+                    PropertyValue<String> visibility = visibility(visible ? Property.VISIBLE : Property.NONE);
+
+                    giraLayer.setProperties(visibility);
+                    giraClustersLayer.setProperties(visibility);
+                    giraCountLayer.setProperties(visibility);
+                    item.setChecked(visible);
+                    giraStationsVisible = visible;
+                    break;
+
+                default:
+            }
+        } catch (NullPointerException ignored) { }
+    }
+
 
     /*** -------------------------------------------- ***/
     /*** ---------------- LOCATION ------------------ ***/
@@ -593,7 +649,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
-
     void updateLocationRequestRecording() {
         locationRequest.setMaxWaitTime(LOCATION_UPDATE_INTERVAL);
     }
@@ -601,7 +656,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     void updateLocationRequestNotRecording() {
         locationRequest.setMaxWaitTime(LOCATION_UPDATE_MAX_WAIT_INTERVAL);
     }
-
 
     void checkIfLocationOn() {
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
@@ -732,6 +786,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             addCycleways(style);
             addGiraStations(style);
             initRouteLayer(style);
+
+            // Keep filters the same as they were
+            MaterialToolbar toolbar = findViewById(R.id.map_toolbar).findViewById(R.id.topAppBar);
+            filterItems("cycleways", cyclewaysVisible, toolbar.getMenu().getItem(0));
+            filterItems("gira-stations", giraStationsVisible, toolbar.getMenu().getItem(1));
         });
     }
 
