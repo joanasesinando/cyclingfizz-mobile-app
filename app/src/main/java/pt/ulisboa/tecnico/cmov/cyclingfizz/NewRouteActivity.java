@@ -88,6 +88,12 @@ public class NewRouteActivity extends AppCompatActivity {
                     .show();
         });
 
+        // Set toolbar action btn click listener
+        toolbar.setOnMenuItemClickListener(item -> {
+            saveRoute();
+            return false;
+        });
+
         // Set thumbnail btn click listener
         CardView thumbnail = findViewById(R.id.new_route_thumbnail);
         thumbnail.setOnClickListener(v -> {
@@ -98,27 +104,7 @@ public class NewRouteActivity extends AppCompatActivity {
 
         // Set save btn click listener
         MaterialButton saveBtn = findViewById(R.id.save_route);
-        saveBtn.setOnClickListener(v -> {
-            // Clean error messages
-            nameInputLayout.setError(null);
-            descriptionInputLayout.setError(null);
-
-            // Get name & description
-            String name = Objects.requireNonNull(nameInputLayout.getEditText()).getText().toString();
-            String description = Objects.requireNonNull(descriptionInputLayout.getEditText()).getText().toString();
-
-            // Check for errors
-            boolean error = checkForErrors(name, description);
-
-            if (!error) {
-                LinearProgressIndicator progressIndicator = findViewById(R.id.progress_indicator);
-                pathRecorder.saveRecording(name, description, result -> {
-                    progressIndicator.setVisibility(View.GONE);
-                    finish();
-                });
-                progressIndicator.setVisibility(View.VISIBLE);
-            }
-        });
+        saveBtn.setOnClickListener(v -> saveRoute());
     }
 
 
@@ -173,5 +159,32 @@ public class NewRouteActivity extends AppCompatActivity {
         }
 
         return error;
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ------------------- ROUTE ------------------ ***/
+    /*** -------------------------------------------- ***/
+
+    public void saveRoute() {
+        // Clean error messages
+        nameInputLayout.setError(null);
+        descriptionInputLayout.setError(null);
+
+        // Get name & description
+        String name = Objects.requireNonNull(nameInputLayout.getEditText()).getText().toString();
+        String description = Objects.requireNonNull(descriptionInputLayout.getEditText()).getText().toString();
+
+        // Check for errors
+        boolean error = checkForErrors(name, description);
+
+        if (!error) {
+            LinearProgressIndicator progressIndicator = findViewById(R.id.progress_indicator);
+            pathRecorder.saveRecording(name, description, result -> {
+                progressIndicator.setVisibility(View.GONE);
+                finish();
+            });
+            progressIndicator.setVisibility(View.VISIBLE);
+        }
     }
 }
