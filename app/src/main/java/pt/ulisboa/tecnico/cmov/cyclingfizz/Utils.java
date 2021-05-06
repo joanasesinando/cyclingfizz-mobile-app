@@ -19,6 +19,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.common.util.IOUtils;
@@ -70,6 +71,10 @@ public final class Utils {
     /*** -------------------------------------------- ***/
     /*** -------------- USER INTERFACE -------------- ***/
     /*** -------------------------------------------- ***/
+
+    static void forceLightModeOn() {
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     static void setStatusBarColor(Activity activity, int color) {

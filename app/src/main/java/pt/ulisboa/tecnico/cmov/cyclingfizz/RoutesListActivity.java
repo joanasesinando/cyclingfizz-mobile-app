@@ -5,23 +5,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.Chronometer;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -30,20 +22,25 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 
 public class RoutesListActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@RoutesList";
     static String SERVER_URL = "https://stations.cfservertest.ga";
+    public final static String ROUTE_ID = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_ID";
 
     Sidebar sidebar;
     FirebaseAuth mAuth;
     DecimalFormat oneDecimalFormatter = new DecimalFormat("#.0");
 
+    ArrayList<Route> routes = new ArrayList<>();
+
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
         super.onCreate(savedInstanceState);
         setContentView(R.layout.routes_list);
 
@@ -71,7 +68,6 @@ public class RoutesListActivity extends AppCompatActivity {
             if (!obj.get("status").getAsString().equals("success")) return;
             LinearLayout linearLayout = findViewById(R.id.routes_list);
 
-
             for (JsonElement routeJsonElement : obj.get("data").getAsJsonArray()) {
                 JsonObject routeJson = routeJsonElement.getAsJsonObject();
                 LayoutInflater inflater = LayoutInflater.from(this);
@@ -79,15 +75,22 @@ public class RoutesListActivity extends AppCompatActivity {
 
                 if (!routeJson.isJsonNull()) {
 
-                    TextView title = layout.findViewById(R.id.route_card_title);
-                    TextView description = layout.findViewById(R.id.route_card_description);
-                    TextView routeCardRateValue = layout.findViewById(R.id.route_card_rate_value);
-                    ImageView routeCardRateIcon = layout.findViewById(R.id.route_card_rate_icon);
+                    // Get views to update
+                    TextView titleView = layout.findViewById(R.id.route_card_title);
+                    TextView descriptionView = layout.findViewById(R.id.route_card_description);
+                    TextView routeCardRateValueView = layout.findViewById(R.id.route_card_rate_value);
+                    ImageView routeCardRateIconView = layout.findViewById(R.id.route_card_rate_icon);
 
-                    if (!routeJson.get("title").isJsonNull()) title.setText(routeJson.get("title").getAsString());
-                    if (!routeJson.get("description").isJsonNull()) description.setText(routeJson.get("description").getAsString());
+                    // Set thumbnail
+                    // TODO
 
+                    // Set title & description
+                    String title = routeJson.get("title") != null && !routeJson.get("title").isJsonNull() ? routeJson.get("title").getAsString() : null;
+                    String description = routeJson.get("description") != null && !routeJson.get("description").isJsonNull() ? routeJson.get("description").getAsString() : null;
+                    if (title != null) titleView.setText(title);
+                    if (description != null) descriptionView.setText(description);
 
+                    // Set avg rate
                     if (routeJson.get("rates") != null && !routeJson.get("rates").isJsonNull()) {
                         float rateAvg = 0;
                         JsonArray ratesJson = routeJson.get("rates").getAsJsonArray();
@@ -95,24 +98,28 @@ public class RoutesListActivity extends AppCompatActivity {
                             rateAvg += rateJson.getAsFloat() / ratesJson.size();
                         }
 
-                        routeCardRateValue.setText(oneDecimalFormatter.format(rateAvg));
-                        routeCardRateValue.setTextColor(getColorFromRate(rateAvg));
-                        routeCardRateIcon.setColorFilter(getColorFromRate(rateAvg));
+                        routeCardRateValueView.setText(oneDecimalFormatter.format(rateAvg));
+                        routeCardRateValueView.setTextColor(getColorFromRate(rateAvg));
+                        routeCardRateIconView.setColorFilter(getColorFromRate(rateAvg));
                     }
 
-                    if (!routeJson.get("id").isJsonNull()) layout.setOnClickListener(v -> {
-                        //fixme ** JUST FOR TESTING! ** - change this to real on click
+                    String routeID = routeJson.get("id") != null && !routeJson.get("id").isJsonNull() ? routeJson.get("id").getAsString() : null;
 
-                        PathPlayer.getInstance().playRouteFromRouteId(routeJson.get("id").getAsString(), success -> {
-                            if (success) {
-                                finish();
-                            } else {
-                                Toast.makeText(this, "Error: Could not play route", Toast.LENGTH_LONG).show();
-                            }
-                        });
+                    if (routeID != null) layout.setOnClickListener(v -> {
+                        Intent intent = new Intent(this, RouteActivity.class);
+                        intent.putExtra(ROUTE_ID, routeID);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+
+//                        PathPlayer.getInstance().playRouteFromRouteId(routeJson.get("id").getAsString(), success -> {
+//                            if (success) {
+//                                finish();
+//                            } else {
+//                                Toast.makeText(this, "Error: Could not play route", Toast.LENGTH_LONG).show();
+//                            }
+//                        });
                     });
                 }
-
 
                 linearLayout.addView(layout);
             }

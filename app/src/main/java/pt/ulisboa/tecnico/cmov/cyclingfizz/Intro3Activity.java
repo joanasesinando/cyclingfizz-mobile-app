@@ -14,6 +14,7 @@ public class Intro3Activity extends AppCompatActivity {
     @Override
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     protected void onCreate(Bundle savedInstanceState) {
+        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
         super.onCreate(savedInstanceState);
         setContentView(R.layout.intro3);
 

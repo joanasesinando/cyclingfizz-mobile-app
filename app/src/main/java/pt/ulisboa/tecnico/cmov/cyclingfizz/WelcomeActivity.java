@@ -14,9 +14,9 @@ public class WelcomeActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
         super.onCreate(savedInstanceState);
         setContentView(R.layout.welcome);
-
 
         // Set status bar color
         Utils.setStatusBarColor(this, R.color.offWhite);

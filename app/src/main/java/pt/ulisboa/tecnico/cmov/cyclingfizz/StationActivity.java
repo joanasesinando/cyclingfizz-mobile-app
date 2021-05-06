@@ -71,6 +71,7 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
         super.onCreate(savedInstanceState);
         sharedState = (SharedState) getApplicationContext();
 
@@ -120,11 +121,11 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
 
     private void uiUpdateTopBar(String name) {
         // Set top bar title
-        TextView title = findViewById(R.id.map_info_name);
+        TextView title = findViewById(R.id.taller_top_bar_name);
         title.setText(name);
 
         // Set top bar icon
-        ImageView icon = findViewById(R.id.map_info_icon);
+        ImageView icon = findViewById(R.id.taller_top_bar_icon);
         icon.setImageResource(R.drawable.ic_station);
     }
 
@@ -201,7 +202,7 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
 
     private void uiSetClickListeners() {
         // Set close btn click listener
-        MaterialToolbar topBar = findViewById(R.id.map_info_bar);
+        MaterialToolbar topBar = findViewById(R.id.taller_top_bar);
         topBar.setNavigationOnClickListener(v -> finish());
 
         // Set street view thumbnail click listener

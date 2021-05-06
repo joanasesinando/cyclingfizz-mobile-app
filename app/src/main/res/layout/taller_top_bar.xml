@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
@@ -11,43 +11,33 @@
         android:layout_height="128dp">
 
         <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/map_info_bar"
+            android:id="@+id/taller_top_bar"
             style="@style/Widget.MaterialComponents.Toolbar.Primary"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:elevation="0dp"
-            app:menu="@menu/map_info_bar"
+            app:menu="@menu/share_only_menu"
             app:navigationIcon="@drawable/ic_round_close_24" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Note: A RecyclerView can also be used -->
-    <androidx.core.widget.NestedScrollView
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <!-- Scrollable content -->
-
-    </androidx.core.widget.NestedScrollView>
-
     <ImageView
-        android:id="@+id/map_info_icon"
+        android:id="@+id/taller_top_bar_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_cycleway"
+        android:src="@drawable/ic_toolbar_default"
         android:layout_marginLeft="15dp"
         android:layout_marginTop="55dp"
         android:translationZ="10dp" />
 
     <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/map_info_name"
+        android:id="@+id/taller_top_bar_name"
         android:layout_width="285dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="65dp"
         android:layout_marginTop="53dp"
         android:fontFamily="@font/quicksand_medium"
-        android:text="Ciclovia da Av. Fontes Pereira de Melo"
+        android:text="@string/not_available"
         android:textColor="@color/white"
         android:textSize="20sp"
         android:translationZ="10dp"

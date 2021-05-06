@@ -8,17 +8,14 @@ import java.util.ArrayList;
 
 public class Route {
 
-    private final String routeJson;
+    private final String route;
     private final String idToken;
     private final ArrayList<PointOfInterest> POIs;
     private final String title;
     private final String description;
 
-    static String SERVER_URL = "https://stations.cfservertest.ga";
-    static String TAG = "Cycling_Fizz@Route";
-
-    public Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs) {
-        this.routeJson = routeJson;
+    public Route(String route, String idToken, String title, String description, ArrayList<PointOfInterest> POIs) {
+        this.route = route;
         this.idToken = idToken;
         this.title = title;
         this.description = description;
@@ -27,7 +24,7 @@ public class Route {
 
     public void getJsonAsync(Utils.OnTaskCompleted<JsonObject> callback) {
         JsonObject data = new JsonObject();
-        data.addProperty("route", routeJson);
+        data.addProperty("route", route);
         data.addProperty("id_token", idToken);
         data.addProperty("title", title);
         data.addProperty("description", description);
@@ -51,10 +48,6 @@ public class Route {
         }
     }
 
-    public ArrayList<PointOfInterest> getAllPOIs() {
-        return POIs;
-    }
-
     public static Route fromJson(JsonObject json) {
 
         ArrayList<PointOfInterest> POISs = new ArrayList<>();
@@ -72,6 +65,24 @@ public class Route {
                 );
     }
 
+    public String getRoute() {
+        return route;
+    }
 
+    public String getIdToken() {
+        return idToken;
+    }
+
+    public ArrayList<PointOfInterest> getPOIs() {
+        return POIs;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
 }
 

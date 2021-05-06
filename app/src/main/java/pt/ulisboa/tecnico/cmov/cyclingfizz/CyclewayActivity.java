@@ -47,6 +47,7 @@ public class CyclewayActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
         super.onCreate(savedInstanceState);
         setContentView(R.layout.cycleway);
 
@@ -86,11 +87,11 @@ public class CyclewayActivity extends AppCompatActivity {
 
     private void uiUpdateTopBar(String name) {
         // Set top bar title
-        TextView title = findViewById(R.id.map_info_name);
+        TextView title = findViewById(R.id.taller_top_bar_name);
         title.setText(name);
 
         // Set top bar icon
-        ImageView icon = findViewById(R.id.map_info_icon);
+        ImageView icon = findViewById(R.id.taller_top_bar_icon);
         icon.setImageResource(R.drawable.ic_cycleway);
     }
 
@@ -155,7 +156,7 @@ public class CyclewayActivity extends AppCompatActivity {
 
     private void uiSetClickListeners() {
         // Set close btn click listener
-        MaterialToolbar topBar = findViewById(R.id.map_info_bar);
+        MaterialToolbar topBar = findViewById(R.id.taller_top_bar);
         topBar.setNavigationOnClickListener(v -> finish());
 
         // Set street view thumbnail click listener

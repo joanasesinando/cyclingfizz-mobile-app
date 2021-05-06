@@ -32,11 +32,11 @@ public class SimWifiP2pBroadcastReceiver extends BroadcastReceiver {
 
             int state = intent.getIntExtra(SimWifiP2pBroadcast.EXTRA_WIFI_STATE, -1);
             if (state == SimWifiP2pBroadcast.WIFI_P2P_STATE_ENABLED) {
-                Toast.makeText(mActivity, "WiFi Direct enabled",
-                        Toast.LENGTH_SHORT).show();
+//                Toast.makeText(mActivity, "WiFi Direct enabled",
+//                        Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(mActivity, "WiFi Direct disabled",
-                        Toast.LENGTH_SHORT).show();
+//                Toast.makeText(mActivity, "WiFi Direct disabled",
+//                        Toast.LENGTH_SHORT).show();
             }
 
         } else if (SimWifiP2pBroadcast.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {

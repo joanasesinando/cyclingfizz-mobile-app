@@ -230,7 +230,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        forceLightModeOn(); // FIXME: remove when dark mode implemented
+        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
         checkIfFirstTimeOpening();
         super.onCreate(savedInstanceState);
 
@@ -298,10 +298,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     /*** -------------------------------------------- ***/
     /*** -------------- USER INTERFACE -------------- ***/
     /*** -------------------------------------------- ***/
-
-    private void forceLightModeOn() {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-    }
 
     private void checkIfFirstTimeOpening() {
         // Set flag for first time opening
@@ -692,13 +688,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void startLocation() {
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Permission already Granted", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(this, "Permission already Granted", Toast.LENGTH_SHORT).show();
 
             if (locationRequest == null) createLocationRequest();
             checkIfLocationOn();
 
         } else {
-            Toast.makeText(this, "ask for permission", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(this, "ask for permission", Toast.LENGTH_SHORT).show();
             requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
         }
     }

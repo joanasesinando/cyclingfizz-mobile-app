@@ -8,11 +8,9 @@
 
     <include
         android:id="@+id/include2"
-        layout="@layout/map_info_bar"
+        layout="@layout/taller_top_bar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="115dp" />
+        android:layout_height="wrap_content" />
 
     <LinearLayout
         android:id="@+id/cycleway_counts"
