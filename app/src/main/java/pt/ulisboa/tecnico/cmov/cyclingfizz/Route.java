@@ -1,8 +1,6 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
+import android.util.Log;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -10,9 +8,11 @@ import com.google.gson.JsonObject;
 import com.mapbox.geojson.Feature;
 
 import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 public class Route {
+
+    static String TAG = "Cycling_Fizz@Route";
+    static String SERVER_URL = "https://stations.cfservertest.ga";
 
     private final String id;
     private final String routeJson;
@@ -22,9 +22,6 @@ public class Route {
     private final String title;
     private final String description;
     private ArrayList<Review> reviews = new ArrayList<>();
-
-    static String SERVER_URL = "https://stations.cfservertest.ga";
-    static String TAG = "Cycling_Fizz@Route";
 
     private Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID) {
         this.routeJson = routeJson;
@@ -98,21 +95,14 @@ public class Route {
                 json.get("author_uid").getAsString()
         );
 
-        if (json.get("reviews") != null && !json.has("reviews")) {
+        if (json.get("reviews") != null && json.has("reviews")) {
             JsonArray reviewsJson = json.get("reviews").getAsJsonArray();
             for (JsonElement reviewJson : reviewsJson) {
               route.addReviewFromJson(reviewJson.getAsJsonObject());
             }
         }
 
-        return new Route(
-                json.get("route").getAsString(),
-                json.get("title").getAsString(),
-                json.get("description").getAsString(),
-                POISs,
-                json.get("id").getAsString(),
-                json.get("author_uid").getAsString()
-                );
+        return route;
     }
 
     public String getRoute() {
@@ -149,10 +139,10 @@ public class Route {
 
     public void addReviewFromJson(JsonObject json) {
         this.reviews.add(new Review(
-                json.get("author_uid").getAsString(),
-                json.get("msg").getAsString(),
-                json.get("rate").getAsInt(),
-                json.get("creation_timestamp").getAsString()
+                json.has("author_uid") ? json.get("author_uid").getAsString() : null,
+                json.has("msg") ? json.get("msg").getAsString() : null,
+                json.has("rate") ? json.get("rate").getAsInt() : null,
+                json.has("creation_timestamp") ? json.get("creation_timestamp").getAsString() : null
                 ));
     }
 
@@ -161,11 +151,8 @@ public class Route {
         for (Review review : reviews) {
             rates.add(review.getRate());
         }
-
         return rates;
     }
-
-
 
     private static class Review {
 
@@ -181,7 +168,6 @@ public class Route {
             this.rate = rate;
             this.creationTimestamp = creationTimestamp;
         }
-
 
         public String getAuthorUID() {
             return authorUID;
@@ -199,7 +185,6 @@ public class Route {
             return creationTimestamp;
         }
     }
-
 
 }
 

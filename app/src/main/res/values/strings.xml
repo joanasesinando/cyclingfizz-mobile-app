@@ -146,4 +146,5 @@
     <string name="google_API_KEY" translatable="false">AIzaSyBycELmIsSb30MHTmFol4Ez5lXSc1IA7eg</string>
     <string name="google_signing_secret" translatable="false">DTDrKz5z8ti16fOGYOhIkPNFkXk=</string>
     <string name="server_url">.cfservertest.ga</string>
+    <string name="created_by">Created by </string>
 </resources>
