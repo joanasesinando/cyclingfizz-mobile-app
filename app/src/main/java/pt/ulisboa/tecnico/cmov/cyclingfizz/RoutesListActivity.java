@@ -141,7 +141,6 @@ public class RoutesListActivity extends AppCompatActivity {
         if (rate < 2.5f) return getColor(R.color.pink);
         if (rate < 4.0f) return getColor(R.color.warning);
         return getColor(R.color.success);
-
     }
 
     private void uiSetClickListeners() {
