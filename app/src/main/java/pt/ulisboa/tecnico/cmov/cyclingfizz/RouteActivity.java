@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.gson.JsonObject;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
 import com.mapbox.geojson.LineString;
@@ -125,7 +126,7 @@ public class RouteActivity extends AppCompatActivity {
         // Update view
         uiUpdateTopBar(route.getTitle());
         uiUpdateRate();
-        updateAuthor("Joana Sesinando"); //FIXME: get author from route
+        updateAuthor();
         uiUpdateCard(findViewById(R.id.route_description), R.drawable.ic_description,
                 getString(R.string.description), route.getDescription());
 
@@ -145,12 +146,18 @@ public class RouteActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void uiUpdateRate() {
-        float rateAvg = 0;
         int rateCount = route.getRates().size();
+
+        TextView reviews = findViewById(R.id.route_nr_reviews);
+        String s = "(" + rateCount + " reviews)";
+        reviews.setText(s);
+
+        if (rateCount == 0) return;
+
+        float rateAvg = 0;
         for (Integer rate : route.getRates()) {
             rateAvg += rate.floatValue() / rateCount;
         }
-        Log.d(TAG, Arrays.toString(route.getRates().toArray()));
 
         // Update view
         TextView rateValue = findViewById(R.id.route_rate_value);
@@ -159,16 +166,18 @@ public class RouteActivity extends AppCompatActivity {
 
         ImageView rateIcon = findViewById(R.id.route_rate_icon);
         rateIcon.setColorFilter(getColorFromRate(rateAvg));
-
-        TextView reviews = findViewById(R.id.route_nr_reviews);
-        String s = "(" + rateCount + " reviews)";
-        reviews.setText(s);
     }
 
-    private void updateAuthor(String author) {
-        TextView creator = findViewById(R.id.route_author);
-        String s = getString(R.string.created_by) + " " + author;
-        creator.setText(s);
+    private void updateAuthor() {
+        (new Utils.httpRequestJson(obj -> {
+            if (!obj.get("status").getAsString().equals("success")) return;
+
+            String authorName = obj.get("data").getAsJsonObject().get("name").getAsString();
+            TextView creator = findViewById(R.id.route_author);
+            String s = getString(R.string.created_by) + " " + authorName;
+            creator.setText(s);
+
+        })).execute(SERVER_URL + "/get-user-info?uid=" + route.getAuthorUID());
     }
 
     private void uiUpdateCard(View card, @DrawableRes int iconId, CharSequence textTitle, CharSequence textSubtitle) {

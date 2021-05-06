@@ -31,6 +31,7 @@ public class Route implements Serializable {
         this.description = description;
         this.POIs = POIs;
         this.id = id;
+        this.authorUID = authorUID;
     }
 
     private Route(String routeJson, String title, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID) {
@@ -112,6 +113,10 @@ public class Route implements Serializable {
 
     public String getIdToken() {
         return idToken;
+    }
+
+    public String getAuthorUID() {
+        return authorUID;
     }
 
     public String getTitle() {
