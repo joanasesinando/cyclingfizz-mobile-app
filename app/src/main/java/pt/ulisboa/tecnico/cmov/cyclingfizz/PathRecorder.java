@@ -137,7 +137,7 @@ public class PathRecorder {
     }
 
     public void saveFeature(String name, String description, Utils.OnTaskCompleted<Boolean> callback) {
-        if (path.size() < 2) return; // TODO: show dialog before if is
+        if (path.size() < 2) return;
 
         FirebaseUser user = mAuth.getCurrentUser();
 

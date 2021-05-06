@@ -949,8 +949,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         ExtendedFloatingActionButton recordingFlag = findViewById(R.id.flag_recording);
         recordingFlag.setVisibility(View.GONE);
 
-        // Show dialog for saving/deleting route
-        new MaterialAlertDialogBuilder(this)
+        if (pathRecorder.getPath().size() < 2) {
+            // Show dialog for short route
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.short_route)
+                    .setMessage(R.string.short_route_warning)
+                    .setPositiveButton(R.string.ok, (dialog, which) -> {
+                        // Respond to positive button press
+                        pathRecorder.cleanGeoJson();
+                    })
+                    .show();
+
+        } else {
+            // Show dialog for saving/deleting route
+            new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.route_recorded)
                 .setMessage(R.string.route_recorded_message)
                 .setNeutralButton(R.string.delete, (dialog, which) -> {
@@ -964,6 +976,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
                 })
                 .show();
+        }
     }
 
     private void initRouteLayer(@NonNull Style style) {

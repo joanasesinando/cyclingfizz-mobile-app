@@ -44,10 +44,12 @@
     <string name="deleting_poi_dialog_warning">Do you want to delete this point of interest from the route?</string>
     <string name="name_required">Name required</string>
     <string name="description_required">Description required</string>
-    <string name="dangerous_action">Dangerous action</string>
-    <string name="quit_new_route_warning">You won’t be able to recover this route. Are you sure you want to quit?</string>
+    <string name="delete_route">Delete route</string>
+    <string name="delete_route_warning">You’re about to delete this route. You won’t be able to recover it after this. Are you sure you want to delete?</string>
     <string name="already_recording">Already recording route</string>
     <string name="already_recording_warning">You are already recording a route! Please end the current recording first.</string>
+    <string name="short_route">Short route</string>
+    <string name="short_route_warning">Route is too short and it won’t be saved.</string>
 
     <!-- Messages -->
     <string name="route_recorded">Route recorded</string>

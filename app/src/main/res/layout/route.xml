@@ -19,61 +19,103 @@
         android:layout_marginTop="128dp"
         android:layout_marginHorizontal="16dp">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp">
+            android:orientation="vertical">
 
-            <LinearLayout
-                android:id="@+id/route_rate"
-                android:layout_width="wrap_content"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+                android:layout_marginTop="10dp">
 
-                <ImageView
-                    android:id="@+id/route_rate_icon"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:src="@drawable/ic_round_star_24"
-                    app:tint="@color/material_on_surface_disabled" />
-
-                <TextView
-                    android:id="@+id/route_rate_value"
+                <LinearLayout
+                    android:id="@+id/route_rate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="1.5dp"
+                    android:orientation="horizontal"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <ImageView
+                        android:id="@+id/route_rate_icon"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_round_star_24"
+                        app:tint="@color/material_on_surface_disabled" />
+
+                    <TextView
+                        android:id="@+id/route_rate_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="1.5dp"
+                        android:fontFamily="@font/quicksand"
+                        android:text="?"
+                        android:textColor="@color/material_on_surface_disabled"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/route_nr_reviews"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:fontFamily="@font/quicksand"
-                    android:text="?"
+                    android:text="@string/not_available"
                     android:textColor="@color/material_on_surface_disabled"
-                    android:textSize="12sp" />
-            </LinearLayout>
+                    android:textSize="11sp"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginTop="1.5dp"
+                    app:layout_constraintStart_toEndOf="@id/route_rate"
+                    app:layout_constraintTop_toTopOf="parent"/>
 
-            <TextView
-                android:id="@+id/route_nr_reviews"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/quicksand"
-                android:text="@string/not_available"
-                android:textColor="@color/material_on_surface_disabled"
-                android:textSize="11sp"
-                android:layout_marginStart="5dp"
-                android:layout_marginTop="1.5dp"
-                app:layout_constraintStart_toEndOf="@id/route_rate"
-                app:layout_constraintTop_toTopOf="parent"/>
+                <TextView
+                    android:id="@+id/route_author"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/quicksand"
+                    android:text="@string/not_available"
+                    android:textColor="@color/material_on_surface_emphasis_medium"
+                    android:textSize="13sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <TextView
-                android:id="@+id/route_author"
-                android:layout_width="wrap_content"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/quicksand"
-                android:text="@string/not_available"
-                android:textColor="@color/material_on_surface_emphasis_medium"
-                android:textSize="13sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"/>
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                android:layout_marginTop="18dp">
+
+                <com.mapbox.mapboxsdk.maps.MapView
+                    android:id="@+id/previewRouteMapView"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/preview_route_thumbnail_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@color/darkTransparent"
+                    android:fontFamily="@font/quicksand"
+                    android:gravity="center"
+                    android:text="@string/click_to_expand"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    app:layout_constraintBottom_toBottomOf="@+id/previewRouteMapView"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <include
+                android:id="@+id/route_description"
+                layout="@layout/card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"/>
+        </LinearLayout>
     </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

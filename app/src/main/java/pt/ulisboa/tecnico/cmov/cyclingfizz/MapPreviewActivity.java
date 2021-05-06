@@ -2,11 +2,10 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 
 import com.google.android.material.appbar.MaterialToolbar;
@@ -61,7 +60,11 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textSize;
 
 public class MapPreviewActivity extends AppCompatActivity {
 
-    PathRecorder pathRecorder;
+    static final String ROUTE_PATH = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_PATH";
+    static final String ROUTE_POIS = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_POIS";
+
+    ArrayList<Point> path;
+    ArrayList<PointOfInterest> pois;
 
     private MapView mapView;
     private MapboxMap mapboxMap;
@@ -76,13 +79,14 @@ public class MapPreviewActivity extends AppCompatActivity {
     static String POI_COUNT_LAYER_ID = "poi-count-layer";
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map_preview);
 
-        pathRecorder = PathRecorder.getInstance();
+        Intent intent = getIntent();
+        path = (ArrayList<Point>) intent.getSerializableExtra(ROUTE_PATH);
+        pois = (ArrayList<PointOfInterest>) intent.getSerializableExtra(ROUTE_POIS);
         initMap(savedInstanceState);
 
         // Set click listener for close btn
@@ -106,19 +110,16 @@ public class MapPreviewActivity extends AppCompatActivity {
             mapboxMap.setStyle(Style.MAPBOX_STREETS, style -> {
                 style.setTransition(new TransitionOptions(0, 0, false));
 
-
-
-
                 LatLngBounds latLngBounds;
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-
                     latLngBounds = new LatLngBounds.Builder()
-                            .includes(pathRecorder.getPath().stream().map(p -> new LatLng(p.latitude(), p.longitude())).collect(Collectors.toList()))
+                            .includes(path.stream().map(p -> new LatLng(p.latitude(), p.longitude())).collect(Collectors.toList()))
                             .build();
+
                 } else {
-                    Point startPoint = pathRecorder.getPath().get(0);
-                    Point centerPoint = pathRecorder.getCenterPoint();
-                    Point endPoint = pathRecorder.getPath().get(pathRecorder.getPath().size() - 1);
+                    Point startPoint = path.get(0);
+                    Point centerPoint = path.get((int) (path.size()/2));
+                    Point endPoint = path.get(path.size() - 1);
 
                     latLngBounds = new LatLngBounds.Builder()
                             .include(new LatLng(startPoint.latitude(), startPoint.longitude()))
@@ -134,10 +135,7 @@ public class MapPreviewActivity extends AppCompatActivity {
                 showRouteOnMap();
                 showPOIsOnMap();
 
-
-
                 // Map is set up and the style has loaded. Now you can add data or make other map adjustments.
-
             });
         });
     }
@@ -152,7 +150,7 @@ public class MapPreviewActivity extends AppCompatActivity {
         // Init path recorded layer
         style.addSource(new GeoJsonSource(PATH_RECORDED_SOURCE_ID,
                 FeatureCollection.fromFeatures(new Feature[] {Feature.fromGeometry(
-                        LineString.fromLngLats(pathRecorder.getPath())
+                        LineString.fromLngLats(path)
                 )})));
 
         LineLayer pathRecorded = new LineLayer(PATH_RECORDED_LAYER_ID, PATH_RECORDED_SOURCE_ID);
@@ -169,7 +167,7 @@ public class MapPreviewActivity extends AppCompatActivity {
         // Init POIs layer
         ArrayList<Feature> features = new ArrayList<>();
         int i = 0;
-        for (PointOfInterest poi : pathRecorder.getAllPOIs()) {
+        for (PointOfInterest poi : pois) {
             Feature poiFeature = Feature.fromGeometry(poi.getCoord());
             poiFeature.addNumberProperty("id", i++);
             features.add(poiFeature);
@@ -230,7 +228,7 @@ public class MapPreviewActivity extends AppCompatActivity {
         if (pathRecordedSource != null) {
             FeatureCollection featureCollection = FeatureCollection.fromFeatures(
                     new Feature[] {Feature.fromGeometry(
-                            LineString.fromLngLats(pathRecorder.getPath())
+                            LineString.fromLngLats(path)
                     )}
             );
             runOnUiThread(() -> pathRecordedSource.setGeoJson(featureCollection));
@@ -245,7 +243,7 @@ public class MapPreviewActivity extends AppCompatActivity {
         if (POIsSource != null) {
             ArrayList<Feature> features = new ArrayList<>();
             int i = 0;
-            for (PointOfInterest poi : pathRecorder.getAllPOIs()) {
+            for (PointOfInterest poi : pois) {
                 Feature poiFeature = Feature.fromGeometry(poi.getCoord());
                 poiFeature.addNumberProperty("id", i++);
                 features.add(poiFeature);

@@ -1,15 +1,16 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
-import android.util.Log;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mapbox.geojson.Feature;
+import com.mapbox.geojson.LineString;
+import com.mapbox.geojson.Point;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Route {
+public class Route implements Serializable {
 
     static String TAG = "Cycling_Fizz@Route";
     static String SERVER_URL = "https://stations.cfservertest.ga";
@@ -113,10 +114,6 @@ public class Route {
         return idToken;
     }
 
-    public ArrayList<PointOfInterest> getPOIs() {
-        return POIs;
-    }
-
     public String getTitle() {
         return title;
     }
@@ -154,7 +151,12 @@ public class Route {
         return rates;
     }
 
-    private static class Review {
+    public ArrayList<Point> getPath() {
+        LineString line = (LineString) getRouteFeature().geometry();
+        return new ArrayList<>(line.coordinates());
+    }
+
+    private static class Review implements Serializable {
 
         private final String authorUID;
         private final String msg;

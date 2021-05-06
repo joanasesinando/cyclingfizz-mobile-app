@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -37,10 +38,8 @@ import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
-import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.expressions.Expression;
 import com.mapbox.mapboxsdk.style.layers.CircleLayer;
@@ -56,7 +55,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.mapbox.mapboxsdk.style.expressions.Expression.get;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.has;
@@ -121,6 +119,73 @@ public class NewRouteActivity extends AppCompatActivity {
         initMap(savedInstanceState);
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        try {
+            if (requestCode == PICK_IMAGES && resultCode == RESULT_OK && data != null) {
+                Log.d(TAG, String.valueOf(data.getData()));
+                // Get URI
+                Uri uri = data.getData();
+
+                // Update view
+                ImageView thumbnail = findViewById(R.id.route_thumbnail);
+                thumbnail.setImageURI(uri);
+
+            } else {
+                Toast.makeText(this, "No photo selected", Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, Arrays.toString(e.getStackTrace()));
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** -------------- USER INTERFACE -------------- ***/
+    /*** -------------------------------------------- ***/
+
+    @SuppressLint("IntentReset")
+    private void uiSetClickListeners() {
+        // Set close btn click listener
+        MaterialToolbar toolbar = findViewById(R.id.new_route_toolbar).findViewById(R.id.topAppBar);
+        toolbar.setNavigationOnClickListener(v -> {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.delete_route)
+                    .setMessage(R.string.delete_route_warning)
+                    .setNeutralButton(R.string.cancel, (dialog, which) -> {
+                        // Respond to neutral button press
+                    })
+                    .setPositiveButton(R.string.delete, (dialog, which) -> {
+                        // Respond to positive button press
+                        finish();
+                    })
+                    .show();
+        });
+
+        // Set toolbar action btn click listener
+        toolbar.setOnMenuItemClickListener(item -> {
+            saveRoute();
+            return false;
+        });
+
+        // Set thumbnail btn click listener
+        CardView thumbnail = findViewById(R.id.new_route_thumbnail);
+        thumbnail.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            intent.setType("image/*");
+            startActivityForResult(intent, PICK_IMAGES);
+        });
+
+        // Set save btn click listener
+        MaterialButton saveBtn = findViewById(R.id.save_route);
+        saveBtn.setOnClickListener(v -> saveRoute());
+    }
+
+    /*** -------------------------------------------- ***/
+    /*** --------------- ROUTE PREVIEW -------------- ***/
+    /*** -------------------------------------------- ***/
+
     private void initMap(Bundle savedInstanceState) {
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
 
@@ -134,12 +199,12 @@ public class NewRouteActivity extends AppCompatActivity {
 
                 mapboxMap.getUiSettings().setAllGesturesEnabled(false);
 
-                  LatLngBounds latLngBounds;
+                LatLngBounds latLngBounds;
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-
                     latLngBounds = new LatLngBounds.Builder()
                             .includes(pathRecorder.getPath().stream().map(p -> new LatLng(p.latitude(), p.longitude())).collect(Collectors.toList()))
                             .build();
+
                 } else {
                     Point startPoint = pathRecorder.getPath().get(0);
                     Point centerPoint = pathRecorder.getCenterPoint();
@@ -159,12 +224,14 @@ public class NewRouteActivity extends AppCompatActivity {
                 showRouteOnMap();
                 showPOIsOnMap();
 
+                mapboxMap.addOnMapClickListener(point -> {
+                    expandMap();
+                    return true;
+                });
                 TextView expandView = findViewById(R.id.preview_route_thumbnail_text);
-                expandView.setOnClickListener(this::expandMap);
-                mapView.setOnClickListener(this::expandMap);
+                expandView.setOnClickListener(v -> expandMap());
 
                 // Map is set up and the style has loaded. Now you can add data or make other map adjustments.
-
             });
         });
     }
@@ -175,13 +242,15 @@ public class NewRouteActivity extends AppCompatActivity {
                 getResources().getDrawable(R.drawable.ic_poi_marker))));
     }
 
-    private void expandMap(View view) {
-        Log.e(TAG, "abre");
+    private void expandMap() {
         Intent intent = new Intent(this, MapPreviewActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putSerializable(MapPreviewActivity.ROUTE_PATH, pathRecorder.getPath());
+        bundle.putSerializable(MapPreviewActivity.ROUTE_POIS, pathRecorder.getAllPOIs());
+        intent.putExtras(bundle);
         startActivity(intent);
         overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
     }
-
 
     private void initRouteLayer(@NonNull Style style) {
         // Init path recorded layer
@@ -290,69 +359,6 @@ public class NewRouteActivity extends AppCompatActivity {
             );
             runOnUiThread(() -> POIsSource.setGeoJson(featureCollection));
         }
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        try {
-            if (requestCode == PICK_IMAGES && resultCode == RESULT_OK && data != null) {
-                Log.d(TAG, String.valueOf(data.getData()));
-                // Get URI
-                Uri uri = data.getData();
-
-                // Update view
-                ImageView thumbnail = findViewById(R.id.route_thumbnail);
-                thumbnail.setImageURI(uri);
-
-            } else {
-                Toast.makeText(this, "No photo selected", Toast.LENGTH_LONG).show();
-            }
-        } catch (Exception e) {
-            Log.e(TAG, Arrays.toString(e.getStackTrace()));
-        }
-        super.onActivityResult(requestCode, resultCode, data);
-    }
-
-
-    /*** -------------------------------------------- ***/
-    /*** -------------- USER INTERFACE -------------- ***/
-    /*** -------------------------------------------- ***/
-
-    @SuppressLint("IntentReset")
-    private void uiSetClickListeners() {
-        // Set close btn click listener
-        MaterialToolbar toolbar = findViewById(R.id.new_route_toolbar).findViewById(R.id.topAppBar);
-        toolbar.setNavigationOnClickListener(v -> {
-            new MaterialAlertDialogBuilder(this)
-                    .setTitle(R.string.dangerous_action)
-                    .setMessage(R.string.quit_new_route_warning)
-                    .setNeutralButton(R.string.cancel, (dialog, which) -> {
-                        // Respond to neutral button press
-                    })
-                    .setPositiveButton(R.string.quit, (dialog, which) -> {
-                        // Respond to positive button press
-                        finish();
-                    })
-                    .show();
-        });
-
-        // Set toolbar action btn click listener
-        toolbar.setOnMenuItemClickListener(item -> {
-            saveRoute();
-            return false;
-        });
-
-        // Set thumbnail btn click listener
-        CardView thumbnail = findViewById(R.id.new_route_thumbnail);
-        thumbnail.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            intent.setType("image/*");
-            startActivityForResult(intent, PICK_IMAGES);
-        });
-
-        // Set save btn click listener
-        MaterialButton saveBtn = findViewById(R.id.save_route);
-        saveBtn.setOnClickListener(v -> saveRoute());
     }
 
 

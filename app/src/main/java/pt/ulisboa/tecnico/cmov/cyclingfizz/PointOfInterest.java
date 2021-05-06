@@ -13,10 +13,11 @@ import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.Point;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PointOfInterest {
+public class PointOfInterest implements Serializable {
 
     static String SERVER_URL = "https://stations.cfservertest.ga";
     static String TAG = "Cycling_Fizz@POI";
