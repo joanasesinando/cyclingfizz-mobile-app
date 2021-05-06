@@ -254,6 +254,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (locationResult == null) return;
                 Log.d(TAG, "Got Location");
 
+                Location previousLocation = userLocation;
+
                 // Pass the new location to the Maps SDK's LocationComponent
                 if (mapboxMap != null) {
                     userLocation = locationResult.getLastLocation();
@@ -267,6 +269,22 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         if (pointAdded || pathRecorder.POIAdded()) {
                             updateRoute();
                             pathRecorder.setPOIAdded(false);
+                        }
+                    }
+                })).start();
+
+                (new Thread(() -> {
+                    if (pathPlayer.isPlayingRoute()) {
+
+                        Point userPoint = Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude());
+
+                        if (Utils.distanceBetweenPointsInMeters(
+                                Point.fromLngLat(previousLocation.getLongitude(), previousLocation.getLatitude()),
+                                userPoint) < 4) return;
+
+                        PointOfInterest poi = pathPlayer.checkIfNearPOI(userPoint);
+                        if (poi != null) {
+                            Log.d(TAG, "User near this poi -> " + poi);
                         }
                     }
                 })).start();
@@ -374,7 +392,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         recordingFlag.setVisibility(View.VISIBLE);
     }
 
-    private void showDisplayRouteUI() {
+    private void showPlayingRouteUI() {
         Log.e(TAG, "Mostrar Route");
     }
 
@@ -1042,6 +1060,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
+    private void showPlayingRouteOnMap() {
+        if (mapboxMap.getStyle() == null) return;
+
+        GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
+        if (pathRecordedSource != null) {
+            FeatureCollection featureCollection = FeatureCollection.fromFeatures(
+                    new Feature[] {pathPlayer.getPlayingRoute().getRouteFeature()}
+            );
+            runOnUiThread(() -> pathRecordedSource.setGeoJson(featureCollection));
+        }
+    }
+
     private void updatePOIsOnMap() {
         Log.d(TAG, "Updating POIs on map");
 
@@ -1052,6 +1082,26 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             ArrayList<Feature> features = new ArrayList<>();
             int i = 0;
             for (PointOfInterest poi : pathRecorder.getAllPOIs()) {
+                Feature poiFeature = Feature.fromGeometry(poi.getCoord());
+                poiFeature.addNumberProperty("id", i++);
+                features.add(poiFeature);
+            }
+            FeatureCollection featureCollection = FeatureCollection.fromFeatures(
+                    features.toArray(new Feature[0])
+            );
+            runOnUiThread(() -> POIsSource.setGeoJson(featureCollection));
+        }
+    }
+
+    private void showPlayingPOIsOnMap() {
+
+        if (mapboxMap.getStyle() == null) return;
+
+        GeoJsonSource POIsSource = mapboxMap.getStyle().getSourceAs(POI_SOURCE_ID);
+        if (POIsSource != null) {
+            ArrayList<Feature> features = new ArrayList<>();
+            int i = 0;
+            for (PointOfInterest poi : pathPlayer.getPlayingRoute().getAllPOIs()) {
                 Feature poiFeature = Feature.fromGeometry(poi.getCoord());
                 poiFeature.addNumberProperty("id", i++);
                 features.add(poiFeature);
@@ -1375,7 +1425,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
 
         if (pathPlayer.isPlayingRoute()) {
-            showDisplayRouteUI();
+            showPlayingRouteUI();
+            showPlayingRouteOnMap();
+            showPlayingPOIsOnMap();
         }
     }
 

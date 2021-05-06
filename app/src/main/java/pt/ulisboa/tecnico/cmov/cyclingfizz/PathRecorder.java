@@ -75,6 +75,7 @@ public class PathRecorder {
     }
 
     public void startRecording() {
+        if (PathPlayer.getInstance().isPlayingRoute()) return;
         cleanGeoJson();
         isRecording = true;
     }
@@ -123,6 +124,10 @@ public class PathRecorder {
         Feature feature = Feature.fromGeometry(LineString.fromLngLats(path));
         feature.addStringProperty("", "");
         return feature;
+    }
+
+    public Point getCenterPoint() {
+        return path.get((int) (path.size()/2));
     }
 
     private void printFeature() {

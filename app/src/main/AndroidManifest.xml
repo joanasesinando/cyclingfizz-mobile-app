@@ -27,6 +27,8 @@
         tools:replace="android:icon,android:theme">
         <activity android:name=".RouteActivity"></activity>
         <activity android:name=".EditPOIActivity" />
+        <activity android:name=".MapPreviewActivity"></activity>
+        <activity android:name=".EditPOIActivity" />
         <activity android:name=".NewRouteActivity" />
         <activity android:name=".AddPOIActivity" />
         <activity android:name=".RoutesListActivity" />

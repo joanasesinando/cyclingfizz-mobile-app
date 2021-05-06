@@ -91,12 +91,19 @@ public class RoutesListActivity extends AppCompatActivity {
                     if (description != null) descriptionView.setText(description);
 
                     // Set avg rate
-                    if (routeJson.get("rates") != null && !routeJson.get("rates").isJsonNull()) {
-                        float rateAvg = 0;
-                        JsonArray ratesJson = routeJson.get("rates").getAsJsonArray();
-                        for (JsonElement rateJson : ratesJson) {
-                            rateAvg += rateJson.getAsFloat() / ratesJson.size();
+                    if (routeJson.get("reviews") != null && !routeJson.get("reviews").isJsonNull()) {
+                        float rateSum = 0;
+                        int rateCount = 0;
+                        JsonArray reviewsJson = routeJson.get("reviews").getAsJsonArray();
+                        for (JsonElement reviewJson : reviewsJson) {
+                            if (reviewJson.getAsJsonObject().has("rate")) {
+                                int rate = reviewJson.getAsJsonObject().get("rate").getAsInt();
+                                rateSum += rate;
+                                rateCount++;
+                            }
                         }
+
+                        float rateAvg = rateSum / rateCount;
 
                         routeCardRateValueView.setText(oneDecimalFormatter.format(rateAvg));
                         routeCardRateValueView.setTextColor(getColorFromRate(rateAvg));

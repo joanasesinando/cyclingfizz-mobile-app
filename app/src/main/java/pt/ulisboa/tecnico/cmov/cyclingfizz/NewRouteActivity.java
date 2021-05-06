@@ -1,5 +1,6 @@
-package pt.ulisboa.tecnico.cmov.cyclingfizz;
+ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -28,9 +29,55 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
+import com.mapbox.geojson.Feature;
+import com.mapbox.geojson.FeatureCollection;
+import com.mapbox.geojson.LineString;
+import com.mapbox.geojson.Point;
+import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
+import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.geometry.LatLngBounds;
+import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions;
+import com.mapbox.mapboxsdk.maps.MapView;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.maps.Style;
+import com.mapbox.mapboxsdk.style.expressions.Expression;
+import com.mapbox.mapboxsdk.style.layers.CircleLayer;
+import com.mapbox.mapboxsdk.style.layers.LineLayer;
+import com.mapbox.mapboxsdk.style.layers.Property;
+import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
+import com.mapbox.mapboxsdk.style.layers.TransitionOptions;
+import com.mapbox.mapboxsdk.style.sources.GeoJsonOptions;
+import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
+
+import static com.mapbox.mapboxsdk.style.expressions.Expression.get;
+import static com.mapbox.mapboxsdk.style.expressions.Expression.has;
+import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
+import static com.mapbox.mapboxsdk.style.expressions.Expression.not;
+import static com.mapbox.mapboxsdk.style.expressions.Expression.step;
+import static com.mapbox.mapboxsdk.style.expressions.Expression.stop;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleColor;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleOpacity;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleRadius;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconAnchor;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconSize;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineJoin;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineOpacity;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textAllowOverlap;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textColor;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textField;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textFont;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textIgnorePlacement;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textSize;
 
 public class NewRouteActivity extends AppCompatActivity {
 
@@ -41,6 +88,19 @@ public class NewRouteActivity extends AppCompatActivity {
 
     TextInputLayout nameInputLayout;
     TextInputLayout descriptionInputLayout;
+
+    static String PATH_RECORDED_SOURCE_ID = "path-recorded-source";
+    static String PATH_RECORDED_LAYER_ID = "path-recorded-layer";
+
+    static String POI_SOURCE_ID = "poi-source";
+    static String POI_ICON_ID = "poi-icon";
+    static String POI_LAYER_ID = "poi-layer";
+    static String POI_CLUSTER_LAYER_ID = "poi-cluster-layer";
+    static String POI_COUNT_LAYER_ID = "poi-count-layer";
+
+    private MapView mapView;
+    private MapboxMap mapboxMap;
+
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -54,6 +114,159 @@ public class NewRouteActivity extends AppCompatActivity {
         uiSetClickListeners();
         setInputs();
         setPOIs();
+
+        initMap(savedInstanceState);
+    }
+
+    private void initMap(Bundle savedInstanceState) {
+        Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
+
+        mapView = findViewById(R.id.previewRouteMapView);
+        mapView.onCreate(savedInstanceState);
+
+        mapView.getMapAsync(mapbox -> {
+            mapboxMap = mapbox;
+            mapboxMap.setStyle(Style.MAPBOX_STREETS, style -> {
+                style.setTransition(new TransitionOptions(0, 0, false));
+
+                Point center = pathRecorder.getCenterPoint();
+
+                mapboxMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(
+                        center.latitude(), center.longitude()), 13)); //fixme zoom and center on root
+
+                mapboxMap.getUiSettings().setAllGesturesEnabled(false);
+
+                initRouteLayer(style);
+                showRouteOnMap();
+                showPOIsOnMap();
+
+                Point startPoint = pathRecorder.getPath().get(0);
+                Point endPoint = pathRecorder.getPath().get(pathRecorder.getPath().size() - 1);
+
+                LatLngBounds latLngBounds = new LatLngBounds.Builder()
+                        .include(new LatLng(startPoint.latitude(), startPoint.longitude()))
+                        .include(new LatLng(endPoint.latitude(), endPoint.longitude()))
+                        .build();
+
+                mapboxMap.easeCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 100));
+
+
+                // Map is set up and the style has loaded. Now you can add data or make other map adjustments.
+
+            });
+        });
+
+
+    }
+
+
+    private void initRouteLayer(@NonNull Style style) {
+        // Init path recorded layer
+        style.addSource(new GeoJsonSource(PATH_RECORDED_SOURCE_ID,
+                FeatureCollection.fromFeatures(new Feature[] {Feature.fromGeometry(
+                        LineString.fromLngLats(pathRecorder.getPath())
+                )})));
+
+        LineLayer pathRecorded = new LineLayer(PATH_RECORDED_LAYER_ID, PATH_RECORDED_SOURCE_ID);
+        pathRecorded.setProperties(
+                lineJoin(Property.LINE_JOIN_ROUND),
+                lineCap(Property.LINE_CAP_ROUND),
+                lineColor(getResources().getColor(R.color.purple)),
+                lineWidth(5f),
+                lineOpacity(.8f)
+        );
+
+        style.addLayer(pathRecorded);
+
+        // Init POIs layer
+        ArrayList<Feature> features = new ArrayList<>();
+        int i = 0;
+        for (PointOfInterest poi : pathRecorder.getAllPOIs()) {
+            Feature poiFeature = Feature.fromGeometry(poi.getCoord());
+            poiFeature.addNumberProperty("id", i++);
+            features.add(poiFeature);
+        }
+        style.addSource(new GeoJsonSource(POI_SOURCE_ID,
+                        FeatureCollection.fromFeatures(features.toArray(new Feature[0])),
+                        new GeoJsonOptions()
+                                .withCluster(true)
+                                .withClusterMaxZoom(14)
+                                .withClusterRadius(50)
+                )
+        );
+
+        //Creating a marker layer for single data points
+        SymbolLayer unclustered = new SymbolLayer(POI_LAYER_ID, POI_SOURCE_ID);
+
+        unclustered.setProperties(
+                iconImage(POI_ICON_ID),
+                iconAnchor(Property.ICON_ANCHOR_BOTTOM),
+                iconSize(literal(.5f))
+        );
+
+        unclustered.setFilter(not(has("point_count")));
+        style.addLayer(unclustered);
+
+        CircleLayer circles = new CircleLayer(POI_CLUSTER_LAYER_ID, POI_SOURCE_ID);
+
+        //Add clusters' circles
+        circles.setProperties(
+                circleColor(getResources().getColor(R.color.purple)),
+                circleRadius(step(get("point_count"), 25,
+                        stop(5, 35),
+                        stop(10, 45),
+                        stop(20, 55))),
+                circleOpacity(0.8f)
+        );
+        circles.setFilter(has("point_count"));
+        style.addLayer(circles);
+
+        //Add the count labels
+        SymbolLayer count = new SymbolLayer(POI_COUNT_LAYER_ID, POI_SOURCE_ID);
+        count.setProperties(
+                textField(Expression.toString(get("point_count"))),
+                textSize(12f),
+                textColor(getResources().getColor(R.color.white)),
+                textIgnorePlacement(true),
+                textAllowOverlap(true),
+                textFont(Expression.literal(R.font.quicksand_bold))
+        );
+        style.addLayer(count);
+    }
+
+
+    private void showRouteOnMap() {
+        if (mapboxMap.getStyle() == null) return;
+
+        GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
+        if (pathRecordedSource != null) {
+            FeatureCollection featureCollection = FeatureCollection.fromFeatures(
+                    new Feature[] {Feature.fromGeometry(
+                            LineString.fromLngLats(pathRecorder.getPath())
+                    )}
+            );
+            runOnUiThread(() -> pathRecordedSource.setGeoJson(featureCollection));
+        }
+    }
+
+    private void showPOIsOnMap() {
+
+        if (mapboxMap.getStyle() == null) return;
+
+        GeoJsonSource POIsSource = mapboxMap.getStyle().getSourceAs(POI_SOURCE_ID);
+        if (POIsSource != null) {
+            ArrayList<Feature> features = new ArrayList<>();
+            int i = 0;
+            for (PointOfInterest poi : pathRecorder.getAllPOIs()) {
+                Feature poiFeature = Feature.fromGeometry(poi.getCoord());
+                poiFeature.addNumberProperty("id", i++);
+                features.add(poiFeature);
+            }
+            FeatureCollection featureCollection = FeatureCollection.fromFeatures(
+                    features.toArray(new Feature[0])
+            );
+            runOnUiThread(() -> POIsSource.setGeoJson(featureCollection));
+        }
     }
 
     @Override
@@ -267,5 +480,48 @@ public class NewRouteActivity extends AppCompatActivity {
             });
             progressIndicator.setVisibility(View.VISIBLE);
         }
+    }
+
+    // Add the mapView lifecycle to the activity's lifecycle methods
+    @Override
+    public void onResume() {
+        super.onResume();
+        mapView.onResume();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mapView.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mapView.onStop();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mapView.onPause();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mapView.onDestroy();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mapView.onSaveInstanceState(outState);
     }
 }
