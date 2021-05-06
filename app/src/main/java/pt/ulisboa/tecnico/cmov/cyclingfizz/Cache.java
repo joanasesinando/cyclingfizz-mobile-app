@@ -1,5 +1,6 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.Log;
 import android.util.LruCache;
@@ -20,7 +21,9 @@ import java.util.Map;
 public class Cache implements Serializable {
     private final static String TAG = "Cycling_Fizz@Cache";
 
+    @SuppressLint("StaticFieldLeak")
     private static Cache INSTANCE_BIG = null;
+    @SuppressLint("StaticFieldLeak")
     private static Cache INSTANCE_SMALL = null;
 
     private String cacheFileName = "BigCache";

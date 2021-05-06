@@ -50,10 +50,13 @@ import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.layers.TransitionOptions;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonOptions;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+import com.mapbox.mapboxsdk.utils.BitmapUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.mapbox.mapboxsdk.style.expressions.Expression.get;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.has;
@@ -129,34 +132,54 @@ public class NewRouteActivity extends AppCompatActivity {
             mapboxMap.setStyle(Style.MAPBOX_STREETS, style -> {
                 style.setTransition(new TransitionOptions(0, 0, false));
 
-                Point center = pathRecorder.getCenterPoint();
-
-                mapboxMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(
-                        center.latitude(), center.longitude()), 13)); //fixme zoom and center on root
-
                 mapboxMap.getUiSettings().setAllGesturesEnabled(false);
 
+                  LatLngBounds latLngBounds;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+
+                    latLngBounds = new LatLngBounds.Builder()
+                            .includes(pathRecorder.getPath().stream().map(p -> new LatLng(p.latitude(), p.longitude())).collect(Collectors.toList()))
+                            .build();
+                } else {
+                    Point startPoint = pathRecorder.getPath().get(0);
+                    Point centerPoint = pathRecorder.getCenterPoint();
+                    Point endPoint = pathRecorder.getPath().get(pathRecorder.getPath().size() - 1);
+
+                    latLngBounds = new LatLngBounds.Builder()
+                            .include(new LatLng(startPoint.latitude(), startPoint.longitude()))
+                            .include(new LatLng(centerPoint.latitude(), centerPoint.longitude()))
+                            .include(new LatLng(endPoint.latitude(), endPoint.longitude()))
+                            .build();
+                }
+
+                mapboxMap.easeCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 100));
+
+                addIcons(style);
                 initRouteLayer(style);
                 showRouteOnMap();
                 showPOIsOnMap();
 
-                Point startPoint = pathRecorder.getPath().get(0);
-                Point endPoint = pathRecorder.getPath().get(pathRecorder.getPath().size() - 1);
-
-                LatLngBounds latLngBounds = new LatLngBounds.Builder()
-                        .include(new LatLng(startPoint.latitude(), startPoint.longitude()))
-                        .include(new LatLng(endPoint.latitude(), endPoint.longitude()))
-                        .build();
-
-                mapboxMap.easeCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 100));
-
+                TextView expandView = findViewById(R.id.preview_route_thumbnail_text);
+                expandView.setOnClickListener(this::expandMap);
+                mapView.setOnClickListener(this::expandMap);
 
                 // Map is set up and the style has loaded. Now you can add data or make other map adjustments.
 
             });
         });
+    }
 
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private void addIcons(@NonNull Style loadedMapStyle) {
+        loadedMapStyle.addImage(POI_ICON_ID, Objects.requireNonNull(BitmapUtils.getBitmapFromDrawable(
+                getResources().getDrawable(R.drawable.ic_poi_marker))));
+    }
 
+    private void expandMap(View view) {
+        Log.e(TAG, "abre");
+        Intent intent = new Intent(this, MapPreviewActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
     }
 
 
@@ -190,8 +213,8 @@ public class NewRouteActivity extends AppCompatActivity {
                         FeatureCollection.fromFeatures(features.toArray(new Feature[0])),
                         new GeoJsonOptions()
                                 .withCluster(true)
-                                .withClusterMaxZoom(14)
                                 .withClusterRadius(50)
+                                .withClusterMaxZoom(14)
                 )
         );
 

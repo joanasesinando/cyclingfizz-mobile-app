@@ -550,8 +550,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     new URI(GIRA_DATA_URL),
                     new GeoJsonOptions()
                         .withCluster(true)
-                        .withClusterMaxZoom(14)
                         .withClusterRadius(50)
+                        .withClusterMaxZoom(14)
                 )
             );
         } catch (URISyntaxException uriSyntaxException) {
@@ -996,8 +996,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 FeatureCollection.fromFeatures(features.toArray(new Feature[0])),
                 new GeoJsonOptions()
                     .withCluster(true)
-                    .withClusterMaxZoom(14)
                     .withClusterRadius(50)
+                    .withClusterMaxZoom(14)
             )
         );
 
