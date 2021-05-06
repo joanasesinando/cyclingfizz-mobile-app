@@ -25,9 +25,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CyclingFizz"
         tools:replace="android:icon,android:theme">
-        <activity android:name=".RouteActivity"></activity>
+        <activity android:name=".ViewPOIActivity"></activity>
+        <activity android:name=".RouteActivity" />
         <activity android:name=".EditPOIActivity" />
-        <activity android:name=".MapPreviewActivity"></activity>
+        <activity android:name=".MapPreviewActivity" />
         <activity android:name=".EditPOIActivity" />
         <activity android:name=".NewRouteActivity" />
         <activity android:name=".AddPOIActivity" />

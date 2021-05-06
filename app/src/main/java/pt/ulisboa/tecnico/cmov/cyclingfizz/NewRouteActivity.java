@@ -12,7 +12,6 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -367,8 +366,8 @@ public class NewRouteActivity extends AppCompatActivity {
     /*** -------------------------------------------- ***/
 
     private void setInputs() {
-        nameInputLayout = findViewById(R.id.new_poi_name);
-        descriptionInputLayout = findViewById(R.id.new_poi_description);
+        nameInputLayout = findViewById(R.id.poi_name);
+        descriptionInputLayout = findViewById(R.id.poi_description);
 
         Objects.requireNonNull(nameInputLayout.getEditText()).addTextChangedListener(new TextWatcher() {
             @Override

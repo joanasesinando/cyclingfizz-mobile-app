@@ -105,6 +105,22 @@ public class PointOfInterest implements Serializable {
         }
     }
 
+    public void downloadImages(Utils.OnTaskCompleted<Void> callback) {
+        if (mediaLinks.size() == images.size()) {
+            callback.onTaskCompleted(null);
+        }
+
+        for (String mediaLink : mediaLinks) {
+
+            (new Utils.httpRequestImage(response -> {
+                images.add(response);
+                if (mediaLinks.size() == images.size()) {
+                    callback.onTaskCompleted(null);
+                }
+            })).execute(mediaLink);
+        }
+    }
+
     public void getJsonAsync(Utils.OnTaskCompleted<JsonObject> callback) {
         JsonObject data = new JsonObject();
         data.addProperty("title", name);

@@ -151,7 +151,7 @@ public class EditPOIActivity extends AppCompatActivity {
         });
 
         // Set take photo btn listener
-        MaterialButton takePhotoBtn = findViewById(R.id.new_poi_take_photo);
+        MaterialButton takePhotoBtn = findViewById(R.id.poi_take_photo);
         takePhotoBtn.setOnClickListener(v -> {
             if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                 Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -163,7 +163,7 @@ public class EditPOIActivity extends AppCompatActivity {
         });
 
         // Set pick photos btn listener
-        MaterialButton pickPhotosBtn = findViewById(R.id.new_poi_pick_photos);
+        MaterialButton pickPhotosBtn = findViewById(R.id.poi_pick_photos);
         pickPhotosBtn.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             intent.setType("image/*"); //FIXME: add video support
@@ -180,7 +180,7 @@ public class EditPOIActivity extends AppCompatActivity {
         deleteBtn.setOnClickListener(v -> deletePOI());
 
         // Set selecting items top bar btns listeners
-        MaterialToolbar selectItemsToolbar = findViewById(R.id.new_poi_select_items_toolbar).findViewById(R.id.topAppBar);
+        MaterialToolbar selectItemsToolbar = findViewById(R.id.poi_select_items_toolbar).findViewById(R.id.topAppBar);
         selectItemsToolbar.setNavigationOnClickListener(v -> quitDeletingImages());
         selectItemsToolbar.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
@@ -192,7 +192,7 @@ public class EditPOIActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void toggleToolbar() {
         View toolbarLayout = findViewById(R.id.poi_toolbar);
-        View selectItemsToolbarLayout = findViewById(R.id.new_poi_select_items_toolbar);
+        View selectItemsToolbarLayout = findViewById(R.id.poi_select_items_toolbar);
 
         if (toolbarLayout.getVisibility() == View.VISIBLE) {
             toolbarLayout.setVisibility(View.GONE);
@@ -288,7 +288,7 @@ public class EditPOIActivity extends AppCompatActivity {
         Log.d(TAG, String.valueOf(gallery.indexOfChild(view)));
 
         // Update toolbar
-        View toolbarLayout = findViewById(R.id.new_poi_select_items_toolbar);
+        View toolbarLayout = findViewById(R.id.poi_select_items_toolbar);
         MaterialToolbar toolbar = toolbarLayout.findViewById(R.id.topAppBar);
         toolbar.setTitle(imagesToDeleteIndexes.size() + " selected");
 
@@ -306,7 +306,7 @@ public class EditPOIActivity extends AppCompatActivity {
         Log.d(TAG, String.valueOf(gallery.indexOfChild(view)));
 
         // Update toolbar
-        View toolbar = findViewById(R.id.new_poi_select_items_toolbar);
+        View toolbar = findViewById(R.id.poi_select_items_toolbar);
         MaterialToolbar topBar = toolbar.findViewById(R.id.topAppBar);
         topBar.setTitle(imagesToDeleteIndexes.size() + " selected");
 
@@ -355,8 +355,8 @@ public class EditPOIActivity extends AppCompatActivity {
     /*** -------------------------------------------- ***/
 
     private void setInputs() {
-        nameInputLayout = findViewById(R.id.new_poi_name);
-        descriptionInputLayout = findViewById(R.id.new_poi_description);
+        nameInputLayout = findViewById(R.id.poi_name);
+        descriptionInputLayout = findViewById(R.id.poi_description);
 
         Objects.requireNonNull(nameInputLayout.getEditText()).setText(poi.getName());
         Objects.requireNonNull(descriptionInputLayout.getEditText()).setText(poi.getDescription());

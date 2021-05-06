@@ -13,10 +13,19 @@
         android:layout_height="wrap_content" />
 
     <include
-        android:id="@+id/new_poi_select_items_toolbar"
+        android:id="@+id/poi_select_items_toolbar"
         layout="@layout/select_items_action_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:visibility="gone"/>
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progress_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        app:indicatorColor="@color/pink"
+        app:trackColor="@color/offPink"
         android:visibility="gone"/>
 
     <ScrollView
@@ -32,7 +41,7 @@
             android:orientation="vertical">
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/new_poi_name"
+                android:id="@+id/poi_name"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -49,7 +58,7 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/new_poi_description"
+                android:id="@+id/poi_description"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -112,7 +121,7 @@
                 android:weightSum="1">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/new_poi_take_photo"
+                    android:id="@+id/poi_take_photo"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -127,7 +136,7 @@
                     app:strokeWidth="2dp" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/new_poi_pick_photos"
+                    android:id="@+id/poi_pick_photos"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

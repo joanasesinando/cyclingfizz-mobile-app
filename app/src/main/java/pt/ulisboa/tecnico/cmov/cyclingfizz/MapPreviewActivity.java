@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.PointF;
+import android.graphics.RectF;
 import android.os.Bundle;
 import android.view.View;
 
@@ -31,6 +33,7 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.mapboxsdk.utils.BitmapUtils;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -62,6 +65,7 @@ public class MapPreviewActivity extends AppCompatActivity {
 
     static final String ROUTE_PATH = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_PATH";
     static final String ROUTE_POIS = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_POIS";
+    public final static String POI = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI";
 
     ArrayList<Point> path;
     ArrayList<PointOfInterest> pois;
@@ -98,7 +102,6 @@ public class MapPreviewActivity extends AppCompatActivity {
         finish();
     }
 
-
     private void initMap(Bundle savedInstanceState) {
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
 
@@ -134,6 +137,39 @@ public class MapPreviewActivity extends AppCompatActivity {
                 initRouteLayer(style);
                 showRouteOnMap();
                 showPOIsOnMap();
+
+                mapboxMap.addOnMapClickListener(point -> {
+
+                    PointF pointf = mapboxMap.getProjection().toScreenLocation(point);
+                    RectF rectF = new RectF(pointf.x - 10, pointf.y - 10, pointf.x + 10, pointf.y + 10);
+                    List<Feature> poisFeatureList = mapboxMap.queryRenderedFeatures(rectF, POI_LAYER_ID);
+
+                    String itemSelected = "";
+                    Feature feature = null;
+                    if (poisFeatureList.size() > 0) {
+                        itemSelected = "POI";
+                        feature = poisFeatureList.get(0);
+                    }
+
+                    Intent intent;
+                    Bundle bundle;
+                    switch (itemSelected) {
+                        case "POI":
+                            int poiIndex = feature.getNumberProperty("id").intValue();
+                            PointOfInterest poi = pois.get(poiIndex);
+                            intent = new Intent(this, ViewPOIActivity.class);
+                            bundle = new Bundle();
+                            bundle.putSerializable(POI, poi);
+                            intent.putExtras(bundle);
+                            startActivity(intent);
+                            overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                            break;
+
+                        default:
+                            return true;
+                    }
+                    return true;
+                });
 
                 // Map is set up and the style has loaded. Now you can add data or make other map adjustments.
             });
