@@ -18,7 +18,7 @@ public class Route implements Serializable {
     private final String id;
     private final String routeJson;
     private final String idToken;
-    private String authorUID;
+    private final String authorUID;
     private final ArrayList<PointOfInterest> POIs;
     private final String title;
     private final String description;

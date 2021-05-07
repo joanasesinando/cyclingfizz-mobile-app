@@ -462,6 +462,8 @@ public class NewRouteActivity extends AppCompatActivity {
         ImageView newImg = new ImageView(this);
         newImg.setImageBitmap(bitmap);
         newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        LinearLayout.LayoutParams newImgParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        newImg.setLayoutParams(newImgParams);
         imgWrapper.addView(newImg);
 
         // Create overlay (when selected)

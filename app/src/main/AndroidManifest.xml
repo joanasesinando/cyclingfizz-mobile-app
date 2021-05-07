@@ -9,8 +9,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="18"
+        tools:ignore="ScopedStorage" />
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+    </queries>
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
@@ -25,11 +31,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CyclingFizz"
         tools:replace="android:icon,android:theme">
-        <activity android:name=".ViewPOIActivity"></activity>
+        <activity android:name=".ViewPOIActivity"/>
         <activity android:name=".RouteActivity" />
         <activity android:name=".EditPOIActivity" />
         <activity android:name=".MapPreviewActivity" />
-        <activity android:name=".EditPOIActivity" />
         <activity android:name=".NewRouteActivity" />
         <activity android:name=".AddPOIActivity" />
         <activity android:name=".RoutesListActivity" />
@@ -58,6 +63,16 @@
             android:value="@string/google_API_KEY" />
 
         <service android:name="pt.inesc.termite.wifidirect.service.SimWifiP2pService" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="pt.ulisboa.tecnico.cmov.cyclingfizz.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

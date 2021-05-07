@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -13,10 +14,12 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -33,9 +36,13 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
 import com.mapbox.geojson.Point;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Objects;
 
 
@@ -55,6 +62,9 @@ public class AddPOIActivity extends AppCompatActivity {
 
     ArrayList<Bitmap> images = new ArrayList<>();
     ArrayList<Integer> imagesToDeleteIndexes = new ArrayList<>();
+
+    String currentPhotoPath;
+
 
     /// -------------- PERMISSIONS -------------- ///
 
@@ -101,12 +111,13 @@ public class AddPOIActivity extends AppCompatActivity {
                 GridLayout gallery = findViewById(R.id.poi_gallery);
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
-            } else if (requestCode == TAKE_PHOTO && resultCode == RESULT_OK && data != null) {
+            } else if (requestCode == TAKE_PHOTO && resultCode == RESULT_OK && currentPhotoPath != null) {
                 // Get bitmap
-                Bundle extras = data.getExtras();
-                Bitmap bitmap = (Bitmap) extras.get("data");
-                images.add(bitmap);
+                File f = new File(currentPhotoPath);
+                Uri uri = Uri.fromFile(f);
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
 
+                images.add(bitmap);
                 // Update view
                 addImageToGallery(bitmap);
                 GridLayout gallery = findViewById(R.id.poi_gallery);
@@ -116,7 +127,8 @@ public class AddPOIActivity extends AppCompatActivity {
                 Toast.makeText(this, "No photos selected", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
-            Log.e(TAG, Arrays.toString(e.getStackTrace()));
+            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -144,7 +156,19 @@ public class AddPOIActivity extends AppCompatActivity {
         takePhotoBtn.setOnClickListener(v -> {
             if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                 Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(intent, TAKE_PHOTO);
+                if (intent.resolveActivity(getPackageManager()) != null) {
+
+                    File photoFile = createImageFile();
+
+                    // Continue only if the File was successfully created
+                    if (photoFile != null) {
+                        Uri photoURI = FileProvider.getUriForFile(this,
+                                "pt.ulisboa.tecnico.cmov.cyclingfizz.fileprovider",
+                                photoFile);
+                        intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                    }
+                    startActivityForResult(intent, TAKE_PHOTO);
+                }
 
             } else {
                 requestPermissionLauncher.launch(Manifest.permission.CAMERA);
@@ -214,6 +238,8 @@ public class AddPOIActivity extends AppCompatActivity {
         ImageView newImg = new ImageView(this);
         newImg.setImageBitmap(bitmap);
         newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        LinearLayout.LayoutParams newImgParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        newImg.setLayoutParams(newImgParams);
         imgWrapper.addView(newImg);
 
         // Create overlay (when selected)
@@ -322,6 +348,27 @@ public class AddPOIActivity extends AppCompatActivity {
         isDeletingImages = false;
         imagesToDeleteIndexes.clear();
         toggleToolbar();
+    }
+
+
+    private File createImageFile() {
+
+        try {
+            // Create an image file name
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            String imageFileName = "JPEG_" + timeStamp + "_";
+            File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            File image = File.createTempFile(
+                    imageFileName,  /* prefix */
+                    ".jpg",         /* suffix */
+                    storageDir      /* directory */
+            );
+            currentPhotoPath = image.getAbsolutePath();
+            return image;
+        } catch (IOException e) {
+            Log.e(TAG, e.getMessage());
+            return null;
+        }
     }
 
 //    private Bitmap fixImageRotation(Uri uri, Bitmap bitmap) {
