@@ -4,17 +4,23 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
@@ -70,9 +76,10 @@ public class RouteActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@RouteActivity";
     static String SERVER_URL = "https://stations.cfservertest.ga";
+    public final static String POI = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI";
 
-    static String PATH_RECORDED_SOURCE_ID = "path-recorded-source";
-    static String PATH_RECORDED_LAYER_ID = "path-recorded-layer";
+    static String PATH_SOURCE_ID = "path-source";
+    static String PATH_LAYER_ID = "path-layer";
 
     static String POI_SOURCE_ID = "poi-source";
     static String POI_ICON_ID = "poi-icon";
@@ -125,6 +132,7 @@ public class RouteActivity extends AppCompatActivity {
         updateAuthor();
         uiUpdateCard(findViewById(R.id.route_description), R.drawable.ic_description,
                 getString(R.string.description), route.getDescription());
+        updatePOIs();
 
         // Set click listeners
         uiSetClickListeners();
@@ -196,6 +204,10 @@ public class RouteActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         // Set share btn click listener
+        // TODO
+
+        // Set play btn click listener
+        FloatingActionButton playBtn = findViewById(R.id.route_play);
         // TODO
     }
 
@@ -269,14 +281,14 @@ public class RouteActivity extends AppCompatActivity {
     }
 
     private void initRouteLayer(@NonNull Style style) {
-        // Init path recorded layer
-        style.addSource(new GeoJsonSource(PATH_RECORDED_SOURCE_ID,
+        // Init path layer
+        style.addSource(new GeoJsonSource(PATH_SOURCE_ID,
                 FeatureCollection.fromFeatures(new Feature[] {Feature.fromGeometry(
                         LineString.fromLngLats(route.getPath())
                 )})));
 
-        LineLayer pathRecorded = new LineLayer(PATH_RECORDED_LAYER_ID, PATH_RECORDED_SOURCE_ID);
-        pathRecorded.setProperties(
+        LineLayer path = new LineLayer(PATH_LAYER_ID, PATH_SOURCE_ID);
+        path.setProperties(
                 lineJoin(Property.LINE_JOIN_ROUND),
                 lineCap(Property.LINE_CAP_ROUND),
                 lineColor(getResources().getColor(R.color.purple_500)),
@@ -284,7 +296,7 @@ public class RouteActivity extends AppCompatActivity {
                 lineOpacity(.8f)
         );
 
-        style.addLayer(pathRecorded);
+        style.addLayer(path);
 
         // Init POIs layer
         ArrayList<Feature> features = new ArrayList<>();
@@ -345,14 +357,14 @@ public class RouteActivity extends AppCompatActivity {
     private void showRouteOnMap() {
         if (mapboxMap.getStyle() == null) return;
 
-        GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
-        if (pathRecordedSource != null) {
+        GeoJsonSource pathSource = mapboxMap.getStyle().getSourceAs(PATH_SOURCE_ID);
+        if (pathSource != null) {
             FeatureCollection featureCollection = FeatureCollection.fromFeatures(
                     new Feature[] {Feature.fromGeometry(
                             LineString.fromLngLats(route.getPath())
                     )}
             );
-            runOnUiThread(() -> pathRecordedSource.setGeoJson(featureCollection));
+            runOnUiThread(() -> pathSource.setGeoJson(featureCollection));
         }
     }
 
@@ -384,5 +396,65 @@ public class RouteActivity extends AppCompatActivity {
         intent.putExtras(bundle);
         startActivity(intent);
         overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ------------------- POIs ------------------- ***/
+    /*** -------------------------------------------- ***/
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void updatePOIs() {
+        cleanPOIs();
+        LinearLayout linearLayout = findViewById(R.id.poi_list);
+        int i = 1;
+
+        for (PointOfInterest poi : route.getAllPOIs()) {
+            LayoutInflater inflater = LayoutInflater.from(this);
+            ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.poi_item, null, false);
+
+            // Set order
+            TextView order = layout.findViewById(R.id.poi_item_order);
+            order.setText(String.valueOf(i));
+
+            // Set thumbnail
+            ArrayList<Bitmap> images = poi.getImages();
+            if (images.size() > 0) {
+                ImageView thumbnail = layout.findViewById(R.id.poi_item_thumbnail);
+                thumbnail.setImageBitmap(images.get(0));
+            }
+
+            //Set title
+            TextView title = layout.findViewById(R.id.poi_item_title);
+            title.setText(poi.getName());
+
+            //Set description
+            TextView description = layout.findViewById(R.id.route_card_description);
+            description.setText(poi.getDescription());
+
+            linearLayout.addView(layout);
+
+            // Set poi click listener
+            layout.setOnClickListener(v -> {
+                Intent intent = new Intent(this, ViewPOIActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable(POI, poi);
+                intent.putExtras(bundle);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+            });
+
+            i++;
+        }
+
+        if (route.getAllPOIs().size() > 0) {
+            MaterialCardView poisLayout = findViewById(R.id.new_route_pois);
+            poisLayout.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void cleanPOIs() {
+        LinearLayout linearLayout = findViewById(R.id.poi_list);
+        linearLayout.removeAllViews();
     }
 }
