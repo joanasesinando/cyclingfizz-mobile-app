@@ -17,8 +17,6 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -26,6 +24,7 @@ import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
@@ -82,6 +81,7 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textSize;
 public class NewRouteActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@NewRoute";
+    public final static String POI_INDEX = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI_INDEX";
     static final int PICK_IMAGES = 1;
 
     PathRecorder pathRecorder;
@@ -111,9 +111,8 @@ public class NewRouteActivity extends AppCompatActivity {
 
         pathRecorder = PathRecorder.getInstance();
 
-        uiSetClickListeners();
         setInputs();
-        setPOIs();
+        uiSetClickListeners();
 
         initMap(savedInstanceState);
     }
@@ -150,16 +149,16 @@ public class NewRouteActivity extends AppCompatActivity {
         MaterialToolbar toolbar = findViewById(R.id.new_route_toolbar).findViewById(R.id.topAppBar);
         toolbar.setNavigationOnClickListener(v -> {
             new MaterialAlertDialogBuilder(this)
-                    .setTitle(R.string.delete_route)
-                    .setMessage(R.string.delete_route_warning)
-                    .setNeutralButton(R.string.cancel, (dialog, which) -> {
-                        // Respond to neutral button press
-                    })
-                    .setPositiveButton(R.string.delete, (dialog, which) -> {
-                        // Respond to positive button press
-                        finish();
-                    })
-                    .show();
+                .setTitle(R.string.delete_route)
+                .setMessage(R.string.delete_route_warning)
+                .setNeutralButton(R.string.cancel, (dialog, which) -> {
+                    // Respond to neutral button press
+                })
+                .setPositiveButton(R.string.delete, (dialog, which) -> {
+                    // Respond to positive button press
+                    finish();
+                })
+                .show();
         });
 
         // Set toolbar action btn click listener
@@ -262,7 +261,7 @@ public class NewRouteActivity extends AppCompatActivity {
         pathRecorded.setProperties(
                 lineJoin(Property.LINE_JOIN_ROUND),
                 lineCap(Property.LINE_CAP_ROUND),
-                lineColor(getResources().getColor(R.color.purple)),
+                lineColor(getResources().getColor(R.color.purple_500)),
                 lineWidth(5f),
                 lineOpacity(.8f)
         );
@@ -302,7 +301,7 @@ public class NewRouteActivity extends AppCompatActivity {
 
         //Add clusters' circles
         circles.setProperties(
-                circleColor(getResources().getColor(R.color.purple)),
+                circleColor(getResources().getColor(R.color.purple_500)),
                 circleRadius(step(get("point_count"), 25,
                         stop(5, 35),
                         stop(10, 45),
@@ -421,68 +420,56 @@ public class NewRouteActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void setPOIs() {
+        cleanPOIs();
         LinearLayout linearLayout = findViewById(R.id.poi_list);
+        int i = 1;
 
-        for (PointOfInterest poi : pathRecorder.getAllPOIs()){
+        for (PointOfInterest poi : pathRecorder.getAllPOIs()) {
             LayoutInflater inflater = LayoutInflater.from(this);
             ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.poi_item, null, false);
 
-            //Set title for POI
+            // Set order
+            TextView order = layout.findViewById(R.id.poi_item_order);
+            order.setText(String.valueOf(i));
+
+            // Set thumbnail
+            ArrayList<Bitmap> images = poi.getImages();
+            if (images.size() > 0) {
+                ImageView thumbnail = layout.findViewById(R.id.poi_item_thumbnail);
+                thumbnail.setImageBitmap(images.get(0));
+            }
+
+            //Set title
             TextView title = layout.findViewById(R.id.poi_item_title);
             title.setText(poi.getName());
-            //Set description for POI
+
+            //Set description
             TextView description = layout.findViewById(R.id.route_card_description);
             description.setText(poi.getDescription());
-            //Add POI's images
-            for (Bitmap bitmap: poi.getImages()) {
-                addImageToGallery(bitmap, layout);
-            }
-            GridLayout gallery = layout.findViewById(R.id.poi_gallery);
-            if (poi.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
 
             linearLayout.addView(layout);
+
+            // Set poi click listener
+            int poiIndex = i - 1;
+            layout.setOnClickListener(v -> {
+                Intent intent = new Intent(this, EditPOIActivity.class);
+                intent.putExtra(POI_INDEX, poiIndex);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+            });
+
+            i++;
+        }
+
+        if (pathRecorder.getAllPOIs().size() > 0) {
+            MaterialCardView poisLayout = findViewById(R.id.new_route_pois);
+            poisLayout.setVisibility(View.VISIBLE);
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private void addImageToGallery(Bitmap bitmap, ConstraintLayout layout) {
-        GridLayout gallery = layout.findViewById(R.id.poi_gallery);
-        final float scale = getResources().getDisplayMetrics().density;
-
-        // Create wrapper
-        ConstraintLayout imgWrapper = new ConstraintLayout(this);
-        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = 0;
-        params.height = (int) (100 * scale);
-        params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-        imgWrapper.setLayoutParams(params);
-
-        // Create image
-        ImageView newImg = new ImageView(this);
-        newImg.setImageBitmap(bitmap);
-        newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        LinearLayout.LayoutParams newImgParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        newImg.setLayoutParams(newImgParams);
-        imgWrapper.addView(newImg);
-
-        // Create overlay (when selected)
-        LinearLayout overlay = new LinearLayout(this);
-        LinearLayout.LayoutParams overlayParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        overlay.setBackgroundColor(getColor(R.color.orange_500));
-        overlay.setAlpha(0.4f);
-        overlay.setVisibility(View.GONE);
-        imgWrapper.addView(overlay, overlayParams);
-
-        // Create checked icon (when selected)
-        ImageView icon = new ImageView(this);
-        icon.setImageResource(R.drawable.ic_round_check_circle_24);
-        icon.setPadding((int) (10 * scale), (int) (10 * scale), (int) (10 * scale), (int) (10 * scale));
-        icon.setColorFilter(getColor(R.color.white));
-        icon.setVisibility(View.GONE);
-        imgWrapper.addView(icon);
-
-        gallery.addView(imgWrapper, params);
+    private void cleanPOIs() {
+        LinearLayout linearLayout = findViewById(R.id.poi_list);
+        linearLayout.removeAllViews();
     }
 
 
@@ -513,10 +500,12 @@ public class NewRouteActivity extends AppCompatActivity {
     }
 
     // Add the mapView lifecycle to the activity's lifecycle methods
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onResume() {
         super.onResume();
         mapView.onResume();
+        setPOIs();
     }
 
     @Override

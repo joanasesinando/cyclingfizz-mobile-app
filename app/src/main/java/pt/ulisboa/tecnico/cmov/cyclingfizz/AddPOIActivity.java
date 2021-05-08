@@ -14,7 +14,6 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -40,7 +39,6 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Objects;
@@ -89,6 +87,9 @@ public class AddPOIActivity extends AppCompatActivity {
 
         uiSetClickListeners();
         setInputs();
+
+        // Set purple status bar
+        getWindow().setStatusBarColor(getColor(R.color.purple_700));
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -211,7 +212,7 @@ public class AddPOIActivity extends AppCompatActivity {
         } else {
             toolbarLayout.setVisibility(View.VISIBLE);
             selectItemsToolbarLayout.setVisibility(View.GONE);
-            getWindow().setStatusBarColor(getColor(R.color.orange_700));
+            getWindow().setStatusBarColor(getColor(R.color.purple_700));
         }
     }
 
@@ -245,8 +246,8 @@ public class AddPOIActivity extends AppCompatActivity {
         // Create overlay (when selected)
         LinearLayout overlay = new LinearLayout(this);
         LinearLayout.LayoutParams overlayParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        overlay.setBackgroundColor(getColor(R.color.orange_500));
-        overlay.setAlpha(0.4f);
+        overlay.setBackgroundColor(getColor(R.color.purple_500));
+        overlay.setAlpha(0.3f);
         overlay.setVisibility(View.GONE);
         imgWrapper.addView(overlay, overlayParams);
 

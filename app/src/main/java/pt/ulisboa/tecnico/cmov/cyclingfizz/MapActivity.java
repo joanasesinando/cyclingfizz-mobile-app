@@ -6,7 +6,6 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
@@ -29,7 +28,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Messenger;
-import android.os.Parcelable;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -990,7 +988,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         pathRecorded.setProperties(
                 lineJoin(Property.LINE_JOIN_ROUND),
                 lineCap(Property.LINE_CAP_ROUND),
-                lineColor(getResources().getColor(R.color.purple)),
+                lineColor(getResources().getColor(R.color.purple_500)),
                 lineWidth(5f),
                 lineOpacity(.8f)
         );
@@ -1030,7 +1028,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         //Add clusters' circles
         circles.setProperties(
-                circleColor(getResources().getColor(R.color.purple)),
+                circleColor(getResources().getColor(R.color.purple_500)),
                 circleRadius(step(get("point_count"), 25,
                         stop(5, 35),
                         stop(10, 45),

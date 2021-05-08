@@ -22,4 +22,14 @@
     <style name="PrimaryOutlinedButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
         <item name="strokeColor">@color/orange_500</item>
     </style>
+
+    <style name="SecondaryOutlinedButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="strokeColor">@color/purple_500</item>
+        <item name="android:textColor">@color/purple_500</item>
+        <item name="iconTint">@color/purple_500</item>
+    </style>
+
+    <style name="SecondaryTextInput" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="colorControlActivated">@color/purple_500</item>
+    </style>
 </resources>

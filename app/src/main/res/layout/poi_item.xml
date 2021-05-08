@@ -3,98 +3,83 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:paddingTop="14dp">
+
 
     <LinearLayout
-        android:id="@+id/linearLayout2"
+        android:id="@+id/poi_item"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:weightSum="1"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="18dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:id="@+id/poi_item_title"
+            android:id="@+id/poi_item_order"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/quicksand_bold"
-            android:text="@string/not_available"
-            android:textColor="@color/orange_500"
-            android:textSize="16sp"
-            android:ellipsize="end"
-            android:maxLines="1"/>
+            android:text="?"
+            android:textColor="@color/material_on_surface_emphasis_high_type"
+            android:textSize="13sp"
+            android:layout_marginEnd="12dp"/>
 
-        <TextView
-            android:id="@+id/route_card_description"
-            android:layout_width="wrap_content"
+        <ImageView
+            android:id="@+id/poi_item_thumbnail"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_default"
+            android:layout_marginEnd="12dp"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/quicksand"
-            android:text="@string/not_available"
-            android:textColor="@color/material_on_surface_emphasis_medium"
-            android:textSize="14sp"
-            android:ellipsize="end"
-            android:maxLines="2"/>
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-        <GridLayout
-            android:id="@+id/poi_gallery"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:columnCount="3"
-            android:layout_marginTop="10dp"
-            android:useDefaultMargins="true"
-            android:visibility="gone">
+            <TextView
+                android:id="@+id/poi_item_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/quicksand_bold"
+                android:text="@string/not_available"
+                android:textColor="@color/purple_500"
+                android:textSize="16sp"
+                android:ellipsize="end"
+                android:maxLines="1"/>
 
-<!--            <androidx.constraintlayout.widget.ConstraintLayout-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="80dp"-->
-<!--                android:layout_columnWeight="1"-->
-<!--                android:layout_rowWeight="1">-->
+            <TextView
+                android:id="@+id/route_card_description"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/quicksand"
+                android:text="@string/not_available"
+                android:textColor="@color/material_on_surface_emphasis_medium"
+                android:textSize="14sp"
+                android:ellipsize="end"
+                android:maxLines="1"/>
+        </LinearLayout>
 
-<!--                <ImageView-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="match_parent"-->
-<!--                    android:src="@drawable/ic_default"-->
-<!--                    android:scaleType="centerCrop" />-->
-<!--            </androidx.constraintlayout.widget.ConstraintLayout>-->
-
-<!--            <androidx.constraintlayout.widget.ConstraintLayout-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="80dp"-->
-<!--                android:layout_columnWeight="1"-->
-<!--                android:layout_rowWeight="1">-->
-
-<!--                <ImageView-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="match_parent"-->
-<!--                    android:src="@drawable/ic_default"-->
-<!--                    android:scaleType="centerCrop" />-->
-<!--            </androidx.constraintlayout.widget.ConstraintLayout>-->
-
-<!--            <androidx.constraintlayout.widget.ConstraintLayout-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="80dp"-->
-<!--                android:layout_columnWeight="1"-->
-<!--                android:layout_rowWeight="1">-->
-
-<!--                <ImageView-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="match_parent"-->
-<!--                    android:src="@drawable/ic_default"-->
-<!--                    android:scaleType="centerCrop" />-->
-<!--            </androidx.constraintlayout.widget.ConstraintLayout>-->
-        </GridLayout>
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_round_chevron_right_24"
+            app:tint="@color/material_on_surface_disabled" />
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="1.5dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="14dp"
         android:alpha=".1"
         android:background="@color/dark"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout2">
+        app:layout_constraintTop_toBottomOf="@+id/poi_item"
+        android:orientation="horizontal">
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

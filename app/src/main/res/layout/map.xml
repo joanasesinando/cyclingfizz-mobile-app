@@ -124,7 +124,7 @@
                     app:fabSize="normal"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:tint="@color/purple"
+                    app:tint="@color/purple_500"
                     android:visibility="gone"/>
 
                 <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton

@@ -24,8 +24,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:indeterminate="true"
-        app:indicatorColor="@color/pink"
-        app:trackColor="@color/offPink"
+        app:indicatorColor="@color/purple_500"
+        app:trackColor="@color/purple_alpha"
         android:visibility="gone"/>
 
     <ScrollView
@@ -43,11 +43,13 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/poi_name"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:theme="@style/SecondaryTextInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:hint="@string/name"
-                app:boxStrokeColor="@color/orange_500"
+                app:hintTextColor="@color/purple_500"
+                app:boxStrokeColor="@color/purple_500"
                 app:boxStrokeWidth="2dp">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -60,11 +62,13 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/poi_description"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:theme="@style/SecondaryTextInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="@string/description"
-                app:boxStrokeColor="@color/orange_500"
+                app:hintTextColor="@color/purple_500"
+                app:boxStrokeColor="@color/purple_500"
                 app:boxStrokeWidth="2dp">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -84,33 +88,33 @@
                 android:useDefaultMargins="true"
                 android:visibility="gone">
 
-                <!--                <androidx.constraintlayout.widget.ConstraintLayout-->
-                <!--                    android:layout_width="wrap_content"-->
-                <!--                    android:layout_height="100dp"-->
-                <!--                    android:layout_columnWeight="1"-->
-                <!--                    android:layout_rowWeight="1">-->
+<!--                    <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="100dp"-->
+<!--                        android:layout_columnWeight="1"-->
+<!--                        android:layout_rowWeight="1">-->
 
-                <!--                    <ImageView-->
-                <!--                        android:layout_width="match_parent"-->
-                <!--                        android:layout_height="match_parent"-->
-                <!--                        android:src="@drawable/ic_default"-->
-                <!--                        android:scaleType="centerCrop" />-->
+<!--                        <ImageView-->
+<!--                            android:layout_width="match_parent"-->
+<!--                            android:layout_height="match_parent"-->
+<!--                            android:src="@drawable/ic_default"-->
+<!--                            android:scaleType="centerCrop" />-->
 
-                <!--                    <LinearLayout-->
-                <!--                        android:layout_width="match_parent"-->
-                <!--                        android:layout_height="match_parent"-->
-                <!--                        android:background="@color/orange_500"-->
-                <!--                        android:alpha=".4" />-->
+<!--                        <LinearLayout-->
+<!--                            android:layout_width="match_parent"-->
+<!--                            android:layout_height="match_parent"-->
+<!--                            android:background="@color/purple_500"-->
+<!--                            android:alpha=".3" />-->
 
-                <!--                    <ImageView-->
-                <!--                        android:layout_width="wrap_content"-->
-                <!--                        android:layout_height="wrap_content"-->
-                <!--                        android:padding="10dp"-->
-                <!--                        android:src="@drawable/ic_round_check_circle_24"-->
-                <!--                        app:layout_constraintEnd_toEndOf="parent"-->
-                <!--                        app:layout_constraintTop_toTopOf="parent"-->
-                <!--                        app:tint="@color/white" />-->
-                <!--                </androidx.constraintlayout.widget.ConstraintLayout>-->
+<!--                        <ImageView-->
+<!--                            android:layout_width="wrap_content"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:padding="10dp"-->
+<!--                            android:src="@drawable/ic_round_check_circle_24"-->
+<!--                            app:layout_constraintEnd_toEndOf="parent"-->
+<!--                            app:layout_constraintTop_toTopOf="parent"-->
+<!--                            app:tint="@color/white" />-->
+<!--                    </androidx.constraintlayout.widget.ConstraintLayout>-->
             </GridLayout>
 
             <LinearLayout
@@ -131,9 +135,12 @@
                     android:fontFamily="@font/quicksand_bold"
                     android:paddingVertical="8dp"
                     android:text="@string/take_photo"
+                    android:textColor="@color/purple_500"
                     app:icon="@drawable/ic_round_add_a_photo_24"
                     app:iconGravity="textStart"
-                    app:strokeWidth="2dp" />
+                    app:iconTint="@color/purple_500"
+                    app:strokeWidth="2dp"
+                    app:rippleColor="@color/purple_alpha"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/poi_pick_photos"
@@ -146,9 +153,12 @@
                     android:fontFamily="@font/quicksand_bold"
                     android:paddingVertical="8dp"
                     android:text="@string/pick_photos"
+                    android:textColor="@color/purple_500"
                     app:icon="@drawable/ic_round_add_photo_alternate_24"
                     app:iconGravity="textStart"
-                    app:strokeWidth="2dp" />
+                    app:iconTint="@color/purple_500"
+                    app:strokeWidth="2dp"
+                    app:rippleColor="@color/purple_alpha" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
@@ -163,6 +173,7 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/save_poi"
             style="@style/Widget.MaterialComponents.Button.Icon"
+            android:backgroundTint="@color/purple_500"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/quicksand_bold"
@@ -173,7 +184,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/delete_poi"
-            style="@style/PrimaryOutlinedButton"
+            style="@style/SecondaryOutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/quicksand_bold"
@@ -181,6 +192,7 @@
             android:text="@string/delete"
             app:icon="@drawable/ic_round_delete_24"
             app:iconGravity="textStart"
+            app:rippleColor="@color/purple_alpha"
             android:visibility="gone"/>
     </LinearLayout>
 </LinearLayout>

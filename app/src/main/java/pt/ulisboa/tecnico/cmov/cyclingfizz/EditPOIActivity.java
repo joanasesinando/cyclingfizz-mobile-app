@@ -137,7 +137,11 @@ public class EditPOIActivity extends AppCompatActivity {
     /*** -------------- USER INTERFACE -------------- ***/
     /*** -------------------------------------------- ***/
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void setUI() {
+        // Set purple status bar
+        getWindow().setStatusBarColor(getColor(R.color.purple_700));
+
         // Show delete btn
         MaterialButton deleteBtn = findViewById(R.id.delete_poi);
         deleteBtn.setVisibility(View.VISIBLE);
@@ -268,8 +272,8 @@ public class EditPOIActivity extends AppCompatActivity {
         // Create overlay (when selected)
         LinearLayout overlay = new LinearLayout(this);
         LinearLayout.LayoutParams overlayParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        overlay.setBackgroundColor(getColor(R.color.orange_500));
-        overlay.setAlpha(0.4f);
+        overlay.setBackgroundColor(getColor(R.color.purple_500));
+        overlay.setAlpha(0.3f);
         overlay.setVisibility(View.GONE);
         imgWrapper.addView(overlay, overlayParams);
 

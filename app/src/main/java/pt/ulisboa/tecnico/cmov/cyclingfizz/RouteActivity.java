@@ -279,7 +279,7 @@ public class RouteActivity extends AppCompatActivity {
         pathRecorded.setProperties(
                 lineJoin(Property.LINE_JOIN_ROUND),
                 lineCap(Property.LINE_CAP_ROUND),
-                lineColor(getResources().getColor(R.color.purple)),
+                lineColor(getResources().getColor(R.color.purple_500)),
                 lineWidth(5f),
                 lineOpacity(.8f)
         );
@@ -319,7 +319,7 @@ public class RouteActivity extends AppCompatActivity {
 
         //Add clusters' circles
         circles.setProperties(
-                circleColor(getResources().getColor(R.color.purple)),
+                circleColor(getResources().getColor(R.color.purple_500)),
                 circleRadius(step(get("point_count"), 25,
                         stop(5, 35),
                         stop(10, 45),

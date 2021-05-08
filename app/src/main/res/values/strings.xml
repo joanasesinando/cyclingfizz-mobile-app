@@ -4,6 +4,7 @@
     <string name="new_poi">New point of interest</string>
     <string name="new_route">New route</string>
     <string name="pois">Points of Interest</string>
+    <string name="pois_description">Interesting places along this route</string>
     <string name="route_overview">Route overview</string>
 
     <!-- Actions -->
