@@ -1,5 +1,6 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -9,19 +10,19 @@ import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
-import com.mapbox.geojson.Point;
 
 
 public class ViewPOIActivity extends AppCompatActivity {
@@ -41,7 +42,6 @@ public class ViewPOIActivity extends AppCompatActivity {
 
         setUI();
         uiSetClickListeners();
-        setInputs();
     }
 
 
@@ -58,7 +58,7 @@ public class ViewPOIActivity extends AppCompatActivity {
         MaterialToolbar toolbar = findViewById(R.id.poi_toolbar).findViewById(R.id.topAppBar);
         toolbar.setTitle(poi.getName());
 
-        // Hide btns
+        // Hide / change btns
         MaterialButton takePhotosbtn = findViewById(R.id.poi_take_photo);
         takePhotosbtn.setVisibility(View.GONE);
 
@@ -69,9 +69,23 @@ public class ViewPOIActivity extends AppCompatActivity {
         saveBtn.setVisibility(View.GONE);
 
         toolbar.getMenu().getItem(0).setVisible(false);
+        toolbar.setNavigationIcon(R.drawable.ic_round_arrow_back_24);
+
+        // Hide inputs
+        TextInputLayout nameInput = findViewById(R.id.poi_name_input);
+        nameInput.setVisibility(View.GONE);
+
+        TextInputLayout descriptionInput = findViewById(R.id.poi_description_input);
+        descriptionInput.setVisibility(View.GONE);
+
+        // Set description
+        View description = findViewById(R.id.poi_description);
+        uiUpdateCard(description, R.drawable.ic_description,
+                getString(R.string.description), poi.getDescription());
+        description.setVisibility(View.VISIBLE);
 
         // Set images
-        LinearProgressIndicator progressIndicator = findViewById(R.id.progress_indicator);
+        CircularProgressIndicator progressIndicator = findViewById(R.id.progress_indicator);
         progressIndicator.setVisibility(View.VISIBLE);
         (new Thread(() -> {
             poi.downloadImages(ignored -> {
@@ -87,28 +101,26 @@ public class ViewPOIActivity extends AppCompatActivity {
         })).start();
     }
 
+    private void uiUpdateCard(View card, @DrawableRes int iconId, CharSequence textTitle, CharSequence textSubtitle) {
+        // Set card icon
+        ImageView icon = card.findViewById(R.id.card_icon);
+        icon.setImageResource(iconId);
+
+        // Set card title
+        TextView title = card.findViewById(R.id.card_title);
+        title.setText(textTitle);
+
+        // Set card subtitle
+        TextView subtitle = card.findViewById(R.id.card_subtitle);
+        subtitle.setText(textSubtitle);
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     @SuppressLint("IntentReset")
     private void uiSetClickListeners() {
         // Set close btn click listener
         MaterialToolbar toolbar = findViewById(R.id.poi_toolbar).findViewById(R.id.topAppBar);
         toolbar.setNavigationOnClickListener(v -> finish());
-    }
-
-    private void setInputs() {
-        EditText nameInput = ((TextInputLayout) findViewById(R.id.poi_name)).getEditText();
-        EditText descriptionInput = ((TextInputLayout) findViewById(R.id.poi_description)).getEditText();
-
-        assert nameInput != null;
-        nameInput.setInputType(InputType.TYPE_NULL);
-        nameInput.setFocusable(false);
-
-        assert descriptionInput != null;
-        descriptionInput.setInputType(InputType.TYPE_NULL);
-        descriptionInput.setFocusable(false);
-
-        nameInput.setText(poi.getName());
-        descriptionInput.setText(poi.getDescription());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)

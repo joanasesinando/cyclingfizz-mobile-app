@@ -365,8 +365,8 @@ public class NewRouteActivity extends AppCompatActivity {
     /*** -------------------------------------------- ***/
 
     private void setInputs() {
-        nameInputLayout = findViewById(R.id.poi_name);
-        descriptionInputLayout = findViewById(R.id.poi_description);
+        nameInputLayout = findViewById(R.id.poi_name_input);
+        descriptionInputLayout = findViewById(R.id.poi_description_input);
 
         Objects.requireNonNull(nameInputLayout.getEditText()).addTextChangedListener(new TextWatcher() {
             @Override

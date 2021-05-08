@@ -153,20 +153,17 @@ public class MapPreviewActivity extends AppCompatActivity {
 
                     Intent intent;
                     Bundle bundle;
-                    switch (itemSelected) {
-                        case "POI":
-                            int poiIndex = feature.getNumberProperty("id").intValue();
-                            PointOfInterest poi = pois.get(poiIndex);
-                            intent = new Intent(this, ViewPOIActivity.class);
-                            bundle = new Bundle();
-                            bundle.putSerializable(POI, poi);
-                            intent.putExtras(bundle);
-                            startActivity(intent);
-                            overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
-                            break;
-
-                        default:
-                            return true;
+                    if ("POI".equals(itemSelected)) {
+                        int poiIndex = feature.getNumberProperty("id").intValue();
+                        PointOfInterest poi = pois.get(poiIndex);
+                        intent = new Intent(this, ViewPOIActivity.class);
+                        bundle = new Bundle();
+                        bundle.putSerializable(POI, poi);
+                        intent.putExtras(bundle);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                    } else {
+                        return true;
                     }
                     return true;
                 });

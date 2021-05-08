@@ -106,8 +106,8 @@ public class RouteActivity extends AppCompatActivity {
             }
 
             route = Route.fromJson(obj.get("data").getAsJsonObject());
-            uiInit();
             initMap(savedInstanceState);
+            uiInit();
 
         })).execute(SERVER_URL + "/get-route-by-id?routeID=" + routeID);
     }

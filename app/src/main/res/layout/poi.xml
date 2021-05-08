@@ -19,15 +19,6 @@
         android:layout_height="wrap_content"
         android:visibility="gone"/>
 
-    <com.google.android.material.progressindicator.LinearProgressIndicator
-        android:id="@+id/progress_indicator"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:indeterminate="true"
-        app:indicatorColor="@color/purple_500"
-        app:trackColor="@color/purple_alpha"
-        android:visibility="gone"/>
-
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -41,7 +32,7 @@
             android:orientation="vertical">
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/poi_name"
+                android:id="@+id/poi_name_input"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:theme="@style/SecondaryTextInput"
                 android:layout_width="match_parent"
@@ -60,7 +51,7 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/poi_description"
+                android:id="@+id/poi_description_input"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:theme="@style/SecondaryTextInput"
                 android:layout_width="match_parent"
@@ -77,6 +68,24 @@
                     android:fontFamily="@font/quicksand"
                     android:inputType="text" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <include
+                android:id="@+id/poi_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                layout="@layout/card"
+                android:visibility="gone"/>
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/progress_indicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="20dp"
+                android:indeterminate="true"
+                app:indicatorColor="@color/purple_500"
+                android:visibility="gone"/>
 
             <GridLayout
                 android:id="@+id/poi_gallery"
