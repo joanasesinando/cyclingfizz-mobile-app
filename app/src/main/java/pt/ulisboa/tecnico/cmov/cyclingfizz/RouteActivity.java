@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,6 +53,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -477,8 +479,11 @@ public class RouteActivity extends AppCompatActivity {
             if (reviewsCount == 1) s = s.substring(0, s.length() - 1);
             total.setText(s);
 
+            int rateSum = 0;
+            Integer[] histogramCounts = Collections.nCopies(5, 0).toArray(new Integer[0]);
             LinearLayout linearLayout = findViewById(R.id.reviews_list);
             for (Route.Review review : reviews) {
+                rateSum += review.getRate();
                 LayoutInflater inflater = LayoutInflater.from(this);
                 ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.review_item, null, false);
 
@@ -503,6 +508,7 @@ public class RouteActivity extends AppCompatActivity {
 
                 // Set rate
                 int rate = review.getRate();
+                histogramCounts[Math.round(rate) > 5 ? 4 : Math.round(rate) - 1]++;
                 TextView rateValue = layout.findViewById(R.id.review_item_rate_value);
                 ImageView rateIcon = layout.findViewById(R.id.review_item_rate_icon);
                 rateValue.setText(oneDecimalFormatter.format(rate));
@@ -530,6 +536,30 @@ public class RouteActivity extends AppCompatActivity {
 
                 linearLayout.addView(layout);
             }
+
+            // Set histogram
+            float rateAvg = (float) rateSum / reviewsCount;
+            TextView avg = findViewById(R.id.histogram_avg);
+            avg.setText(oneDecimalFormatter.format(rateAvg));
+            avg.setTextColor(getColorFromRate(rateAvg));
+
+            int maxRate = Math.round(rateAvg) > 5 ? 5 : Math.round(rateAvg);
+            for (int i = 1; i <= maxRate; i++) {
+                ImageView star = findViewById(getResources().getIdentifier("histogram_star" + i, "id", getPackageName()));
+                star.setColorFilter(getColorFromRate(rateAvg));
+            }
+
+            final float scale = getResources().getDisplayMetrics().density;
+            for (int i = 1; i <= 5; i++) {
+                LinearLayout bar = findViewById(getResources().getIdentifier("histogram_bar" + i, "id", getPackageName()));
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, (int) (4 * scale));
+                params.weight = (float) histogramCounts[i - 1] / reviewsCount;
+                bar.setLayoutParams(params);
+            }
+
+            TextView totalReviews = findViewById(R.id.histogram_total);
+            String str = "(" + reviewsCount + ")";
+            totalReviews.setText(str);
 
             // Show reviews' card
             MaterialCardView reviewsCard = findViewById(R.id.route_reviews);
