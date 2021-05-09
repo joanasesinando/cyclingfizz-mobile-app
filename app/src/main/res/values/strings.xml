@@ -6,6 +6,7 @@
     <string name="pois">Points of Interest</string>
     <string name="pois_description">Interesting places along this route</string>
     <string name="route_overview">Route overview</string>
+    <string name="reviews">Reviews</string>
 
     <!-- Actions -->
     <string name="get_started">Get Started</string>
@@ -32,6 +33,7 @@
     <string name="pick_photos">Pick photos</string>
     <string name="take_photo">Take photo</string>
     <string name="quit">Quit</string>
+    <string name="sort">Sort</string>
 
     <!-- States -->
     <string name="recording">Recording...</string>
@@ -39,6 +41,7 @@
     <!-- Warnings -->
     <string name="not_available">Not available</string>
     <string name="no_name">No name</string>
+    <string name="no_comment">No comment</string>
     <string name="sign_in_required">Sign in required</string>
     <string name="renting_dialog_warning">You need to be signed in to rent a bike.</string>
     <string name="creating_route_dialog_warning">You need to be signed in to create a route.</string>

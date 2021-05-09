@@ -161,7 +161,7 @@ public class Route implements Serializable {
         return new ArrayList<>(line.coordinates());
     }
 
-    private static class Review implements Serializable {
+    public static class Review implements Serializable {
 
         private final String authorUID;
         private final String msg;

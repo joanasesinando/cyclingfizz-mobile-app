@@ -462,7 +462,7 @@ public class NewRouteActivity extends AppCompatActivity {
         }
 
         if (pathRecorder.getAllPOIs().size() > 0) {
-            MaterialCardView poisLayout = findViewById(R.id.new_route_pois);
+            MaterialCardView poisLayout = findViewById(R.id.route_pois);
             poisLayout.setVisibility(View.VISIBLE);
         }
     }

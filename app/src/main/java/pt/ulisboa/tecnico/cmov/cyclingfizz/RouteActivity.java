@@ -43,8 +43,14 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonOptions;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.mapboxsdk.utils.BitmapUtils;
 
+import java.sql.Timestamp;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -95,7 +101,7 @@ public class RouteActivity extends AppCompatActivity {
 
     DecimalFormat oneDecimalFormatter = new DecimalFormat("#.0");
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
@@ -124,7 +130,7 @@ public class RouteActivity extends AppCompatActivity {
     /*** -------------- USER INTERFACE -------------- ***/
     /*** -------------------------------------------- ***/
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void uiInit() {
         // Update view
         uiUpdateTopBar(route.getTitle());
@@ -133,6 +139,7 @@ public class RouteActivity extends AppCompatActivity {
         uiUpdateCard(findViewById(R.id.route_description), R.drawable.ic_description,
                 getString(R.string.description), route.getDescription());
         updatePOIs();
+        updateReviews();
 
         // Set click listeners
         uiSetClickListeners();
@@ -405,7 +412,6 @@ public class RouteActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void updatePOIs() {
-        cleanPOIs();
         LinearLayout linearLayout = findViewById(R.id.poi_list);
         int i = 1;
 
@@ -448,13 +454,75 @@ public class RouteActivity extends AppCompatActivity {
         }
 
         if (route.getAllPOIs().size() > 0) {
-            MaterialCardView poisLayout = findViewById(R.id.new_route_pois);
+            MaterialCardView poisLayout = findViewById(R.id.route_pois);
             poisLayout.setVisibility(View.VISIBLE);
         }
     }
 
-    private void cleanPOIs() {
-        LinearLayout linearLayout = findViewById(R.id.poi_list);
-        linearLayout.removeAllViews();
+
+    /*** -------------------------------------------- ***/
+    /*** ----------------- REVIEWS ------------------ ***/
+    /*** -------------------------------------------- ***/
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void updateReviews() {
+        ArrayList<Route.Review> reviews = route.getReviews();
+        int reviewsCount = reviews.size();
+
+        if (reviewsCount > 0) {
+            // Set total number reviews
+            TextView total = findViewById(R.id.reviews_card_subtitle);
+            String s = reviewsCount + " " + getString(R.string.reviews).toLowerCase();
+            if (reviewsCount == 1) s = s.substring(0, s.length() - 1);
+            total.setText(s);
+
+            LinearLayout linearLayout = findViewById(R.id.reviews_list);
+            for (Route.Review review : reviews) {
+                LayoutInflater inflater = LayoutInflater.from(this);
+                ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.review_item, null, false);
+
+                // Set avatar & name
+                (new Utils.httpRequestJson(obj -> {
+                    if (!obj.get("status").getAsString().equals("success")) return;
+
+                    TextView name = layout.findViewById(R.id.review_item_name);
+                    String userName = obj.get("data").getAsJsonObject().get("name").getAsString();
+                    name.setText(userName);
+
+                    ImageView avatar = layout.findViewById(R.id.review_item_avatar);
+                    String avatarURL = obj.get("data").getAsJsonObject().get("avatar").getAsString();
+                    (new Utils.httpRequestImage(avatar::setImageBitmap)).execute(avatarURL);
+
+                })).execute(SERVER_URL + "/get-user-info?uid=" + review.getAuthorUID());
+
+
+                // Set comment
+                TextView comment = layout.findViewById(R.id.review_item_comment);
+                comment.setText(review.getMsg() != null ? review.getMsg() : getString(R.string.no_comment));
+
+                // Set rate
+                int rate = review.getRate();
+                TextView rateValue = layout.findViewById(R.id.review_item_rate_value);
+                ImageView rateIcon = layout.findViewById(R.id.review_item_rate_icon);
+                rateValue.setText(oneDecimalFormatter.format(rate));
+                rateValue.setTextColor(getColorFromRate(rate));
+                rateIcon.setColorFilter(getColorFromRate(rate));
+
+                // Set images
+                // TODO
+
+                // Set date
+                TextView date = layout.findViewById(R.id.review_item_date);
+                Timestamp timestamp = new Timestamp(Long.parseLong(review.getCreationTimestamp()));
+                LocalDate localDate = timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                date.setText(localDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)));
+
+                linearLayout.addView(layout);
+            }
+
+            // Show reviews' card
+            MaterialCardView reviewsCard = findViewById(R.id.route_reviews);
+            reviewsCard.setVisibility(View.VISIBLE);
+        }
     }
 }
