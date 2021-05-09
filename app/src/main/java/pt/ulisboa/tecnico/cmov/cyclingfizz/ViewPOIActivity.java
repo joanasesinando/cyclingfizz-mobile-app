@@ -98,10 +98,10 @@ public class ViewPOIActivity extends AppCompatActivity {
         (new Thread(() -> {
             poi.downloadImages(ignored -> {
                 runOnUiThread(() -> {
-                    for (Bitmap bitmap : poi.getImages()) {
-                        addImageToGallery(bitmap);
-                    }
                     GridLayout gallery = findViewById(R.id.poi_gallery);
+                    for (Bitmap bitmap : poi.getImages()) {
+                        addImageToGallery(bitmap, gallery);
+                    }
                     if (poi.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
                     progressIndicator.setVisibility(View.GONE);
                 });
@@ -135,8 +135,7 @@ public class ViewPOIActivity extends AppCompatActivity {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
-    private void addImageToGallery(Bitmap bitmap) {
-        GridLayout gallery = findViewById(R.id.poi_gallery);
+    private void addImageToGallery(Bitmap bitmap, GridLayout gallery) {
         final float scale = getResources().getDisplayMetrics().density;
 
         // Create wrapper
@@ -154,22 +153,6 @@ public class ViewPOIActivity extends AppCompatActivity {
         LinearLayout.LayoutParams newImgParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         newImg.setLayoutParams(newImgParams);
         imgWrapper.addView(newImg);
-
-        // Create overlay (when selected)
-        LinearLayout overlay = new LinearLayout(this);
-        LinearLayout.LayoutParams overlayParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        overlay.setBackgroundColor(getColor(R.color.purple_500));
-        overlay.setAlpha(0.3f);
-        overlay.setVisibility(View.GONE);
-        imgWrapper.addView(overlay, overlayParams);
-
-        // Create checked icon (when selected)
-        ImageView icon = new ImageView(this);
-        icon.setImageResource(R.drawable.ic_round_check_circle_24);
-        icon.setPadding((int) (10 * scale), (int) (10 * scale), (int) (10 * scale), (int) (10 * scale));
-        icon.setColorFilter(getColor(R.color.white));
-        icon.setVisibility(View.GONE);
-        imgWrapper.addView(icon);
 
         gallery.addView(imgWrapper, params);
     }
@@ -215,7 +198,17 @@ public class ViewPOIActivity extends AppCompatActivity {
                 msg.setText(comment.getMsg());
 
                 // Set images
-                // TODO
+                (new Thread(() -> {
+                    comment.downloadImages(ignored -> {
+                        runOnUiThread(() -> {
+                            GridLayout gallery = findViewById(R.id.comment_item_gallery);
+                            for (Bitmap bitmap : comment.getImages()) {
+                                addImageToGallery(bitmap, gallery);
+                            }
+                            if (comment.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
+                        });
+                    });
+                })).start();
 
                 // Set date
                 TextView date = layout.findViewById(R.id.comment_item_date);

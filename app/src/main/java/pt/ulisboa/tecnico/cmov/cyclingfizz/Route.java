@@ -1,5 +1,7 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
+import android.graphics.Bitmap;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -136,11 +138,20 @@ public class Route implements Serializable {
     }
 
     public void addReviewFromJson(JsonObject json) {
+        ArrayList<String> mediaLinks = new ArrayList<>();
+
+        if (json.has("media_links")) {
+            for (JsonElement jsonElement : json.get("media_links").getAsJsonArray()) {
+                mediaLinks.add(jsonElement.getAsString());
+            }
+        }
+
         this.reviews.add(new Review(
                 json.has("author_uid") ? json.get("author_uid").getAsString() : null,
                 json.has("msg") ? json.get("msg").getAsString() : null,
                 json.has("rate") ? json.get("rate").getAsInt() : null,
-                json.has("creation_timestamp") ? json.get("creation_timestamp").getAsString() : null
+                json.has("creation_timestamp") ? json.get("creation_timestamp").getAsString() : null,
+                mediaLinks
                 ));
     }
 
@@ -164,11 +175,15 @@ public class Route implements Serializable {
         private final String msg;
         private final int rate;
 
-        public Review(String authorUID, String msg, int rate, String creationTimestamp) {
+        private ArrayList<Bitmap> images = new ArrayList<>();
+        private ArrayList<String> mediaLinks = new ArrayList<>();
+
+        public Review(String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks) {
             this.creationTimestamp = creationTimestamp;
             this.authorUID = authorUID;
             this.msg = msg;
             this.rate = rate;
+            this.mediaLinks = mediaLinks;
         }
 
         public String getAuthorUID() {
@@ -185,6 +200,26 @@ public class Route implements Serializable {
 
         public String getCreationTimestamp() {
             return creationTimestamp;
+        }
+
+        public ArrayList<Bitmap> getImages() {
+            return images;
+        }
+
+        public void downloadImages(Utils.OnTaskCompleted<Void> callback) {
+            if (mediaLinks.size() == images.size()) {
+                callback.onTaskCompleted(null);
+            }
+
+            for (String mediaLink : mediaLinks) {
+
+                (new Utils.httpRequestImage(response -> {
+                    images.add(response);
+                    if (mediaLinks.size() == images.size()) {
+                        callback.onTaskCompleted(null);
+                    }
+                })).execute(mediaLink);
+            }
         }
     }
 

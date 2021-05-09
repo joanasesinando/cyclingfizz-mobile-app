@@ -204,6 +204,7 @@ public class PointOfInterest implements Serializable {
         private final String authorUID;
         private final String msg;
         private final ArrayList<String> mediaLinks;
+        private final ArrayList<Bitmap> images = new ArrayList<>();
 
         public Comment(String creationTimestamp, String authorUID, String comment, ArrayList<String> mediaLinks) {
             this.creationTimestamp = creationTimestamp;
@@ -224,8 +225,24 @@ public class PointOfInterest implements Serializable {
             return msg;
         }
 
-        public ArrayList<String> getMediaLinks() {
-            return mediaLinks;
+        public ArrayList<Bitmap> getImages() {
+            return images;
+        }
+
+        public void downloadImages(Utils.OnTaskCompleted<Void> callback) {
+            if (mediaLinks.size() == images.size()) {
+                callback.onTaskCompleted(null);
+            }
+
+            for (String mediaLink : mediaLinks) {
+
+                (new Utils.httpRequestImage(response -> {
+                    images.add(response);
+                    if (mediaLinks.size() == images.size()) {
+                        callback.onTaskCompleted(null);
+                    }
+                })).execute(mediaLink);
+            }
         }
     }
 }

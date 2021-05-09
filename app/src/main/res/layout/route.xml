@@ -268,7 +268,7 @@
                             app:iconGravity="textStart"
                             app:iconTint="@color/material_on_background_emphasis_medium"
                             app:strokeWidth="2dp"
-                            app:rippleColor="@color/material_on_surface_emphasis_medium" />
+                            app:rippleColor="@color/material_on_surface_disabled" />
                     </LinearLayout>
 
                     <LinearLayout

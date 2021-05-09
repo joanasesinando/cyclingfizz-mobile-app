@@ -13,6 +13,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -508,7 +510,17 @@ public class RouteActivity extends AppCompatActivity {
                 rateIcon.setColorFilter(getColorFromRate(rate));
 
                 // Set images
-                // TODO
+                (new Thread(() -> {
+                    review.downloadImages(ignored -> {
+                        runOnUiThread(() -> {
+                            GridLayout gallery = findViewById(R.id.review_item_gallery);
+                            for (Bitmap bitmap : review.getImages()) {
+                                addImageToGallery(bitmap, gallery);
+                            }
+                            if (review.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
+                        });
+                    });
+                })).start();
 
                 // Set date
                 TextView date = layout.findViewById(R.id.review_item_date);
@@ -523,5 +535,28 @@ public class RouteActivity extends AppCompatActivity {
             MaterialCardView reviewsCard = findViewById(R.id.route_reviews);
             reviewsCard.setVisibility(View.VISIBLE);
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void addImageToGallery(Bitmap bitmap, GridLayout gallery) {
+        final float scale = getResources().getDisplayMetrics().density;
+
+        // Create wrapper
+        ConstraintLayout imgWrapper = new ConstraintLayout(this);
+        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+        params.width = (int) (110 * scale);
+        params.height = (int) (110 * scale);
+        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        imgWrapper.setLayoutParams(params);
+
+        // Create image
+        ImageView newImg = new ImageView(this);
+        newImg.setImageBitmap(bitmap);
+        newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        LinearLayout.LayoutParams newImgParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        newImg.setLayoutParams(newImgParams);
+        imgWrapper.addView(newImg);
+
+        gallery.addView(imgWrapper, params);
     }
 }
