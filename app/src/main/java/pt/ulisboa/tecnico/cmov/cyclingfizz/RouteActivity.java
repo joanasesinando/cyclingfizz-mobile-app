@@ -552,7 +552,7 @@ public class RouteActivity extends AppCompatActivity {
             final float scale = getResources().getDisplayMetrics().density;
             for (int i = 1; i <= 5; i++) {
                 LinearLayout bar = findViewById(getResources().getIdentifier("histogram_bar" + i, "id", getPackageName()));
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, (int) (4 * scale));
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, (int) (5 * scale));
                 params.weight = (float) histogramCounts[i - 1] / reviewsCount;
                 bar.setLayoutParams(params);
             }
