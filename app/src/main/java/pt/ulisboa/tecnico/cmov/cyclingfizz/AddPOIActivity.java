@@ -22,6 +22,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -229,9 +230,8 @@ public class AddPOIActivity extends AppCompatActivity {
         // Create wrapper
         ConstraintLayout imgWrapper = new ConstraintLayout(this);
         GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = 0;
-        params.height = (int) (100 * scale);
-        params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        params.width = (int) (110 * scale);
+        params.height = (int) (110 * scale);
         params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
         imgWrapper.setLayoutParams(params);
 
@@ -263,7 +263,6 @@ public class AddPOIActivity extends AppCompatActivity {
 
         // Set click listeners
         imgWrapper.setOnLongClickListener(v -> {
-            Log.d(TAG, "long click");
             if (!isDeletingImages) toggleToolbar();
             isDeletingImages = true;
             View overlayChild = ((ViewGroup) v).getChildAt(1);
@@ -273,10 +272,8 @@ public class AddPOIActivity extends AppCompatActivity {
         });
 
         imgWrapper.setOnClickListener(v -> {
-            Log.d(TAG, "normal click");
             if (isDeletingImages) {
                 View overlayChild = ((ViewGroup) v).getChildAt(1);
-
                 if (overlayChild.getVisibility() == View.VISIBLE) deselectImg(v);
                 else if (overlayChild.getVisibility() == View.GONE) selectImg(v);
             }

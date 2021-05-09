@@ -135,10 +135,6 @@ public class Route implements Serializable {
         this.reviews = reviews;
     }
 
-    public void addReviews(Review review) {
-        this.reviews.add(review);
-    }
-
     public void addReviewFromJson(JsonObject json) {
         this.reviews.add(new Review(
                 json.has("author_uid") ? json.get("author_uid").getAsString() : null,
@@ -163,17 +159,16 @@ public class Route implements Serializable {
 
     public static class Review implements Serializable {
 
+        private final String creationTimestamp;
         private final String authorUID;
         private final String msg;
-//        private final ArrayList<PointOfInterest> POIs;
         private final int rate;
-        private final String creationTimestamp;
 
         public Review(String authorUID, String msg, int rate, String creationTimestamp) {
+            this.creationTimestamp = creationTimestamp;
             this.authorUID = authorUID;
             this.msg = msg;
             this.rate = rate;
-            this.creationTimestamp = creationTimestamp;
         }
 
         public String getAuthorUID() {

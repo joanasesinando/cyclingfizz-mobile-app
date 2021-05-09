@@ -7,6 +7,7 @@
     <string name="pois_description">Interesting places along this route</string>
     <string name="route_overview">Route overview</string>
     <string name="reviews">Reviews</string>
+    <string name="comments">Comments</string>
 
     <!-- Actions -->
     <string name="get_started">Get Started</string>

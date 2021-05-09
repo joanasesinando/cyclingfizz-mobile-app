@@ -9,10 +9,10 @@ import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.InputType;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -20,18 +20,26 @@ import android.widget.TextView;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
+
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.ArrayList;
 
 
 public class ViewPOIActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@ViewPOI";
+    static String SERVER_URL = "https://stations.cfservertest.ga";
 
     PointOfInterest poi;
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
@@ -49,7 +57,7 @@ public class ViewPOIActivity extends AppCompatActivity {
     /*** -------------- USER INTERFACE -------------- ***/
     /*** -------------------------------------------- ***/
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void setUI() {
         // Set purple status bar
         getWindow().setStatusBarColor(getColor(R.color.purple_700));
@@ -99,6 +107,9 @@ public class ViewPOIActivity extends AppCompatActivity {
                 });
             });
         })).start();
+
+        // Set comments
+        setComments();
     }
 
     private void uiUpdateCard(View card, @DrawableRes int iconId, CharSequence textTitle, CharSequence textSubtitle) {
@@ -131,9 +142,8 @@ public class ViewPOIActivity extends AppCompatActivity {
         // Create wrapper
         ConstraintLayout imgWrapper = new ConstraintLayout(this);
         GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = 0;
-        params.height = (int) (100 * scale);
-        params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        params.width = (int) (110 * scale);
+        params.height = (int) (110 * scale);
         params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
         imgWrapper.setLayoutParams(params);
 
@@ -162,5 +172,63 @@ public class ViewPOIActivity extends AppCompatActivity {
         imgWrapper.addView(icon);
 
         gallery.addView(imgWrapper, params);
+    }
+
+    /*** -------------------------------------------- ***/
+    /*** ----------------- COMMENTS ----------------- ***/
+    /*** -------------------------------------------- ***/
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void setComments() {
+        ArrayList<PointOfInterest.Comment> comments = poi.getComments();
+        int commentsCount = comments.size();
+
+        if (commentsCount > 0) {
+            // Set total number comments
+            TextView total = findViewById(R.id.comments_card_subtitle);
+            String s = commentsCount + " " + getString(R.string.comments).toLowerCase();
+            if (commentsCount == 1) s = s.substring(0, s.length() - 1);
+            total.setText(s);
+
+            LinearLayout linearLayout = findViewById(R.id.comments_list);
+            for (PointOfInterest.Comment comment : comments) {
+                LayoutInflater inflater = LayoutInflater.from(this);
+                ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.comment_item, null, false);
+
+                // Set avatar & name
+                (new Utils.httpRequestJson(obj -> {
+                    if (!obj.get("status").getAsString().equals("success")) return;
+
+                    TextView name = layout.findViewById(R.id.comment_item_name);
+                    String userName = obj.get("data").getAsJsonObject().get("name").getAsString();
+                    name.setText(userName);
+
+                    ImageView avatar = layout.findViewById(R.id.comment_item_avatar);
+                    String avatarURL = obj.get("data").getAsJsonObject().get("avatar").getAsString();
+                    (new Utils.httpRequestImage(avatar::setImageBitmap)).execute(avatarURL);
+
+                })).execute(SERVER_URL + "/get-user-info?uid=" + comment.getAuthorUID());
+
+
+                // Set comment
+                TextView msg = layout.findViewById(R.id.comment_item_msg);
+                msg.setText(comment.getMsg());
+
+                // Set images
+                // TODO
+
+                // Set date
+                TextView date = layout.findViewById(R.id.comment_item_date);
+                Timestamp timestamp = new Timestamp(Long.parseLong(comment.getCreationTimestamp()));
+                LocalDate localDate = timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                date.setText(localDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)));
+
+                linearLayout.addView(layout);
+            }
+
+            // Show comments' card
+            MaterialCardView commentsCard = findViewById(R.id.poi_comments);
+            commentsCard.setVisibility(View.VISIBLE);
+        }
     }
 }

@@ -23,25 +23,28 @@ public class PointOfInterest implements Serializable {
     static String TAG = "Cycling_Fizz@POI";
 
 
-    private ArrayList<Bitmap> images = new ArrayList<>();
-    private ArrayList<String> mediaLinks = new ArrayList<>();
+    private final Point coord;
     private String name;
     private String description;
-    private final Point coord;
+    private ArrayList<Bitmap> images = new ArrayList<>();
+    private ArrayList<String> mediaLinks = new ArrayList<>();
+
+    private ArrayList<Comment> comments = new ArrayList<>();
+
     private boolean alreadyVisited = false;
 
-    public PointOfInterest(List<Bitmap> images, String name, String description, Point coord) {
-        this.images = new ArrayList<>(images);
+    public PointOfInterest(Point coord, String name, String description, List<Bitmap> images) {
+        this.coord = coord;
         this.name = name;
         this.description = description;
-        this.coord = coord;
+        this.images = new ArrayList<>(images);
     }
 
-    public PointOfInterest(String name, String description, Point coord, List<String> mediaLinks) {
-        this.mediaLinks = new ArrayList<>(mediaLinks);
+    public PointOfInterest(String name, String description, List<String> mediaLinks, Point coord) {
+        this.coord = coord;
         this.name = name;
         this.description = description;
-        this.coord = coord;
+        this.mediaLinks = new ArrayList<>(mediaLinks);
     }
 
     public Point getCoord() {
@@ -63,6 +66,10 @@ public class PointOfInterest implements Serializable {
     }
     public void setImages(List<Bitmap> images) {
         this.images = new ArrayList<>(images);
+    }
+
+    public ArrayList<Comment> getComments() {
+        return comments;
     }
 
     public void uploadImages(Utils.OnTaskCompleted<Void> callback) {
@@ -151,18 +158,74 @@ public class PointOfInterest implements Serializable {
     public static PointOfInterest fromJson(JsonObject json) {
 
         ArrayList<String> mediaLinks = new ArrayList<>();
+        ArrayList<Comment> comments = new ArrayList<>();
 
         for (JsonElement jsonElement :  json.get("media_links").getAsJsonArray()) {
             mediaLinks.add(jsonElement.getAsString());
         }
 
-        Log.e(TAG, json.get("point").getAsString());
-
-        return new PointOfInterest(
+        PointOfInterest poi = new PointOfInterest(
                 json.get("title").getAsString(),
                 json.get("description").getAsString(),
-                (Point) Feature.fromJson(json.get("point").getAsString()).geometry(),
+                mediaLinks,
+                (Point) Feature.fromJson(json.get("point").getAsString()).geometry());
+
+        if (json.get("comments") != null && json.has("comments")) {
+            JsonArray commentsJson = json.get("comments").getAsJsonArray();
+            for (JsonElement commentJson : commentsJson) {
+                poi.addCommentFromJson(commentJson.getAsJsonObject());
+            }
+        }
+
+        return poi;
+    }
+
+    public void addCommentFromJson(JsonObject json) {
+        ArrayList<String> mediaLinks = new ArrayList<>();
+
+        if (json.has("media_links")) {
+            for (JsonElement jsonElement : json.get("media_links").getAsJsonArray()) {
+                mediaLinks.add(jsonElement.getAsString());
+            }
+        }
+
+        this.comments.add(new Comment(
+                json.has("creation_timestamp") ? json.get("creation_timestamp").getAsString() : null,
+                json.has("author_uid") ? json.get("author_uid").getAsString() : null,
+                json.has("msg") ? json.get("msg").getAsString() : null,
                 mediaLinks
-        );
+        ));
+    }
+
+
+    public static class Comment implements Serializable {
+
+        private final String creationTimestamp;
+        private final String authorUID;
+        private final String msg;
+        private final ArrayList<String> mediaLinks;
+
+        public Comment(String creationTimestamp, String authorUID, String comment, ArrayList<String> mediaLinks) {
+            this.creationTimestamp = creationTimestamp;
+            this.authorUID = authorUID;
+            this.msg = comment;
+            this.mediaLinks = new ArrayList<>(mediaLinks);
+        }
+
+        public String getCreationTimestamp() {
+            return creationTimestamp;
+        }
+
+        public String getAuthorUID() {
+            return authorUID;
+        }
+
+        public String getMsg() {
+            return msg;
+        }
+
+        public ArrayList<String> getMediaLinks() {
+            return mediaLinks;
+        }
     }
 }

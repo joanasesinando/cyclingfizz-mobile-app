@@ -97,10 +97,9 @@
                 android:useDefaultMargins="true"
                 android:visibility="gone">
 
-<!--                    <androidx.constraintlayout.widget.ConstraintLayout-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="100dp"-->
-<!--                        android:layout_columnWeight="1"-->
+<!--                <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--                        android:layout_width="110dp"-->
+<!--                        android:layout_height="110dp"-->
 <!--                        android:layout_rowWeight="1">-->
 
 <!--                        <ImageView-->
@@ -169,6 +168,106 @@
                     app:strokeWidth="2dp"
                     app:rippleColor="@color/purple_alpha" />
             </LinearLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/poi_comments"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/material_on_surface_stroke"
+                app:strokeWidth="1dp"
+                android:layout_marginTop="16dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="15dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:weightSum="1"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="18dp">
+
+                        <ImageView
+                            android:id="@+id/comments_card_icon"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/ic_comments" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="12dp">
+
+                            <TextView
+                                android:id="@+id/comments_card_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/quicksand_medium"
+                                android:text="@string/comments"
+                                android:textColor="@color/dark"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:id="@+id/comments_card_subtitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/quicksand"
+                                android:text="@string/not_available"
+                                android:textColor="@color/material_on_surface_emphasis_medium"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/sort"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:cornerRadius="32dp"
+                            android:fontFamily="@font/quicksand_bold"
+                            android:paddingVertical="8dp"
+                            android:text="@string/sort"
+                            android:textColor="@color/material_on_surface_emphasis_medium"
+                            android:textSize="12sp"
+                            app:icon="@drawable/ic_round_sort_24"
+                            app:iconSize="18dp"
+                            app:iconGravity="textStart"
+                            app:iconTint="@color/material_on_background_emphasis_medium"
+                            app:strokeWidth="2dp"
+                            app:rippleColor="@color/material_on_surface_emphasis_medium" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:id="@+id/comments_divider"
+                            android:layout_width="match_parent"
+                            android:layout_height="1.5dp"
+                            android:layout_marginTop="16dp"
+                            android:alpha=".1"
+                            android:background="@color/dark"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toBottomOf="@+id/linearLayout2"
+                            android:orientation="horizontal">
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/comments_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
     </ScrollView>
 

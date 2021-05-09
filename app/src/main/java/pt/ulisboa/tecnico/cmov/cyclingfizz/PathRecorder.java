@@ -98,7 +98,7 @@ public class PathRecorder {
     }
 
     public void addPOI(List<Bitmap> images, String name, String description, Point coord) {
-        PointOfInterest pointOfInterest = new PointOfInterest(images, name, description, coord);
+        PointOfInterest pointOfInterest = new PointOfInterest(coord, name, description, images);
         POIs.add(pointOfInterest);
         POIAdded = true;
     }

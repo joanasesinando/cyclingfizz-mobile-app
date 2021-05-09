@@ -255,9 +255,8 @@ public class EditPOIActivity extends AppCompatActivity {
         // Create wrapper
         ConstraintLayout imgWrapper = new ConstraintLayout(this);
         GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = 0;
-        params.height = (int) (100 * scale);
-        params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        params.width = (int) (110 * scale);
+        params.height = (int) (110 * scale);
         params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
         imgWrapper.setLayoutParams(params);
 
