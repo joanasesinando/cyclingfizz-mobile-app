@@ -265,11 +265,11 @@ public class Route implements Serializable {
         }
 
         public Review(String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks) {
-            this(authorUID, msg, rate, creationTimestamp, mediaLinks, null);
+            this(authorUID, msg, rate, creationTimestamp, mediaLinks, new ArrayList<>());
         }
 
         public Review(String msg, int rate, ArrayList<Bitmap> images) {
-            this(null, msg, rate, null, null, images);
+            this(null, msg, rate, null, new ArrayList<>(), images);
         }
 
         public String getAuthorUID() {

@@ -720,7 +720,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Get an instance of the component
         LocationComponent locationComponent = mapboxMap.getLocationComponent();
 
-        if (mapboxMap.getStyle() == null) return;
+        if (mapboxMap == null || mapboxMap.getStyle() == null) return;
 
         // Set the LocationComponent activation options
         LocationComponentActivationOptions locationComponentActivationOptions =
@@ -801,8 +801,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
             // Keep filters the same as they were
             MaterialToolbar toolbar = findViewById(R.id.map_toolbar).findViewById(R.id.topAppBar);
-            filterItems("cycleways", cyclewaysVisible, toolbar.getMenu().getItem(0));
-            filterItems("gira-stations", giraStationsVisible, toolbar.getMenu().getItem(1));
+
+            filterItems("cycleways", cyclewaysVisible, toolbar.getMenu().getItem(0).getSubMenu().getItem(0));
+            filterItems("gira-stations", giraStationsVisible, toolbar.getMenu().getItem(0).getSubMenu().getItem(1));
         });
     }
 
@@ -1058,7 +1059,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void updatePathRecordedOnMap() {
         Log.d(TAG, "Updating path recorded on map");
-        if (mapboxMap.getStyle() == null) return;
+        if (mapboxMap == null || mapboxMap.getStyle() == null) return;
 
         GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
         if (pathRecordedSource != null) {
@@ -1072,7 +1073,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void showPlayingRouteOnMap() {
-        if (mapboxMap.getStyle() == null) return;
+        if (mapboxMap == null || mapboxMap.getStyle() == null) return;
 
         GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
         if (pathRecordedSource != null) {
@@ -1086,7 +1087,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void updatePOIsOnMap() {
         Log.d(TAG, "Updating POIs on map");
 
-        if (mapboxMap.getStyle() == null) return;
+        if (mapboxMap == null || mapboxMap.getStyle() == null) return;
 
         GeoJsonSource POIsSource = mapboxMap.getStyle().getSourceAs(POI_SOURCE_ID);
         if (POIsSource != null) {
@@ -1106,7 +1107,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void showPlayingPOIsOnMap() {
 
-        if (mapboxMap.getStyle() == null) return;
+        if (mapboxMap == null || mapboxMap.getStyle() == null) return;
 
         GeoJsonSource POIsSource = mapboxMap.getStyle().getSourceAs(POI_SOURCE_ID);
         if (POIsSource != null) {

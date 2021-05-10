@@ -229,11 +229,11 @@ public class PointOfInterest implements Serializable {
         }
 
         public Comment(String creationTimestamp, String authorUID, String msg, ArrayList<String> mediaLinks) {
-            this(creationTimestamp, authorUID, msg, mediaLinks, null);
+            this(creationTimestamp, authorUID, msg, mediaLinks, new ArrayList<>());
         }
 
         public Comment(String msg, ArrayList<Bitmap> images) {
-            this(null, null, msg, null, images);
+            this(null, null, msg, new ArrayList<>(), images);
 
         }
 
