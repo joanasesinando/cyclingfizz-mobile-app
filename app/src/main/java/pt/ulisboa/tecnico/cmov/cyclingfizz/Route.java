@@ -159,7 +159,7 @@ public class Route implements Serializable {
     }
 
     public void uploadImage(Utils.OnTaskCompleted<Void> callback) {
-        if (mediaLink != null) {
+        if (image == null) {
             callback.onTaskCompleted(null);
         }
 
@@ -194,7 +194,7 @@ public class Route implements Serializable {
     }
 
     public void downloadImage(Utils.OnTaskCompleted<Void> callback) {
-        if (image != null) {
+        if (mediaLink == null) {
             callback.onTaskCompleted(null);
         }
 
