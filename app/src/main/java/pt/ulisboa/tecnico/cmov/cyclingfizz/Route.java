@@ -155,21 +155,7 @@ public class Route implements Serializable {
     }
 
     public void addReviewFromJson(JsonObject json) {
-        ArrayList<String> mediaLinks = new ArrayList<>();
-
-        if (json.has("media_links")) {
-            for (JsonElement jsonElement : json.get("media_links").getAsJsonArray()) {
-                mediaLinks.add(jsonElement.getAsString());
-            }
-        }
-
-        this.reviews.add(new Review(
-                json.has("author_uid") ? json.get("author_uid").getAsString() : null,
-                json.has("msg") ? json.get("msg").getAsString() : null,
-                json.has("rate") ? json.get("rate").getAsInt() : null,
-                json.has("creation_timestamp") ? json.get("creation_timestamp").getAsString() : null,
-                mediaLinks
-                ));
+        this.reviews.add(Review.fromJson(json));
     }
 
     public void uploadImage(Utils.OnTaskCompleted<Void> callback) {
@@ -233,6 +219,32 @@ public class Route implements Serializable {
         return new ArrayList<>(line.coordinates());
     }
 
+
+    public void reviewRoute(String msg, int rate, ArrayList<Bitmap> images, Utils.OnTaskCompleted<Review> callback) {
+        Review review = new Review(msg, rate, images);
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                review.uploadImages(ignored -> {
+                    review.getJsonAsync(data -> {
+                        data.addProperty("idToken", idToken);
+                        (new Utils.httpPostRequestJson(response -> {
+                            addReviewFromJson(response);
+                            callback.onTaskCompleted(Review.fromJson(response));
+                        }, data.toString())).execute(SERVER_URL + "/review-route");
+                    });
+                });
+
+            });
+        } else {
+            callback.onTaskCompleted(null);
+            Log.d(TAG, "Null User");
+        }
+    }
+
     public static class Review implements Serializable {
 
         private final String creationTimestamp;
@@ -243,12 +255,21 @@ public class Route implements Serializable {
         private ArrayList<Bitmap> images = new ArrayList<>();
         private ArrayList<String> mediaLinks = new ArrayList<>();
 
-        public Review(String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks) {
+        private Review(String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks, ArrayList<Bitmap> images) {
             this.creationTimestamp = creationTimestamp;
             this.authorUID = authorUID;
             this.msg = msg;
             this.rate = rate;
             this.mediaLinks = mediaLinks;
+            this.images = images;
+        }
+
+        public Review(String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks) {
+            this(authorUID, msg, rate, creationTimestamp, mediaLinks, null);
+        }
+
+        public Review(String msg, int rate, ArrayList<Bitmap> images) {
+            this(null, msg, rate, null, null, images);
         }
 
         public String getAuthorUID() {
@@ -271,6 +292,46 @@ public class Route implements Serializable {
             return images;
         }
 
+        public void uploadImages(Utils.OnTaskCompleted<Void> callback) {
+            if (images.size() == mediaLinks.size()) {
+                callback.onTaskCompleted(null);
+            }
+            for (Bitmap image : images) {
+
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+                if (user != null) {
+                    user.getIdToken(true).addOnSuccessListener(result -> {
+                        String idToken = result.getToken();
+
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        image.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
+                        byte[] byteArray = outputStream.toByteArray();
+
+                        String mediaBase64 = Base64.encodeToString(byteArray, Base64.DEFAULT);
+
+
+                        JsonObject data = new JsonObject();
+                        data.addProperty("media_base64", mediaBase64);
+                        data.addProperty("id_token", idToken);
+
+                        (new Utils.httpPostRequestJson(response -> {
+                            if (response.get("status").getAsString().equals("success"))
+                                mediaLinks.add(response.get("media_link").getAsString());
+
+                            if (images.size() == mediaLinks.size()) {
+                                callback.onTaskCompleted(null);
+                            }
+                        }, data.toString())).execute(SERVER_URL + "/upload-media");
+
+                    });
+                } else {
+                    Log.d(TAG, "Null User");
+                }
+
+            }
+        }
+
         public void downloadImages(Utils.OnTaskCompleted<Void> callback) {
             if (mediaLinks.size() == images.size()) {
                 callback.onTaskCompleted(null);
@@ -285,6 +346,42 @@ public class Route implements Serializable {
                     }
                 })).execute(mediaLink);
             }
+        }
+
+        public void getJsonAsync(Utils.OnTaskCompleted<JsonObject> callback) {
+            JsonObject data = new JsonObject();
+            data.addProperty("msg", msg);
+            data.addProperty("rate", rate);
+
+            uploadImages(res -> {
+                JsonArray jsonMediaLinks = new JsonArray();
+                for (String mediaLink : mediaLinks) {
+                    jsonMediaLinks.add(mediaLink);
+                }
+                data.addProperty("media_links", jsonMediaLinks.toString());
+
+                callback.onTaskCompleted(data);
+            });
+
+
+        }
+
+        public static Review fromJson(JsonObject json) {
+            ArrayList<String> mediaLinks = new ArrayList<>();
+
+            if (json.has("media_links")) {
+                for (JsonElement jsonElement : json.get("media_links").getAsJsonArray()) {
+                    mediaLinks.add(jsonElement.getAsString());
+                }
+            }
+
+            return new Review(
+                    json.has("author_uid") ? json.get("author_uid").getAsString() : null,
+                    json.has("msg") ? json.get("msg").getAsString() : null,
+                    json.has("rate") ? json.get("rate").getAsInt() : null,
+                    json.has("creation_timestamp") ? json.get("creation_timestamp").getAsString() : null,
+                    mediaLinks
+            );
         }
     }
 
