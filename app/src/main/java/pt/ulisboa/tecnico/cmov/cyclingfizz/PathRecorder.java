@@ -84,9 +84,9 @@ public class PathRecorder {
         isRecording = false;
     }
 
-    public void saveRecording(String name, String description, Utils.OnTaskCompleted<Boolean> callback) {
+    public void saveRecording(String name, String description, Bitmap bitmap, Utils.OnTaskCompleted<Boolean> callback) {
         printFeature();
-        saveFeature(name, description, callback);
+        saveFeature(name, description, bitmap, callback);
     }
 
     public boolean addPointToPath(Point point) {
@@ -136,7 +136,7 @@ public class PathRecorder {
         Log.d(TAG, jsonString);
     }
 
-    public void saveFeature(String name, String description, Utils.OnTaskCompleted<Boolean> callback) {
+    public void saveFeature(String name, String description, Bitmap bitmap, Utils.OnTaskCompleted<Boolean> callback) {
         if (path.size() < 2) return;
 
         FirebaseUser user = mAuth.getCurrentUser();
@@ -145,7 +145,7 @@ public class PathRecorder {
             user.getIdToken(true).addOnSuccessListener(result -> {
                 String idToken = result.getToken();
 
-                Route route = new Route(getFeature().toJson(), idToken, name, description, POIs);
+                Route route = new Route(getFeature().toJson(), idToken, name, description, POIs, bitmap);
 
                 route.getJsonAsync(data -> {
                     (new Utils.httpPostRequestJson(response -> {

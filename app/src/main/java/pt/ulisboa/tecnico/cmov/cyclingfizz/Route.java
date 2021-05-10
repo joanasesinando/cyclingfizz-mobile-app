@@ -2,6 +2,12 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
 import android.graphics.Bitmap;
 
+import android.graphics.Bitmap;
+import android.util.Base64;
+import android.util.Log;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -9,6 +15,7 @@ import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -25,8 +32,11 @@ public class Route implements Serializable {
     private final String title;
     private final String description;
     private ArrayList<Review> reviews = new ArrayList<>();
+    private Bitmap image;
+    private String mediaLink;
 
-    private Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID) {
+
+    private Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, Bitmap bitmap, String mediaLink) {
         this.routeJson = routeJson;
         this.idToken = idToken;
         this.title = title;
@@ -34,14 +44,16 @@ public class Route implements Serializable {
         this.POIs = POIs;
         this.id = id;
         this.authorUID = authorUID;
+        this.image = bitmap;
+        this.mediaLink = mediaLink;
     }
 
-    private Route(String routeJson, String title, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID) {
-        this(routeJson, null, title, description, POIs, id, authorUID);
+    private Route(String routeJson, String title, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, String mediaLink) {
+        this(routeJson, null, title, description, POIs, id, authorUID, null, mediaLink);
     }
 
-    public Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs) {
-        this(routeJson, idToken, title, description, POIs, null, null);
+    public Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs, Bitmap bitmap) {
+        this(routeJson, idToken, title, description, POIs, null, null, bitmap, null);
     }
 
     public Feature getRouteFeature() {
@@ -49,29 +61,33 @@ public class Route implements Serializable {
     }
 
     public void getJsonAsync(Utils.OnTaskCompleted<JsonObject> callback) {
-        JsonObject data = new JsonObject();
-        data.addProperty("route", routeJson);
-        data.addProperty("id_token", idToken);
-        data.addProperty("title", title);
-        data.addProperty("description", description);
 
-        JsonArray jsonPOIArray = new JsonArray();
+        uploadImage(ignored -> {
+            JsonObject data = new JsonObject();
+            data.addProperty("route", routeJson);
+            data.addProperty("id_token", idToken);
+            data.addProperty("title", title);
+            data.addProperty("description", description);
+            data.addProperty("media_link", mediaLink);
 
-        if (jsonPOIArray.size() == POIs.size()) {
-            data.addProperty("POIs", jsonPOIArray.toString());
-            callback.onTaskCompleted(data);
-        }
+            JsonArray jsonPOIArray = new JsonArray();
 
-        for (PointOfInterest POI : POIs) {
+            if (jsonPOIArray.size() == POIs.size()) {
+                data.addProperty("POIs", jsonPOIArray.toString());
+                callback.onTaskCompleted(data);
+            }
 
-            POI.getJsonAsync(json -> {
-                jsonPOIArray.add(json);
-                if (jsonPOIArray.size() == POIs.size()) {
-                    data.addProperty("POIs", jsonPOIArray.toString());
-                    callback.onTaskCompleted(data);
-                }
-            });
-        }
+            for (PointOfInterest POI : POIs) {
+
+                POI.getJsonAsync(json -> {
+                    jsonPOIArray.add(json);
+                    if (jsonPOIArray.size() == POIs.size()) {
+                        data.addProperty("POIs", jsonPOIArray.toString());
+                        callback.onTaskCompleted(data);
+                    }
+                });
+            }
+        });
     }
 
     public ArrayList<PointOfInterest> getAllPOIs() {
@@ -96,7 +112,8 @@ public class Route implements Serializable {
                 json.get("description").getAsString(),
                 POISs,
                 json.get("id").getAsString(),
-                json.get("author_uid").getAsString()
+                json.get("author_uid").getAsString(),
+                json.has("media_link") ? json.get("media_link").getAsString() : null
         );
 
         if (json.get("reviews") != null && json.has("reviews")) {
@@ -155,6 +172,53 @@ public class Route implements Serializable {
                 ));
     }
 
+    public void uploadImage(Utils.OnTaskCompleted<Void> callback) {
+        if (mediaLink != null) {
+            callback.onTaskCompleted(null);
+        }
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                image.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
+                byte[] byteArray = outputStream.toByteArray();
+
+                String mediaBase64 = Base64.encodeToString(byteArray, Base64.DEFAULT);
+
+
+                JsonObject data = new JsonObject();
+                data.addProperty("media_base64", mediaBase64);
+                data.addProperty("id_token", idToken);
+
+                (new Utils.httpPostRequestJson(response -> {
+                    if (response.get("status").getAsString().equals("success"))
+                        mediaLink = response.get("media_link").getAsString();
+                        callback.onTaskCompleted(null);
+
+                }, data.toString())).execute(SERVER_URL + "/upload-media");
+
+            });
+        } else {
+            Log.d(TAG, "Null User");
+        }
+    }
+
+    public void downloadImage(Utils.OnTaskCompleted<Void> callback) {
+        if (image != null) {
+            callback.onTaskCompleted(null);
+        }
+
+        (new Utils.httpRequestImage(response -> {
+            image = response;
+            callback.onTaskCompleted(null);
+
+        })).execute(mediaLink);
+    }
+
     public ArrayList<Integer> getRates() {
         ArrayList<Integer> rates = new ArrayList<>();
         for (Review review : reviews) {
@@ -165,6 +229,7 @@ public class Route implements Serializable {
 
     public ArrayList<Point> getPath() {
         LineString line = (LineString) getRouteFeature().geometry();
+        assert line != null;
         return new ArrayList<>(line.coordinates());
     }
 

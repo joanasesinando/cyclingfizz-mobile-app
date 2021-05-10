@@ -25,6 +25,7 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.gson.JsonElement;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
 import com.mapbox.geojson.LineString;
@@ -186,7 +187,13 @@ public class RouteActivity extends AppCompatActivity {
         (new Utils.httpRequestJson(obj -> {
             if (!obj.get("status").getAsString().equals("success")) return;
 
-            String authorName = obj.get("data").getAsJsonObject().get("name").getAsString();
+            String authorName = "Anonymous";
+            JsonElement authorNameEle = obj.get("data").getAsJsonObject().get("name");
+            if (!authorNameEle.isJsonNull()) {
+                authorName = authorNameEle.getAsString();
+            } else if (!obj.get("data").getAsJsonObject().get("email").isJsonNull()) {
+                authorName = Utils.capitalize(obj.get("data").getAsJsonObject().get("email").getAsString()).split("@")[0];
+            }
             TextView creator = findViewById(R.id.route_author);
             String s = getString(R.string.created_by) + " " + authorName;
             creator.setText(s);

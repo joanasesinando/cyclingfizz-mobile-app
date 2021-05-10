@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -101,6 +102,8 @@ public class NewRouteActivity extends AppCompatActivity {
     private MapView mapView;
     private MapboxMap mapboxMap;
 
+    private Bitmap image;
+
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -124,6 +127,8 @@ public class NewRouteActivity extends AppCompatActivity {
                 Log.d(TAG, String.valueOf(data.getData()));
                 // Get URI
                 Uri uri = data.getData();
+                image = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
+
 
                 // Update view
                 ImageView thumbnail = findViewById(R.id.route_thumbnail);
@@ -491,7 +496,7 @@ public class NewRouteActivity extends AppCompatActivity {
 
         if (!error) {
             LinearProgressIndicator progressIndicator = findViewById(R.id.progress_indicator);
-            pathRecorder.saveRecording(name, description, result -> {
+            pathRecorder.saveRecording(name, description, image, result -> {
                 progressIndicator.setVisibility(View.GONE);
                 finish();
             });
