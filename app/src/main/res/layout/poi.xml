@@ -302,5 +302,18 @@
             app:iconGravity="textStart"
             app:rippleColor="@color/purple_alpha"
             android:visibility="gone"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/leave_comment"
+            style="@style/Widget.MaterialComponents.Button.Icon"
+            android:backgroundTint="@color/purple_500"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/quicksand_bold"
+            android:paddingVertical="8dp"
+            android:text="@string/leave_comment"
+            app:icon="@drawable/ic_round_add_comment_24"
+            app:iconGravity="textStart"
+            android:visibility="gone"/>
     </LinearLayout>
 </LinearLayout>

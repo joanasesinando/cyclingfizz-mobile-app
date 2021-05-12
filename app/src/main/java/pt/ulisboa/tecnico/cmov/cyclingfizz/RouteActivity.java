@@ -87,6 +87,7 @@ public class RouteActivity extends AppCompatActivity {
     static String TAG = "Cycling_Fizz@RouteActivity";
     static String SERVER_URL = Utils.STATIONS_SERVER_URL;
     public final static String POI = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI";
+    public final static String ROUTE_ID = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_ID";
 
     static String PATH_SOURCE_ID = "path-source";
     static String PATH_LAYER_ID = "path-layer";
@@ -427,6 +428,7 @@ public class RouteActivity extends AppCompatActivity {
         Bundle bundle = new Bundle();
         bundle.putSerializable(MapPreviewActivity.ROUTE_PATH, route.getPath());
         bundle.putSerializable(MapPreviewActivity.ROUTE_POIS, route.getAllPOIs());
+        bundle.putString(ROUTE_ID, route.getId());
         intent.putExtras(bundle);
         startActivity(intent);
         overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
@@ -472,6 +474,7 @@ public class RouteActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, ViewPOIActivity.class);
                 Bundle bundle = new Bundle();
                 bundle.putSerializable(POI, poi);
+                bundle.putString(ROUTE_ID, route.getId());
                 intent.putExtras(bundle);
                 startActivity(intent);
                 overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);

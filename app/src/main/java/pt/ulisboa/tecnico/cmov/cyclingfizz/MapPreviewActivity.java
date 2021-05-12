@@ -66,9 +66,11 @@ public class MapPreviewActivity extends AppCompatActivity {
     static final String ROUTE_PATH = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_PATH";
     static final String ROUTE_POIS = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_POIS";
     public final static String POI = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI";
+    public final static String ROUTE_ID = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_ID";
 
     ArrayList<Point> path;
     ArrayList<PointOfInterest> pois;
+    String routeID;
 
     private MapView mapView;
     private MapboxMap mapboxMap;
@@ -91,6 +93,7 @@ public class MapPreviewActivity extends AppCompatActivity {
         Intent intent = getIntent();
         path = (ArrayList<Point>) intent.getSerializableExtra(ROUTE_PATH);
         pois = (ArrayList<PointOfInterest>) intent.getSerializableExtra(ROUTE_POIS);
+        routeID = getIntent().getStringExtra(ROUTE_ID);
         initMap(savedInstanceState);
 
         // Set click listener for close btn

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/leave_comment_toolbar"
+        layout="@layout/leave_comment_action_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <include
+        android:id="@+id/leave_comment_select_items_toolbar"
+        layout="@layout/select_items_action_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="15dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:orientation="vertical">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/leave_comment_message_input"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:theme="@style/SecondaryTextInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:hint="@string/write_comment"
+                app:hintTextColor="@color/purple_500"
+                app:boxStrokeColor="@color/purple_500"
+                app:boxStrokeWidth="2dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/quicksand"
+                    android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <GridLayout
+                android:id="@+id/leave_comment_gallery"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:columnCount="3"
+                android:orientation="horizontal"
+                android:useDefaultMargins="true"
+                android:visibility="gone">
+            </GridLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="horizontal"
+                android:weightSum="1">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/leave_comment_take_photo"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="0.5"
+                    android:fontFamily="@font/quicksand_bold"
+                    android:paddingVertical="8dp"
+                    android:text="@string/take_photo"
+                    android:textColor="@color/purple_500"
+                    app:icon="@drawable/ic_round_add_a_photo_24"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/purple_500"
+                    app:strokeWidth="2dp"
+                    app:rippleColor="@color/purple_alpha"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/leave_comment_pick_photos"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_weight="0.5"
+                    android:fontFamily="@font/quicksand_bold"
+                    android:paddingVertical="8dp"
+                    android:text="@string/pick_photos"
+                    android:textColor="@color/purple_500"
+                    app:icon="@drawable/ic_round_add_photo_alternate_24"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/purple_500"
+                    app:strokeWidth="2dp"
+                    app:rippleColor="@color/purple_alpha" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/add_comment"
+            style="@style/Widget.MaterialComponents.Button.Icon"
+            android:backgroundTint="@color/purple_500"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/quicksand_bold"
+            android:paddingVertical="8dp"
+            android:text="@string/done"
+            app:icon="@drawable/ic_round_check_24"
+            app:iconGravity="textStart" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/delete_comment"
+            style="@style/SecondaryOutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/quicksand_bold"
+            android:paddingVertical="8dp"
+            android:text="@string/delete"
+            app:icon="@drawable/ic_round_delete_24"
+            app:iconGravity="textStart"
+            app:rippleColor="@color/purple_alpha"
+            android:visibility="gone"/>
+    </LinearLayout>
+</LinearLayout>

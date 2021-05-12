@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,8 +37,11 @@ public class ViewPOIActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@ViewPOI";
     static String SERVER_URL = Utils.STATIONS_SERVER_URL;
+    public final static String ROUTE_ID = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_ID";
+    public final static String POI = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI";
 
     PointOfInterest poi;
+    String routeID;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -47,6 +51,7 @@ public class ViewPOIActivity extends AppCompatActivity {
         setContentView(R.layout.poi);
 
         poi = (PointOfInterest) getIntent().getSerializableExtra(MapPreviewActivity.POI);
+        routeID = getIntent().getStringExtra(MapPreviewActivity.ROUTE_ID);
 
         setUI();
         uiSetClickListeners();
@@ -79,6 +84,9 @@ public class ViewPOIActivity extends AppCompatActivity {
         toolbar.getMenu().getItem(0).setVisible(false);
         toolbar.setNavigationIcon(R.drawable.ic_round_arrow_back_24);
 
+        MaterialButton commentBtn = findViewById(R.id.leave_comment);
+        commentBtn.setVisibility(View.VISIBLE);
+
         // Hide inputs
         TextInputLayout nameInput = findViewById(R.id.poi_name_input);
         nameInput.setVisibility(View.GONE);
@@ -91,6 +99,9 @@ public class ViewPOIActivity extends AppCompatActivity {
         uiUpdateCard(description, R.drawable.ic_description,
                 getString(R.string.description), poi.getDescription());
         description.setVisibility(View.VISIBLE);
+
+        // Set comments
+        setComments();
 
         // Set images
         CircularProgressIndicator progressIndicator = findViewById(R.id.progress_indicator);
@@ -107,9 +118,6 @@ public class ViewPOIActivity extends AppCompatActivity {
                 });
             });
         })).start();
-
-        // Set comments
-        setComments();
     }
 
     private void uiUpdateCard(View card, @DrawableRes int iconId, CharSequence textTitle, CharSequence textSubtitle) {
@@ -126,12 +134,25 @@ public class ViewPOIActivity extends AppCompatActivity {
         subtitle.setText(textSubtitle);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @SuppressLint("IntentReset")
     private void uiSetClickListeners() {
         // Set close btn click listener
         MaterialToolbar toolbar = findViewById(R.id.poi_toolbar).findViewById(R.id.topAppBar);
         toolbar.setNavigationOnClickListener(v -> finish());
+
+        // Set comment btn click listener
+        MaterialButton commentBtn = findViewById(R.id.leave_comment);
+        commentBtn.setOnClickListener(v -> {
+            Log.d(TAG, String.valueOf(poi));
+            Log.d(TAG, routeID);
+
+            Intent intent = new Intent(this, LeaveCommentActivity.class);
+            Bundle bundle = new Bundle();
+            bundle.putSerializable(POI, poi);
+            bundle.putString(ROUTE_ID, routeID);
+            intent.putExtras(bundle);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+        });
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)

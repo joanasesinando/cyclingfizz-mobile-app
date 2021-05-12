@@ -54,6 +54,10 @@ public class PointOfInterest implements Serializable {
         this(id, coord, name, description, new ArrayList<>(), mediaLinks);
     }
 
+    public String getId() {
+        return id;
+    }
+
     public Point getCoord() {
         return coord;
     }
@@ -193,7 +197,7 @@ public class PointOfInterest implements Serializable {
         this.comments.add(Comment.fromJson(json, id));
     }
 
-    public void commentPOI(String idRoute, String msg, ArrayList<Bitmap> images, Utils.OnTaskCompleted<Comment> callback) {
+    public void addComment(String idRoute, String msg, ArrayList<Bitmap> images, Utils.OnTaskCompleted<Comment> callback) {
         Comment comment = new Comment(msg, images);
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -203,7 +207,7 @@ public class PointOfInterest implements Serializable {
 
                 comment.uploadImages(ignored -> {
                     comment.getJsonAsync(data -> {
-                        data.addProperty("idToken", idToken);
+                        data.addProperty("id_token", idToken);
                         data.addProperty("route_id", idRoute);
                         data.addProperty("poi_id", id);
 
@@ -337,8 +341,6 @@ public class PointOfInterest implements Serializable {
 
                 callback.onTaskCompleted(data);
             });
-
-
         }
 
         public static Comment fromJson(JsonObject json, String id) {
