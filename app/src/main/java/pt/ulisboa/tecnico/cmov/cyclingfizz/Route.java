@@ -1,8 +1,6 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
 import android.graphics.Bitmap;
-
-import android.graphics.Bitmap;
 import android.util.Base64;
 import android.util.Log;
 
@@ -98,6 +96,10 @@ public class Route implements Serializable {
         return id;
     }
 
+    public Bitmap getImage() {
+        return image;
+    }
+
     public static Route fromJson(JsonObject json) {
 
         ArrayList<PointOfInterest> POISs = new ArrayList<>();
@@ -181,9 +183,10 @@ public class Route implements Serializable {
                 data.addProperty("id_token", idToken);
 
                 (new Utils.httpPostRequestJson(response -> {
-                    if (response.get("status").getAsString().equals("success"))
+                    if (response.get("status").getAsString().equals("success")) {
                         mediaLink = response.get("media_link").getAsString();
-                        callback.onTaskCompleted(null);
+                    }
+                    callback.onTaskCompleted(null);
 
                 }, data.toString())).execute(SERVER_URL + "/upload-media");
 

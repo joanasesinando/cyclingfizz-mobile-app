@@ -140,13 +140,31 @@
                     app:icon="@drawable/ic_round_fiber_manual_record_24"
                     app:iconTint="@color/danger"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/btn_map_stop_recording"
+                    app:layout_constraintEnd_toStartOf="@+id/btn_map_stop"
+                    app:layout_constraintStart_toEndOf="@+id/btn_map_add_poi"
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:visibility="gone"/>
+
+                <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+                    android:id="@+id/flag_playing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="25dp"
+                    android:elevation="0dp"
+                    android:clickable="false"
+                    android:alpha=".9"
+                    android:backgroundTint="@color/dark"
+                    android:text="@string/on_a_route"
+                    app:icon="@drawable/ic_round_directions_bike_24"
+                    app:iconTint="@color/orange_500"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/btn_map_stop"
                     app:layout_constraintStart_toEndOf="@+id/btn_map_add_poi"
                     app:layout_constraintTop_toTopOf="parent"
                     android:visibility="gone"/>
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/btn_map_stop_recording"
+                    android:id="@+id/btn_map_stop"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="25dp"

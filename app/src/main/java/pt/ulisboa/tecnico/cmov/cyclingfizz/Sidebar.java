@@ -80,8 +80,9 @@ public final class Sidebar {
         FloatingActionButton bearingBtn = activity.findViewById(R.id.btn_map_bearing);
         FloatingActionButton locationBtn = activity.findViewById(R.id.btn_map_current_location);
         FloatingActionButton addPOIBtn = activity.findViewById(R.id.btn_map_add_poi);
-        FloatingActionButton stopRecordingBtn = activity.findViewById(R.id.btn_map_stop_recording);
+        FloatingActionButton stopBtn = activity.findViewById(R.id.btn_map_stop);
         ExtendedFloatingActionButton flagRecording = activity.findViewById(R.id.flag_recording);
+        ExtendedFloatingActionButton flagPlaying = activity.findViewById(R.id.flag_playing);
         ExtendedFloatingActionButton startRecordingBtn = activity.findViewById(R.id.btn_map_record_route);
         FloatingActionButton cancelRecordingBtn = activity.findViewById(R.id.btn_cancel_recording);
         View rentingMenu = activity.findViewById(R.id.renting_info);
@@ -98,11 +99,12 @@ public final class Sidebar {
                 locationBtn.setVisibility(View.VISIBLE);
 
                 PathRecorder pathRecorder = PathRecorder.getInstance();
+                PathPlayer pathPlayer = PathPlayer.getInstance();
                 SharedState sharedState = (SharedState) activity.getApplicationContext();
 
                 if (pathRecorder.isRecording()) {
                     addPOIBtn.setVisibility(View.VISIBLE);
-                    stopRecordingBtn.setVisibility(View.VISIBLE);
+                    stopBtn.setVisibility(View.VISIBLE);
                     flagRecording.setVisibility(View.VISIBLE);
 
                 } else if (pathRecorder.isPreparingToRecord()) {
@@ -111,6 +113,10 @@ public final class Sidebar {
 
                 } else if (sharedState.isRenting()) {
                     rentingMenu.setVisibility(View.VISIBLE);
+
+                } else if (pathPlayer.isPlayingRoute()) {
+                    flagPlaying.setVisibility(View.VISIBLE);
+                    stopBtn.setVisibility(View.VISIBLE);
                 }
 
             } else if (activity instanceof RoutesListActivity) {
@@ -128,8 +134,9 @@ public final class Sidebar {
                 locationBtn.setVisibility(View.GONE);
                 rentingMenu.setVisibility(View.GONE);
                 addPOIBtn.setVisibility(View.GONE);
-                stopRecordingBtn.setVisibility(View.GONE);
+                stopBtn.setVisibility(View.GONE);
                 flagRecording.setVisibility(View.GONE);
+                flagPlaying.setVisibility(View.GONE);
                 startRecordingBtn.setVisibility(View.GONE);
                 cancelRecordingBtn.setVisibility(View.GONE);
 

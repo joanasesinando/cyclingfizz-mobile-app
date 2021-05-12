@@ -276,12 +276,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                         Point userPoint = Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude());
 
-                        if (Utils.distanceBetweenPointsInMeters(
+                        if (userLocation != null && Utils.distanceBetweenPointsInMeters(
                                 Point.fromLngLat(previousLocation.getLongitude(), previousLocation.getLatitude()),
-                                userPoint) < 4) return;
+                                userPoint) < 2.5) return;
 
                         PointOfInterest poi = pathPlayer.checkIfNearPOI(userPoint);
                         if (poi != null) {
+                            // TODO: user near POI, prompt it!
                             Log.d(TAG, "User near this poi -> " + poi);
                         }
                     }
@@ -382,16 +383,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         addPOIBtn.setVisibility(View.VISIBLE);
         addPOIBtn.setOnClickListener(v -> addPOI());
 
-        FloatingActionButton stopRecordingBtn = findViewById(R.id.btn_map_stop_recording);
+        FloatingActionButton stopRecordingBtn = findViewById(R.id.btn_map_stop);
         stopRecordingBtn.setVisibility(View.VISIBLE);
         stopRecordingBtn.setOnClickListener(v -> stopRecordingRoute());
 
         ExtendedFloatingActionButton recordingFlag = findViewById(R.id.flag_recording);
         recordingFlag.setVisibility(View.VISIBLE);
-    }
-
-    private void showPlayingRouteUI() {
-        Log.e(TAG, "Mostrar Route");
     }
 
 
@@ -528,6 +525,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
             MaterialToolbar toolbar = findViewById(R.id.map_toolbar).findViewById(R.id.topAppBar);
             toolbar.setOnMenuItemClickListener(this::toolbarItemClicked);
+
+            returnedToMap();
             // Map is set up and the style has loaded. Now you can add data or make other map adjustments
         });
     }
@@ -942,7 +941,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         FloatingActionButton addPOIBtn = findViewById(R.id.btn_map_add_poi);
         addPOIBtn.setVisibility(View.GONE);
 
-        FloatingActionButton stopRecordingBtn = findViewById(R.id.btn_map_stop_recording);
+        FloatingActionButton stopRecordingBtn = findViewById(R.id.btn_map_stop);
         stopRecordingBtn.setVisibility(View.GONE);
 
         ExtendedFloatingActionButton recordingFlag = findViewById(R.id.flag_recording);
@@ -1072,18 +1071,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
-    private void showPlayingRouteOnMap() {
-        if (mapboxMap == null || mapboxMap.getStyle() == null) return;
-
-        GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
-        if (pathRecordedSource != null) {
-            FeatureCollection featureCollection = FeatureCollection.fromFeatures(
-                    new Feature[] {pathPlayer.getPlayingRoute().getRouteFeature()}
-            );
-            runOnUiThread(() -> pathRecordedSource.setGeoJson(featureCollection));
-        }
-    }
-
     private void updatePOIsOnMap() {
         Log.d(TAG, "Updating POIs on map");
 
@@ -1094,26 +1081,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             ArrayList<Feature> features = new ArrayList<>();
             int i = 0;
             for (PointOfInterest poi : pathRecorder.getAllPOIs()) {
-                Feature poiFeature = Feature.fromGeometry(poi.getCoord());
-                poiFeature.addNumberProperty("id", i++);
-                features.add(poiFeature);
-            }
-            FeatureCollection featureCollection = FeatureCollection.fromFeatures(
-                    features.toArray(new Feature[0])
-            );
-            runOnUiThread(() -> POIsSource.setGeoJson(featureCollection));
-        }
-    }
-
-    private void showPlayingPOIsOnMap() {
-
-        if (mapboxMap == null || mapboxMap.getStyle() == null) return;
-
-        GeoJsonSource POIsSource = mapboxMap.getStyle().getSourceAs(POI_SOURCE_ID);
-        if (POIsSource != null) {
-            ArrayList<Feature> features = new ArrayList<>();
-            int i = 0;
-            for (PointOfInterest poi : pathPlayer.getPlayingRoute().getAllPOIs()) {
                 Feature poiFeature = Feature.fromGeometry(poi.getCoord());
                 poiFeature.addNumberProperty("id", i++);
                 features.add(poiFeature);
@@ -1152,6 +1119,67 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         intent.putExtras(bundle);
         startActivity(intent);
         overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** --------------- PLAYING ROUTE -------------- ***/
+    /*** -------------------------------------------- ***/
+
+    private void showPlayingRouteUI() {
+        ExtendedFloatingActionButton playingFlag = findViewById(R.id.flag_playing);
+        playingFlag.setVisibility(View.VISIBLE);
+
+        FloatingActionButton stopBtn = findViewById(R.id.btn_map_stop);
+        stopBtn.setVisibility(View.VISIBLE);
+        stopBtn.setOnClickListener(v -> stopPlaying());
+    }
+
+    private void hidePlayingRouteUI() {
+        ExtendedFloatingActionButton playingFlag = findViewById(R.id.flag_playing);
+        playingFlag.setVisibility(View.GONE);
+
+        FloatingActionButton stopBtn = findViewById(R.id.btn_map_stop);
+        stopBtn.setVisibility(View.GONE);
+    }
+
+    private void showPlayingRouteOnMap() {
+        cleanRoute();
+        if (mapboxMap == null || mapboxMap.getStyle() == null) return;
+
+        GeoJsonSource pathPlayingSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
+        if (pathPlayingSource != null) {
+            FeatureCollection featureCollection = FeatureCollection.fromFeatures(
+                    new Feature[] {pathPlayer.getPlayingRoute().getRouteFeature()}
+            );
+            runOnUiThread(() -> pathPlayingSource.setGeoJson(featureCollection));
+        }
+    }
+
+    private void showPlayingPOIsOnMap() {
+
+        if (mapboxMap == null || mapboxMap.getStyle() == null) return;
+
+        GeoJsonSource POIsSource = mapboxMap.getStyle().getSourceAs(POI_SOURCE_ID);
+        if (POIsSource != null) {
+            ArrayList<Feature> features = new ArrayList<>();
+            int i = 0;
+            for (PointOfInterest poi : pathPlayer.getPlayingRoute().getAllPOIs()) {
+                Feature poiFeature = Feature.fromGeometry(poi.getCoord());
+                poiFeature.addNumberProperty("id", i++);
+                features.add(poiFeature);
+            }
+            FeatureCollection featureCollection = FeatureCollection.fromFeatures(
+                    features.toArray(new Feature[0])
+            );
+            runOnUiThread(() -> POIsSource.setGeoJson(featureCollection));
+        }
+    }
+
+    private void stopPlaying() {
+        cleanRoute();
+        pathPlayer.stopRoute();
+        hidePlayingRouteUI();
     }
 
 
@@ -1406,15 +1434,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     /*** ------------ ACTIVITY LIFECYCLE ------------ ***/
     /*** -------------------------------------------- ***/
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-
-        sidebar.changeUserUI();
-        mapView.onStart();
-
-        Log.e(TAG, "OnStart");
-
+    private void returnedToMap() {
         if (pathRecorder.isPreparingToRecord()) {
             ExtendedFloatingActionButton recordBtn = findViewById(R.id.btn_map_record_route);
             recordBtn.setVisibility(View.VISIBLE);
@@ -1429,8 +1449,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             });
         }
 
-        Log.e(TAG, "is recording: " + pathRecorder.isRecording());
-
         if (pathRecorder.isRecording()) {
             showRecordingUI();
             updateRoute();
@@ -1441,6 +1459,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             showPlayingRouteOnMap();
             showPlayingPOIsOnMap();
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        sidebar.changeUserUI();
+        mapView.onStart();
     }
 
     @Override

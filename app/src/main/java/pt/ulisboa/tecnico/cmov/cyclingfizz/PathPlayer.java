@@ -5,14 +5,12 @@ import android.util.Log;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonObject;
-import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.Point;
-
-import java.util.Arrays;
 
 public class PathPlayer {
     static String TAG = "Cycling_Fizz@PathPlayer";
     static String SERVER_URL = "https://stations.cfservertest.ga";
+    static final int MAX_DISTANCE_FROM_POI = 5;
 
     private static PathPlayer INSTANCE = null;
     private final FirebaseAuth mAuth;
@@ -23,31 +21,11 @@ public class PathPlayer {
         mAuth = FirebaseAuth.getInstance();
     };
 
-
     public static PathPlayer getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new PathPlayer();
         }
         return(INSTANCE);
-    }
-
-    public void playRouteFromRouteId(String id, Utils.OnTaskCompleted<Boolean> callback) {
-        (new Utils.httpRequestJson(obj -> {
-            if (!obj.get("status").getAsString().equals("success")) {
-                callback.onTaskCompleted(false);
-                return;
-            }
-
-            try {
-                playRoute(Route.fromJson(obj.get("data").getAsJsonObject()));
-            } catch (Exception e) {
-                Log.e(TAG, Arrays.toString(e.getStackTrace()));
-                callback.onTaskCompleted(false);
-                return;
-            }
-
-            callback.onTaskCompleted(true);
-        })).execute(SERVER_URL + "/get-route-by-id?routeID=" + id);
     }
 
     public Route getPlayingRoute() {
@@ -56,6 +34,7 @@ public class PathPlayer {
 
     public void playRoute(Route route) {
         routePlaying = route;
+        Log.d(TAG, String.valueOf(routePlaying));
     }
 
     public void stopRoute() {
@@ -71,7 +50,7 @@ public class PathPlayer {
         if (!isPlayingRoute()) return null;
 
         for (PointOfInterest poi : routePlaying.getAllPOIs()) {
-            if (poi.notAlreadyVisited() && Utils.distanceBetweenPointsInMeters(poi.getCoord(), point) < 5) {
+            if (poi.notAlreadyVisited() && Utils.distanceBetweenPointsInMeters(poi.getCoord(), point) < MAX_DISTANCE_FROM_POI) {
                 poi.setAlreadyVisited(true);
                 return poi;
             }
@@ -104,7 +83,7 @@ public class PathPlayer {
         }
     }
 
-    public void commentRoute(String comment, Utils.OnTaskCompleted<Boolean> callback) {
+    public void commentRoute(String comment, Utils.OnTaskCompleted<Boolean> callback) { // FIXME: remove? only rate
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user != null) {
@@ -127,7 +106,7 @@ public class PathPlayer {
         }
     }
 
-    public void rateRoute(int rate, Utils.OnTaskCompleted<Boolean> callback) {
+    public void rateRoute(int rate, Utils.OnTaskCompleted<Boolean> callback) { // FIXME: should swap with old rate if user has already rated
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user != null) {

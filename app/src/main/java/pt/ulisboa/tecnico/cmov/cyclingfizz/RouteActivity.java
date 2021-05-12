@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +22,7 @@ import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.JsonElement;
@@ -225,7 +225,24 @@ public class RouteActivity extends AppCompatActivity {
 
         // Set play btn click listener
         FloatingActionButton playBtn = findViewById(R.id.route_play);
-        // TODO
+        playBtn.setOnClickListener(v -> {
+            PathRecorder pathRecorder = PathRecorder.getInstance();
+            if (pathRecorder.isRecording() || pathRecorder.isPreparingToRecord()) {
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.route_being_recorded)
+                        .setMessage(R.string.route_being_recorded_warning)
+                        .setPositiveButton(R.string.ok, (dialog, which) -> {
+                        })
+                        .show();
+                return;
+            }
+
+            PathPlayer.getInstance().playRoute(route);
+            Intent intent = new Intent(this, MapActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+        });
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)

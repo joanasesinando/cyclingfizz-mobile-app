@@ -5,9 +5,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -15,6 +19,7 @@ import android.widget.TextView;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonArray;
@@ -81,14 +86,24 @@ public class RoutesListActivity extends AppCompatActivity {
                     TextView routeCardRateValueView = layout.findViewById(R.id.route_card_rate_value);
                     ImageView routeCardRateIconView = layout.findViewById(R.id.route_card_rate_icon);
 
+                    Route route = Route.fromJson(routeJson);
+
                     // Set thumbnail
-                    // TODO
+                    if (routeJson.has("media_link")) {
+                        (new Thread(() -> {
+                            route.downloadImage(ignored -> {
+                                runOnUiThread(() -> {
+                                    ImageView thumbnail = layout.findViewById(R.id.route_card_thumbnail);
+                                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(route.getImage(), 64, 64);
+                                    thumbnail.setImageBitmap(thumbImage);
+                                });
+                            });
+                        })).start();
+                    }
 
                     // Set title & description
-                    String title = routeJson.get("title") != null && !routeJson.get("title").isJsonNull() ? routeJson.get("title").getAsString() : null;
-                    String description = routeJson.get("description") != null && !routeJson.get("description").isJsonNull() ? routeJson.get("description").getAsString() : null;
-                    if (title != null) titleView.setText(title);
-                    if (description != null) descriptionView.setText(description);
+                    titleView.setText(route.getTitle());
+                    descriptionView.setText(route.getDescription());
 
                     // Set avg rate
                     if (routeJson.get("reviews") != null && !routeJson.get("reviews").isJsonNull()) {
@@ -117,14 +132,6 @@ public class RoutesListActivity extends AppCompatActivity {
                         intent.putExtra(ROUTE_ID, routeID);
                         startActivity(intent);
                         overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
-
-//                        PathPlayer.getInstance().playRouteFromRouteId(routeJson.get("id").getAsString(), success -> {
-//                            if (success) {
-//                                finish();
-//                            } else {
-//                                Toast.makeText(this, "Error: Could not play route", Toast.LENGTH_LONG).show();
-//                            }
-//                        });
                     });
                 }
 
@@ -151,6 +158,16 @@ public class RoutesListActivity extends AppCompatActivity {
         // Set create route btn click listener
         FloatingActionButton createRouteBtn = findViewById(R.id.btn_create_route);
         createRouteBtn.setOnClickListener(v -> {
+            if (PathPlayer.getInstance().isPlayingRoute()) {
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.route_being_played)
+                        .setMessage(R.string.route_being_played_warning)
+                        .setPositiveButton(R.string.ok, (dialog, which) -> {
+                        })
+                        .show();
+                return;
+            }
+
             PathRecorder pathRecorder = PathRecorder.getInstance();
 
             if (!pathRecorder.isRecording()) {

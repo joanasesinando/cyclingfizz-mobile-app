@@ -38,6 +38,7 @@
 
     <!-- States -->
     <string name="recording">Recording...</string>
+    <string name="on_a_route">On a route</string>
 
     <!-- Warnings -->
     <string name="not_available">Not available</string>
@@ -55,6 +56,10 @@
     <string name="already_recording_warning">You are already recording a route! Please end the current recording first.</string>
     <string name="short_route">Short route</string>
     <string name="short_route_warning">Route is too short and it won’t be saved.</string>
+    <string name="route_being_played">Route being played</string>
+    <string name="route_being_played_warning">You are currently playing a route! Please stop the playing first.</string>
+    <string name="route_being_recorded">Route being recorded</string>
+    <string name="route_being_recorded_warning">You are currently recording a route! Please stop the recording first.</string>
 
     <!-- Messages -->
     <string name="route_recorded">Route recorded</string>
