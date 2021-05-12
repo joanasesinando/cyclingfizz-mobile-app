@@ -20,7 +20,7 @@ import java.util.ArrayList;
 public class Route implements Serializable {
 
     static String TAG = "Cycling_Fizz@Route";
-    static String SERVER_URL = "https://stations.cfservertest.ga";
+    static String SERVER_URL = Utils.STATIONS_SERVER_URL;
 
     private final String id;
     private final String routeJson;
@@ -104,6 +104,7 @@ public class Route implements Serializable {
 
         ArrayList<PointOfInterest> POISs = new ArrayList<>();
 
+
         for (JsonElement jsonElement : json.get("POIs").getAsJsonArray()) {
             POISs.add(PointOfInterest.fromJson(jsonElement.getAsJsonObject()));
         }
@@ -115,13 +116,14 @@ public class Route implements Serializable {
                 POISs,
                 json.get("id").getAsString(),
                 json.get("author_uid").getAsString(),
-                json.has("media_link") ? json.get("media_link").getAsString() : null
+                json.has("media_link") && !json.get("media_link").isJsonNull() ? json.get("media_link").getAsString() : null
         );
 
         if (json.get("reviews") != null && json.has("reviews")) {
-            JsonArray reviewsJson = json.get("reviews").getAsJsonArray();
-            for (JsonElement reviewJson : reviewsJson) {
-              route.addReviewFromJson(reviewJson.getAsJsonObject());
+            JsonObject reviewsJson = json.get("reviews").getAsJsonObject();
+
+            for (String reviewID : reviewsJson.keySet()) {
+              route.addReviewFromJson(reviewsJson.get(reviewID).getAsJsonObject(), reviewID);
             }
         }
 
@@ -156,13 +158,15 @@ public class Route implements Serializable {
         this.reviews = reviews;
     }
 
-    public void addReviewFromJson(JsonObject json) {
-        this.reviews.add(Review.fromJson(json));
+    public void addReviewFromJson(JsonObject json, String id) {
+        this.reviews.add(Review.fromJson(json, id));
     }
 
     public void uploadImage(Utils.OnTaskCompleted<Void> callback) {
+
         if (image == null) {
             callback.onTaskCompleted(null);
+            return;
         }
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -199,6 +203,7 @@ public class Route implements Serializable {
     public void downloadImage(Utils.OnTaskCompleted<Void> callback) {
         if (mediaLink == null) {
             callback.onTaskCompleted(null);
+            return;
         }
 
         (new Utils.httpRequestImage(response -> {
@@ -234,9 +239,12 @@ public class Route implements Serializable {
                 review.uploadImages(ignored -> {
                     review.getJsonAsync(data -> {
                         data.addProperty("idToken", idToken);
+                        data.addProperty("route_id", id);
+
                         (new Utils.httpPostRequestJson(response -> {
-                            addReviewFromJson(response);
-                            callback.onTaskCompleted(Review.fromJson(response));
+
+                            addReviewFromJson(response.get("review").getAsJsonObject(), response.get("id").getAsString());
+                            callback.onTaskCompleted(Review.fromJson(response.get("review").getAsJsonObject(), response.get("id").getAsString()));
                         }, data.toString())).execute(SERVER_URL + "/review-route");
                     });
                 });
@@ -250,6 +258,7 @@ public class Route implements Serializable {
 
     public static class Review implements Serializable {
 
+        private final String id;
         private final String creationTimestamp;
         private final String authorUID;
         private final String msg;
@@ -258,7 +267,8 @@ public class Route implements Serializable {
         private ArrayList<Bitmap> images = new ArrayList<>();
         private ArrayList<String> mediaLinks = new ArrayList<>();
 
-        private Review(String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks, ArrayList<Bitmap> images) {
+        private Review(String id, String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks, ArrayList<Bitmap> images) {
+            this.id = id;
             this.creationTimestamp = creationTimestamp;
             this.authorUID = authorUID;
             this.msg = msg;
@@ -267,12 +277,14 @@ public class Route implements Serializable {
             this.images = images;
         }
 
-        public Review(String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks) {
-            this(authorUID, msg, rate, creationTimestamp, mediaLinks, new ArrayList<>());
+        public Review(String id, String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks) {
+            // from server
+            this(id, authorUID, msg, rate, creationTimestamp, mediaLinks, new ArrayList<>());
         }
 
         public Review(String msg, int rate, ArrayList<Bitmap> images) {
-            this(null, msg, rate, null, new ArrayList<>(), images);
+            // from android
+            this(null, null, msg, rate, null, new ArrayList<>(), images);
         }
 
         public String getAuthorUID() {
@@ -369,7 +381,7 @@ public class Route implements Serializable {
 
         }
 
-        public static Review fromJson(JsonObject json) {
+        public static Review fromJson(JsonObject json, String id) {
             ArrayList<String> mediaLinks = new ArrayList<>();
 
             if (json.has("media_links") && !json.get("media_links").isJsonNull()) {
@@ -379,6 +391,7 @@ public class Route implements Serializable {
             }
 
             return new Review(
+                    id,
                     json.has("author_uid") ? json.get("author_uid").getAsString() : null,
                     json.has("msg") ? json.get("msg").getAsString() : null,
                     json.has("rate") ? json.get("rate").getAsInt() : null,

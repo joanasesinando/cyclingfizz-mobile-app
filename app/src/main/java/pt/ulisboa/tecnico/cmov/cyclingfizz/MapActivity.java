@@ -154,8 +154,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     /// -------------- MAP RELATED -------------- ///
 
-    String MAP_SERVER_URL = "https://map.cfservertest.ga";
-    String STATIONS_SERVER_URL = "https://stations.cfservertest.ga";
+    String MAP_SERVER_URL = Utils.MAP_SERVER_URL;
+    String STATIONS_SERVER_URL = Utils.STATIONS_SERVER_URL;
 
     static String GIRA_SOURCE_ID = "gira-source";
     String GIRA_DATA_URL = MAP_SERVER_URL + "/get-gira";

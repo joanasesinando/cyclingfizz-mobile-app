@@ -54,7 +54,7 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
     public final static String COORDINATES = "pt.ulisboa.tecnico.cmov.cyclingfizz.COORDINATES";
     private final static String COUNTER_DEFAULT = "?";
 
-    String STATIONS_SERVER_URL = "https://stations.cfservertest.ga";
+    String STATIONS_SERVER_URL = Utils.STATIONS_SERVER_URL;
     String GOOGLE_STREET_VIEW_URL = "https://maps.googleapis.com/maps/api/streetview";
     String GOOGLE_DISTANCE_URL = "https://maps.googleapis.com/maps/api/distancematrix";
     private FirebaseAuth mAuth;

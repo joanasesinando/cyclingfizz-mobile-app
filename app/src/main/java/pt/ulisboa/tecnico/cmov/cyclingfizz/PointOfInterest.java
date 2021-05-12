@@ -19,11 +19,12 @@ import java.util.List;
 
 public class PointOfInterest implements Serializable {
 
-    static String SERVER_URL = "https://stations.cfservertest.ga";
+    static String SERVER_URL = Utils.STATIONS_SERVER_URL;
     static String TAG = "Cycling_Fizz@POI";
 
 
     private final Point coord;
+    private String id;
     private String name;
     private String description;
     private ArrayList<Bitmap> images = new ArrayList<>();
@@ -33,18 +34,24 @@ public class PointOfInterest implements Serializable {
 
     private boolean alreadyVisited = false;
 
-    public PointOfInterest(Point coord, String name, String description, List<Bitmap> images) {
+
+    private PointOfInterest(String id, Point coord, String name, String description, List<Bitmap> images, List<String> mediaLinks) {
         this.coord = coord;
+        this.id = id;
         this.name = name;
         this.description = description;
         this.images = new ArrayList<>(images);
+        this.mediaLinks = new ArrayList<>(mediaLinks);
     }
 
-    public PointOfInterest(String name, String description, List<String> mediaLinks, Point coord) {
-        this.coord = coord;
-        this.name = name;
-        this.description = description;
-        this.mediaLinks = new ArrayList<>(mediaLinks);
+    public PointOfInterest(Point coord, String name, String description, List<Bitmap> images) {
+        // from android
+        this(null, coord, name, description, images, new ArrayList<>());
+    }
+
+    public PointOfInterest(String id, String name, String description, List<String> mediaLinks, Point coord) {
+        // from server
+        this(id, coord, name, description, new ArrayList<>(), mediaLinks);
     }
 
     public Point getCoord() {
@@ -158,33 +165,35 @@ public class PointOfInterest implements Serializable {
     public static PointOfInterest fromJson(JsonObject json) {
 
         ArrayList<String> mediaLinks = new ArrayList<>();
-        ArrayList<Comment> comments = new ArrayList<>();
 
         for (JsonElement jsonElement :  json.get("media_links").getAsJsonArray()) {
             mediaLinks.add(jsonElement.getAsString());
         }
 
         PointOfInterest poi = new PointOfInterest(
+                json.get("id").getAsString(),
                 json.get("title").getAsString(),
                 json.get("description").getAsString(),
                 mediaLinks,
                 (Point) Feature.fromJson(json.get("point").getAsString()).geometry());
 
         if (json.get("comments") != null && json.has("comments")) {
-            JsonArray commentsJson = json.get("comments").getAsJsonArray();
-            for (JsonElement commentJson : commentsJson) {
-                poi.addCommentFromJson(commentJson.getAsJsonObject());
+            JsonObject commentsJson = json.get("comments").getAsJsonObject();
+
+            for (String commentID : commentsJson.keySet()) {
+                poi.addCommentFromJson(commentsJson.get(commentID).getAsJsonObject(), commentID);
             }
+
         }
 
         return poi;
     }
 
-    public void addCommentFromJson(JsonObject json) {
-        this.comments.add(Comment.fromJson(json));
+    public void addCommentFromJson(JsonObject json, String id) {
+        this.comments.add(Comment.fromJson(json, id));
     }
 
-    public void commentPOI(String msg, ArrayList<Bitmap> images, Utils.OnTaskCompleted<Comment> callback) {
+    public void commentPOI(String idRoute, String msg, ArrayList<Bitmap> images, Utils.OnTaskCompleted<Comment> callback) {
         Comment comment = new Comment(msg, images);
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -195,9 +204,12 @@ public class PointOfInterest implements Serializable {
                 comment.uploadImages(ignored -> {
                     comment.getJsonAsync(data -> {
                         data.addProperty("idToken", idToken);
+                        data.addProperty("route_id", idRoute);
+                        data.addProperty("poi_id", id);
+
                         (new Utils.httpPostRequestJson(response -> {
-                            addCommentFromJson(response);
-                            callback.onTaskCompleted(Comment.fromJson(response));
+                            addCommentFromJson(response.get("comment").getAsJsonObject(), response.get("id").getAsString());
+                            callback.onTaskCompleted(Comment.fromJson(response.get("comment").getAsJsonObject(), response.get("id").getAsString()));
                         }, data.toString())).execute(SERVER_URL + "/comment-poi");
                     });
                 });
@@ -214,13 +226,15 @@ public class PointOfInterest implements Serializable {
 
     public static class Comment implements Serializable {
 
+        private String id;
         private final String creationTimestamp;
         private final String authorUID;
         private final String msg;
         private final ArrayList<String> mediaLinks;
         private final ArrayList<Bitmap> images;
 
-        private Comment(String creationTimestamp, String authorUID, String msg, ArrayList<String> mediaLinks, ArrayList<Bitmap> images) {
+        private Comment(String id, String creationTimestamp, String authorUID, String msg, ArrayList<String> mediaLinks, ArrayList<Bitmap> images) {
+            this.id = id;
             this.creationTimestamp = creationTimestamp;
             this.authorUID = authorUID;
             this.msg = msg;
@@ -228,13 +242,14 @@ public class PointOfInterest implements Serializable {
             this.images = images;
         }
 
-        public Comment(String creationTimestamp, String authorUID, String msg, ArrayList<String> mediaLinks) {
-            this(creationTimestamp, authorUID, msg, mediaLinks, new ArrayList<>());
+        public Comment(String id, String creationTimestamp, String authorUID, String msg, ArrayList<String> mediaLinks) {
+            // from server
+            this(id, creationTimestamp, authorUID, msg, mediaLinks, new ArrayList<>());
         }
 
         public Comment(String msg, ArrayList<Bitmap> images) {
-            this(null, null, msg, new ArrayList<>(), images);
-
+            // from Android
+            this(null,null, null, msg, new ArrayList<>(), images);
         }
 
         public String getCreationTimestamp() {
@@ -326,7 +341,7 @@ public class PointOfInterest implements Serializable {
 
         }
 
-        public static Comment fromJson(JsonObject json) {
+        public static Comment fromJson(JsonObject json, String id) {
             ArrayList<String> mediaLinks = new ArrayList<>();
 
             if (json.has("media_links") && !json.get("media_links").isJsonNull()) {
@@ -336,6 +351,7 @@ public class PointOfInterest implements Serializable {
             }
 
             return new Comment(
+                    id,
                     json.has("creation_timestamp") ? json.get("creation_timestamp").getAsString() : null,
                     json.has("author_uid") ? json.get("author_uid").getAsString() : null,
                     json.has("msg") ? json.get("msg").getAsString() : null,

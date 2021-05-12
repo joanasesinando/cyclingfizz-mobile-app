@@ -32,7 +32,7 @@ import java.util.ArrayList;
 public class RoutesListActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@RoutesList";
-    static String SERVER_URL = "https://stations.cfservertest.ga";
+    static String SERVER_URL = Utils.STATIONS_SERVER_URL;
     public final static String ROUTE_ID = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_ID";
 
     Sidebar sidebar;
@@ -109,8 +109,15 @@ public class RoutesListActivity extends AppCompatActivity {
                     if (routeJson.get("reviews") != null && !routeJson.get("reviews").isJsonNull()) {
                         float rateSum = 0;
                         int rateCount = 0;
-                        JsonArray reviewsJson = routeJson.get("reviews").getAsJsonArray();
-                        for (JsonElement reviewJson : reviewsJson) {
+
+                        JsonObject reviewsJson = routeJson.get("reviews").getAsJsonObject();
+
+                        for (String reviewID : reviewsJson.keySet()) {
+                            route.addReviewFromJson(reviewsJson.get(reviewID).getAsJsonObject(), reviewID);
+                        }
+
+                        for (String reviewID : reviewsJson.keySet()) {
+                            JsonElement reviewJson = reviewsJson.get(reviewID);
                             if (reviewJson.getAsJsonObject().has("rate")) {
                                 int rate = reviewJson.getAsJsonObject().get("rate").getAsInt();
                                 rateSum += rate;

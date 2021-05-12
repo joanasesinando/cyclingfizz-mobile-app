@@ -157,6 +157,5 @@
     <string name="mapbox_access_token" translatable="false">pk.eyJ1IjoiYmVycmUiLCJhIjoiY2s2YmYzNmxlMGhiZjNubXZ2YzJtY3kxZyJ9.mKwbVWXuigynJ_m2ePSRFA</string>
     <string name="google_API_KEY" translatable="false">AIzaSyBycELmIsSb30MHTmFol4Ez5lXSc1IA7eg</string>
     <string name="google_signing_secret" translatable="false">DTDrKz5z8ti16fOGYOhIkPNFkXk=</string>
-    <string name="server_url">.cfservertest.ga</string>
     <string name="created_by">Created by </string>
 </resources>

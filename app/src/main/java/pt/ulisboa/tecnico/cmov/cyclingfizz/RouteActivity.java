@@ -85,7 +85,7 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textSize;
 public class RouteActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@RouteActivity";
-    static String SERVER_URL = "https://stations.cfservertest.ga";
+    static String SERVER_URL = Utils.STATIONS_SERVER_URL;
     public final static String POI = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI";
 
     static String PATH_SOURCE_ID = "path-source";

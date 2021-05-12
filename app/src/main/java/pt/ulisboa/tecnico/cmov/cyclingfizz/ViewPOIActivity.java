@@ -35,7 +35,7 @@ import java.util.ArrayList;
 public class ViewPOIActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@ViewPOI";
-    static String SERVER_URL = "https://stations.cfservertest.ga";
+    static String SERVER_URL = Utils.STATIONS_SERVER_URL;
 
     PointOfInterest poi;
 
