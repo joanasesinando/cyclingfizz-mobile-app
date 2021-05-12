@@ -66,6 +66,7 @@ import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.location.LocationComponent;
 import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions;
 import com.mapbox.mapboxsdk.location.modes.CameraMode;
@@ -91,6 +92,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import pt.inesc.termite.wifidirect.SimWifiP2pBroadcast;
 import pt.inesc.termite.wifidirect.SimWifiP2pDevice;
@@ -1152,7 +1154,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             FeatureCollection featureCollection = FeatureCollection.fromFeatures(
                     new Feature[] {pathPlayer.getPlayingRoute().getRouteFeature()}
             );
-            runOnUiThread(() -> pathPlayingSource.setGeoJson(featureCollection));
+            runOnUiThread(() -> {
+                pathPlayingSource.setGeoJson(featureCollection);
+                zoomToRoute();
+            });
         }
     }
 
@@ -1174,6 +1179,32 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             );
             runOnUiThread(() -> POIsSource.setGeoJson(featureCollection));
         }
+    }
+
+    private void zoomToRoute() {
+        setMapboxCameraFree();
+
+        LatLngBounds latLngBounds;
+        ArrayList<Point> path = pathPlayer.getPlayingRoute().getPath();
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            latLngBounds = new LatLngBounds.Builder()
+                    .includes(path.stream().map(p -> new LatLng(p.latitude(), p.longitude())).collect(Collectors.toList()))
+                    .build();
+
+        } else {
+            Point startPoint = path.get(0);
+            Point centerPoint = path.get((int) (path.size()/2));
+            Point endPoint = path.get(path.size() - 1);
+
+            latLngBounds = new LatLngBounds.Builder()
+                    .include(new LatLng(startPoint.latitude(), startPoint.longitude()))
+                    .include(new LatLng(centerPoint.latitude(), centerPoint.longitude()))
+                    .include(new LatLng(endPoint.latitude(), endPoint.longitude()))
+                    .build();
+        }
+
+        mapboxMap.easeCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 100));
     }
 
     private void stopPlaying() {
