@@ -94,7 +94,7 @@ public class RoutesListActivity extends AppCompatActivity {
                             route.downloadImage(ignored -> {
                                 runOnUiThread(() -> {
                                     ImageView thumbnail = layout.findViewById(R.id.route_card_thumbnail);
-                                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(route.getImage(), 64, 64);
+                                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(route.getImage(), 128, 128);
                                     thumbnail.setImageBitmap(thumbImage);
                                 });
                             });
