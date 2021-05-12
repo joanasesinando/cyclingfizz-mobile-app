@@ -110,6 +110,7 @@
                 app:tint="@color/dark" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
@@ -158,8 +159,8 @@
                     app:icon="@drawable/ic_round_directions_bike_24"
                     app:iconTint="@color/orange_500"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/btn_map_stop"
-                    app:layout_constraintStart_toEndOf="@+id/btn_map_add_poi"
+                    app:layout_constraintStart_toStartOf="@id/layout"
+                    app:layout_constraintEnd_toEndOf="@id/layout"
                     app:layout_constraintTop_toTopOf="parent"
                     android:visibility="gone"/>
 

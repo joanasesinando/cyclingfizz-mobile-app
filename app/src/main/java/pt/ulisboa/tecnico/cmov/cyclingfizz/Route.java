@@ -372,7 +372,7 @@ public class Route implements Serializable {
         public static Review fromJson(JsonObject json) {
             ArrayList<String> mediaLinks = new ArrayList<>();
 
-            if (json.has("media_links")) {
+            if (json.has("media_links") && !json.get("media_links").isJsonNull()) {
                 for (JsonElement jsonElement : json.get("media_links").getAsJsonArray()) {
                     mediaLinks.add(jsonElement.getAsString());
                 }
