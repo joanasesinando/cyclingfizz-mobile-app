@@ -76,6 +76,14 @@
 
             </GridLayout>
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/comment_item_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_round_edit_24"
+            app:tint="@color/material_on_surface_disabled"
+            android:visibility="gone"/>
     </LinearLayout>
 
     <LinearLayout

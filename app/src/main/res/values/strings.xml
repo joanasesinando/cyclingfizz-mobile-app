@@ -8,6 +8,7 @@
     <string name="route_overview">Route overview</string>
     <string name="reviews">Reviews</string>
     <string name="comments">Comments</string>
+    <string name="edit_comment">Edit comment</string>
 
     <!-- Actions -->
     <string name="get_started">Get Started</string>

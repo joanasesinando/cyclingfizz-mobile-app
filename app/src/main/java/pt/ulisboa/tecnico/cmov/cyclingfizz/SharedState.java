@@ -7,6 +7,8 @@ public class SharedState extends Application {
     // FIXME: remove renting from here and create singleton
     // FIXME: add general stuff here like server URL
 
+    PointOfInterest viewingPOI = null;
+
     private boolean isRenting = false;
 
     public boolean isRenting() {

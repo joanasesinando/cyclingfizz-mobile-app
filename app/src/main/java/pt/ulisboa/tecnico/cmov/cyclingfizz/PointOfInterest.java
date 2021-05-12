@@ -28,6 +28,7 @@ public class PointOfInterest implements Serializable {
     private String name;
     private String description;
     private ArrayList<Bitmap> images = new ArrayList<>();
+
     private ArrayList<String> mediaLinks = new ArrayList<>();
 
     private ArrayList<Comment> comments = new ArrayList<>();
@@ -81,6 +82,10 @@ public class PointOfInterest implements Serializable {
 
     public ArrayList<Comment> getComments() {
         return comments;
+    }
+
+    public ArrayList<String> getMediaLinks() {
+        return mediaLinks;
     }
 
     public void uploadImages(Utils.OnTaskCompleted<Void> callback) {
@@ -212,8 +217,9 @@ public class PointOfInterest implements Serializable {
                         data.addProperty("poi_id", id);
 
                         (new Utils.httpPostRequestJson(response -> {
-                            addCommentFromJson(response.get("comment").getAsJsonObject(), response.get("id").getAsString());
-                            callback.onTaskCompleted(Comment.fromJson(response.get("comment").getAsJsonObject(), response.get("id").getAsString()));
+                            JsonObject commentJson = response.get("comment").getAsJsonObject();
+                            addCommentFromJson(commentJson.get("comment").getAsJsonObject(), commentJson.get("id").getAsString());
+                            callback.onTaskCompleted(Comment.fromJson(commentJson.get("comment").getAsJsonObject(), commentJson.get("id").getAsString()));
                         }, data.toString())).execute(SERVER_URL + "/comment-poi");
                     });
                 });
@@ -224,8 +230,6 @@ public class PointOfInterest implements Serializable {
             Log.d(TAG, "Null User");
         }
     }
-
-
 
 
     public static class Comment implements Serializable {

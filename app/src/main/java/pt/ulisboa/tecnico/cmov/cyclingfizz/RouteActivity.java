@@ -471,9 +471,11 @@ public class RouteActivity extends AppCompatActivity {
 
             // Set poi click listener
             layout.setOnClickListener(v -> {
+                SharedState sharedState = (SharedState) getApplicationContext();
+                sharedState.viewingPOI = poi;
+
                 Intent intent = new Intent(this, ViewPOIActivity.class);
                 Bundle bundle = new Bundle();
-                bundle.putSerializable(POI, poi);
                 bundle.putString(ROUTE_ID, route.getId());
                 intent.putExtras(bundle);
                 startActivity(intent);

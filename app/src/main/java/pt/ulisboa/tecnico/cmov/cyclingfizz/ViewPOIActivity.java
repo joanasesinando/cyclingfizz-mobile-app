@@ -5,12 +5,10 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +22,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -38,7 +38,7 @@ public class ViewPOIActivity extends AppCompatActivity {
     static String TAG = "Cycling_Fizz@ViewPOI";
     static String SERVER_URL = Utils.STATIONS_SERVER_URL;
     public final static String ROUTE_ID = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_ID";
-    public final static String POI = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI";
+    public final static String COMMENT_INDEX = "pt.ulisboa.tecnico.cmov.cyclingfizz.COMMENT_INDEX";
 
     PointOfInterest poi;
     String routeID;
@@ -50,7 +50,7 @@ public class ViewPOIActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.poi);
 
-        poi = (PointOfInterest) getIntent().getSerializableExtra(MapPreviewActivity.POI);
+        poi = ((SharedState) getApplicationContext()).viewingPOI;
         routeID = getIntent().getStringExtra(MapPreviewActivity.ROUTE_ID);
 
         setUI();
@@ -139,15 +139,11 @@ public class ViewPOIActivity extends AppCompatActivity {
         MaterialToolbar toolbar = findViewById(R.id.poi_toolbar).findViewById(R.id.topAppBar);
         toolbar.setNavigationOnClickListener(v -> finish());
 
-        // Set comment btn click listener
-        MaterialButton commentBtn = findViewById(R.id.leave_comment);
-        commentBtn.setOnClickListener(v -> {
-            Log.d(TAG, String.valueOf(poi));
-            Log.d(TAG, routeID);
-
-            Intent intent = new Intent(this, LeaveCommentActivity.class);
+        // Set add comment btn click listener
+        MaterialButton addCommentBtn = findViewById(R.id.leave_comment);
+        addCommentBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(this, AddCommentActivity.class);
             Bundle bundle = new Bundle();
-            bundle.putSerializable(POI, poi);
             bundle.putString(ROUTE_ID, routeID);
             intent.putExtras(bundle);
             startActivity(intent);
@@ -194,6 +190,7 @@ public class ViewPOIActivity extends AppCompatActivity {
             if (commentsCount == 1) s = s.substring(0, s.length() - 1);
             total.setText(s);
 
+            int i = 0;
             LinearLayout linearLayout = findViewById(R.id.comments_list);
             for (PointOfInterest.Comment comment : comments) {
                 LayoutInflater inflater = LayoutInflater.from(this);
@@ -212,7 +209,6 @@ public class ViewPOIActivity extends AppCompatActivity {
                     (new Utils.httpRequestImage(avatar::setImageBitmap)).execute(avatarURL);
 
                 })).execute(SERVER_URL + "/get-user-info?uid=" + comment.getAuthorUID());
-
 
                 // Set comment
                 TextView msg = layout.findViewById(R.id.comment_item_msg);
@@ -237,12 +233,46 @@ public class ViewPOIActivity extends AppCompatActivity {
                 LocalDate localDate = timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                 date.setText(localDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)));
 
+                // Enable editing if created by user
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                assert user != null;
+                if (comment.getAuthorUID().equals(user.getUid())) {
+                    ImageView editBtn = layout.findViewById(R.id.comment_item_edit);
+                    editBtn.setVisibility(View.VISIBLE);
+                    int commentIndex = i;
+                    editBtn.setOnClickListener(v -> {
+                        Intent intent = new Intent(this, EditCommentActivity.class);
+                        Bundle bundle = new Bundle();
+                        bundle.putString(ROUTE_ID, routeID);
+                        bundle.putInt(COMMENT_INDEX, commentIndex);
+                        intent.putExtras(bundle);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                    });
+                }
+
                 linearLayout.addView(layout);
+                i++;
             }
 
             // Show comments' card
             MaterialCardView commentsCard = findViewById(R.id.poi_comments);
             commentsCard.setVisibility(View.VISIBLE);
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void updateComments() {
+        LinearLayout linearLayout = findViewById(R.id.comments_list);
+        linearLayout.removeAllViews();
+        setComments();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    public void onResume() {
+        super.onResume();
+        poi = ((SharedState) getApplicationContext()).viewingPOI;
+        updateComments();
     }
 }

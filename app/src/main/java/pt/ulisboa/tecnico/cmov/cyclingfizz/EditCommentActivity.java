@@ -14,7 +14,6 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -33,28 +32,28 @@ import android.widget.Toast;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
-import com.mapbox.geojson.Point;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Objects;
 
+public class EditCommentActivity extends AppCompatActivity {
 
-public class AddPOIActivity extends AppCompatActivity {
-
-    static String TAG = "Cycling_Fizz@AddPOI";
+    static String TAG = "Cycling_Fizz@EditComment";
     static final int TAKE_PHOTO = 1;
     static final int PICK_IMAGES = 2;
 
-    TextInputLayout nameInputLayout;
-    TextInputLayout descriptionInputLayout;
+    TextInputLayout msgInput;
 
-    PathRecorder pathRecorder;
-    Point coordPOI;
+    String routeID;
+    PointOfInterest poi;
+    PointOfInterest.Comment comment;
+    int commentIndex;
 
     boolean isDeletingImages = false;
 
@@ -62,7 +61,6 @@ public class AddPOIActivity extends AppCompatActivity {
     ArrayList<Integer> imagesToDeleteIndexes = new ArrayList<>();
 
     String currentPhotoPath;
-
 
     /// -------------- PERMISSIONS -------------- ///
 
@@ -79,17 +77,17 @@ public class AddPOIActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.poi);
+        setContentView(R.layout.leave_comment);
 
-        pathRecorder = PathRecorder.getInstance();
-        Location poiLocation = getIntent().getParcelableExtra(MapActivity.POI_LOCATION);
-        coordPOI = Point.fromLngLat(poiLocation.getLongitude(), poiLocation.getLatitude());
+        routeID = getIntent().getStringExtra(ViewPOIActivity.ROUTE_ID);
+        poi = ((SharedState) getApplicationContext()).viewingPOI;
+        commentIndex = getIntent().getIntExtra(ViewPOIActivity.COMMENT_INDEX, -1);
+        if (commentIndex != -1) comment = poi.getComments().get(commentIndex);
 
+        setUI();
         uiSetClickListeners();
-        setInputs();
-
-        // Set purple status bar
-        getWindow().setStatusBarColor(getColor(R.color.purple_700));
+        setInput();
+        setImages();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -109,7 +107,7 @@ public class AddPOIActivity extends AppCompatActivity {
                     // Update view
                     addImageToGallery(bitmap);
                 }
-                GridLayout gallery = findViewById(R.id.poi_gallery);
+                GridLayout gallery = findViewById(R.id.leave_comment_gallery);
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else if (requestCode == TAKE_PHOTO && resultCode == RESULT_OK && currentPhotoPath != null) {
@@ -121,15 +119,14 @@ public class AddPOIActivity extends AppCompatActivity {
                 images.add(bitmap);
                 // Update view
                 addImageToGallery(bitmap);
-                GridLayout gallery = findViewById(R.id.poi_gallery);
+                GridLayout gallery = findViewById(R.id.leave_comment_gallery);
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else {
                 Toast.makeText(this, "No photos selected", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            Log.e(TAG, e.getMessage());
+            Log.e(TAG, Arrays.toString(e.getStackTrace()));
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -140,20 +137,34 @@ public class AddPOIActivity extends AppCompatActivity {
     /*** -------------------------------------------- ***/
 
     @RequiresApi(api = Build.VERSION_CODES.M)
+    private void setUI() {
+        // Set purple status bar
+        getWindow().setStatusBarColor(getColor(R.color.purple_700));
+
+        // Show delete btn
+        MaterialButton deleteBtn = findViewById(R.id.delete_comment);
+        deleteBtn.setVisibility(View.VISIBLE);
+
+        // Set toolbar title
+        MaterialToolbar toolbar = findViewById(R.id.leave_comment_toolbar).findViewById(R.id.topAppBar);
+        toolbar.setTitle(getString(R.string.edit_comment));
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @SuppressLint("IntentReset")
     private void uiSetClickListeners() {
         // Set close btn click listener
-        MaterialToolbar toolbar = findViewById(R.id.poi_toolbar).findViewById(R.id.topAppBar);
+        MaterialToolbar toolbar = findViewById(R.id.leave_comment_toolbar).findViewById(R.id.topAppBar);
         toolbar.setNavigationOnClickListener(v -> finish());
 
         // Set toolbar action btn click listener
         toolbar.setOnMenuItemClickListener(item -> {
-            savePOI();
+            saveComment();
             return false;
         });
 
         // Set take photo btn listener
-        MaterialButton takePhotoBtn = findViewById(R.id.poi_take_photo);
+        MaterialButton takePhotoBtn = findViewById(R.id.leave_comment_take_photo);
         takePhotoBtn.setOnClickListener(v -> {
             if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                 Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -177,7 +188,7 @@ public class AddPOIActivity extends AppCompatActivity {
         });
 
         // Set pick photos btn listener
-        MaterialButton pickPhotosBtn = findViewById(R.id.poi_pick_photos);
+        MaterialButton pickPhotosBtn = findViewById(R.id.leave_comment_pick_photos);
         pickPhotosBtn.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             intent.setType("image/*"); //FIXME: add video support
@@ -185,12 +196,16 @@ public class AddPOIActivity extends AppCompatActivity {
             startActivityForResult(intent, PICK_IMAGES);
         });
 
-        // Set save btn click listener
-        MaterialButton saveBtn = findViewById(R.id.save_poi);
-        saveBtn.setOnClickListener(v -> savePOI());
+        // Set done btn click listener
+        MaterialButton doneBtn = findViewById(R.id.add_comment);
+        doneBtn.setOnClickListener(v -> saveComment());
+
+        // Set delete btn click listener
+        MaterialButton deleteBtn = findViewById(R.id.delete_comment);
+        deleteBtn.setOnClickListener(v -> deleteComment());
 
         // Set selecting items top bar btns listeners
-        MaterialToolbar selectItemsToolbar = findViewById(R.id.poi_select_items_toolbar).findViewById(R.id.topAppBar);
+        MaterialToolbar selectItemsToolbar = findViewById(R.id.leave_comment_select_items_toolbar).findViewById(R.id.topAppBar);
         selectItemsToolbar.setNavigationOnClickListener(v -> quitDeletingImages());
         selectItemsToolbar.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
@@ -201,8 +216,8 @@ public class AddPOIActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void toggleToolbar() {
-        View toolbarLayout = findViewById(R.id.poi_toolbar);
-        View selectItemsToolbarLayout = findViewById(R.id.poi_select_items_toolbar);
+        View toolbarLayout = findViewById(R.id.leave_comment_toolbar);
+        View selectItemsToolbarLayout = findViewById(R.id.leave_comment_select_items_toolbar);
 
         if (toolbarLayout.getVisibility() == View.VISIBLE) {
             toolbarLayout.setVisibility(View.GONE);
@@ -222,8 +237,18 @@ public class AddPOIActivity extends AppCompatActivity {
     /*** -------------------------------------------- ***/
 
     @RequiresApi(api = Build.VERSION_CODES.M)
+    private void setImages() {
+        for (Bitmap bitmap : comment.getImages()) {
+            images.add(bitmap);
+            addImageToGallery(bitmap);
+        }
+        GridLayout gallery = findViewById(R.id.leave_comment_gallery);
+        if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void addImageToGallery(Bitmap bitmap) {
-        GridLayout gallery = findViewById(R.id.poi_gallery);
+        GridLayout gallery = findViewById(R.id.leave_comment_gallery);
         final float scale = getResources().getDisplayMetrics().density;
 
         // Create wrapper
@@ -262,6 +287,7 @@ public class AddPOIActivity extends AppCompatActivity {
 
         // Set click listeners
         imgWrapper.setOnLongClickListener(v -> {
+            Log.d(TAG, "long click");
             if (!isDeletingImages) toggleToolbar();
             isDeletingImages = true;
             View overlayChild = ((ViewGroup) v).getChildAt(1);
@@ -271,8 +297,10 @@ public class AddPOIActivity extends AppCompatActivity {
         });
 
         imgWrapper.setOnClickListener(v -> {
+            Log.d(TAG, "normal click");
             if (isDeletingImages) {
                 View overlayChild = ((ViewGroup) v).getChildAt(1);
+
                 if (overlayChild.getVisibility() == View.VISIBLE) deselectImg(v);
                 else if (overlayChild.getVisibility() == View.GONE) selectImg(v);
             }
@@ -281,11 +309,11 @@ public class AddPOIActivity extends AppCompatActivity {
 
     private void selectImg(View view) {
         // Add index to delete
-        GridLayout gallery = findViewById(R.id.poi_gallery);
+        GridLayout gallery = findViewById(R.id.leave_comment_gallery);
         imagesToDeleteIndexes.add(gallery.indexOfChild(view));
 
         // Update toolbar
-        View toolbarLayout = findViewById(R.id.poi_select_items_toolbar);
+        View toolbarLayout = findViewById(R.id.leave_comment_select_items_toolbar);
         MaterialToolbar toolbar = toolbarLayout.findViewById(R.id.topAppBar);
         toolbar.setTitle(imagesToDeleteIndexes.size() + " selected");
 
@@ -298,11 +326,12 @@ public class AddPOIActivity extends AppCompatActivity {
 
     private void deselectImg(View view) {
         // Remove index to delete
-        GridLayout gallery = findViewById(R.id.poi_gallery);
+        GridLayout gallery = findViewById(R.id.leave_comment_gallery);
         imagesToDeleteIndexes.remove(gallery.indexOfChild(view));
+        Log.d(TAG, String.valueOf(gallery.indexOfChild(view)));
 
         // Update toolbar
-        View toolbar = findViewById(R.id.poi_select_items_toolbar);
+        View toolbar = findViewById(R.id.leave_comment_select_items_toolbar);
         MaterialToolbar topBar = toolbar.findViewById(R.id.topAppBar);
         topBar.setTitle(imagesToDeleteIndexes.size() + " selected");
 
@@ -320,7 +349,7 @@ public class AddPOIActivity extends AppCompatActivity {
         toggleToolbar();
 
         // Hide overlay and checks
-        GridLayout gallery = findViewById(R.id.poi_gallery);
+        GridLayout gallery = findViewById(R.id.leave_comment_gallery);
         for (int i = 0; i < gallery.getChildCount(); i++) {
             View imgWrapper = gallery.getChildAt(i);
             for (int j = 1; j < ((ViewGroup) imgWrapper).getChildCount(); j++) {
@@ -332,7 +361,7 @@ public class AddPOIActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void deleteImages() {
-        GridLayout gallery = findViewById(R.id.poi_gallery);
+        GridLayout gallery = findViewById(R.id.leave_comment_gallery);
         Collections.sort(imagesToDeleteIndexes, Collections.reverseOrder());
 
         for (int index : imagesToDeleteIndexes) {
@@ -367,14 +396,14 @@ public class AddPOIActivity extends AppCompatActivity {
 
 
     /*** -------------------------------------------- ***/
-    /*** ------------------ INPUTS ------------------ ***/
+    /*** ------------------- INPUT ------------------ ***/
     /*** -------------------------------------------- ***/
 
-    private void setInputs() {
-        nameInputLayout = findViewById(R.id.poi_name_input);
-        descriptionInputLayout = findViewById(R.id.poi_description_input);
+    private void setInput() {
+        msgInput = findViewById(R.id.leave_comment_message_input);
+        Objects.requireNonNull(msgInput.getEditText()).setText(comment.getMsg());
 
-        Objects.requireNonNull(nameInputLayout.getEditText()).addTextChangedListener(new TextWatcher() {
+        Objects.requireNonNull(msgInput.getEditText()).addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 
@@ -383,62 +412,43 @@ public class AddPOIActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                nameInputLayout.setError(null);
-            }
-        });
-
-        Objects.requireNonNull(descriptionInputLayout.getEditText()).addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) { }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                descriptionInputLayout.setError(null);
+                msgInput.setError(null);
             }
         });
     }
 
-    private boolean checkForErrors(String name, String description) {
+    private boolean checkForErrors(String msg) {
         boolean error = false;
-
-        // Check name
-        if (name.isEmpty()) {
-            nameInputLayout.setError(getString(R.string.name_required));
+        if (msg.isEmpty()) {
+            msgInput.setError(getString(R.string.comment_required));
             error = true;
         }
-
-        // Check description
-        if (description.isEmpty()) {
-            descriptionInputLayout.setError(getString(R.string.description_required));
-            error = true;
-        }
-
         return error;
     }
 
 
     /*** -------------------------------------------- ***/
-    /*** ------------ POINT OF INTEREST ------------- ***/
+    /*** ----------------- COMMENT ------------------ ***/
     /*** -------------------------------------------- ***/
 
-    private void savePOI() {
-        // Clean error messages
-        nameInputLayout.setError(null);
-        descriptionInputLayout.setError(null);
+    private void saveComment() {
+        // Clean error message
+        msgInput.setError(null);
 
-        // Get name & description
-        String name = Objects.requireNonNull(nameInputLayout.getEditText()).getText().toString();
-        String description = Objects.requireNonNull(descriptionInputLayout.getEditText()).getText().toString();
+        // Get message
+        String message = Objects.requireNonNull(msgInput.getEditText()).getText().toString();
 
         // Check for errors
-        boolean error = checkForErrors(name, description);
+        boolean error = checkForErrors(message);
 
         if (!error) {
-            pathRecorder.addPOI(images, name, description, coordPOI);
+            // TODO edit
             finish();
         }
+    }
+
+    private void deleteComment() {
+        // TODO
+        finish();
     }
 }
