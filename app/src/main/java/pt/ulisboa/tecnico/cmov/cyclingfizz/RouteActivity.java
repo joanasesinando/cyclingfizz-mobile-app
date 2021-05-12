@@ -535,7 +535,7 @@ public class RouteActivity extends AppCompatActivity {
                 histogramCounts[Math.round(rate) > 5 ? 4 : Math.round(rate) - 1]++;
                 TextView rateValue = layout.findViewById(R.id.review_item_rate_value);
                 ImageView rateIcon = layout.findViewById(R.id.review_item_rate_icon);
-                rateValue.setText(oneDecimalFormatter.format(rate));
+                rateValue.setText(String.valueOf(rate));
                 rateValue.setTextColor(getColorFromRate(rate));
                 rateIcon.setColorFilter(getColorFromRate(rate));
 
