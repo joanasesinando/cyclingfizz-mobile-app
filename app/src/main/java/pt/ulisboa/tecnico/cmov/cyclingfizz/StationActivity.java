@@ -97,6 +97,10 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
         // Set top bar
         uiUpdateTopBar(feature.getProperty("desig_comercial").getAsString());
 
+        // Hide top bar menu
+        MaterialToolbar topBar = findViewById(R.id.station_toolbar).findViewById(R.id.taller_top_bar);
+        topBar.getMenu().clear();
+
         // Set navigation estimates
         uiUpdateNavigationEstimates();
 

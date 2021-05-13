@@ -8,7 +8,7 @@
     tools:context=".StationActivity">
 
     <include
-        android:id="@+id/include"
+        android:id="@+id/station_toolbar"
         layout="@layout/taller_top_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />

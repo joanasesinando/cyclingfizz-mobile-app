@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:elevation="0dp"
-            app:menu="@menu/share_only_menu"
+            app:menu="@menu/route_menu"
             app:navigationIcon="@drawable/ic_round_close_24" />
 
     </com.google.android.material.appbar.AppBarLayout>
