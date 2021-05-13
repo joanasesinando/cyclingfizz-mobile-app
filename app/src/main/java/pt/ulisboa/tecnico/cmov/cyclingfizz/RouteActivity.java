@@ -38,6 +38,7 @@ import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
+import com.mapbox.mapboxsdk.exceptions.MapboxConfigurationException;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -121,14 +122,31 @@ public class RouteActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
         super.onCreate(savedInstanceState);
+
+        if (!Mapbox.hasInstance()) {
+            Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
+        }
         setContentView(R.layout.route);
+
 
         mAuth = FirebaseAuth.getInstance();
 
         hasStartedSnapshotGeneration = false;
 
         // Get route
-        String routeID = getIntent().getStringExtra(RoutesListActivity.ROUTE_ID);
+        Intent intent = getIntent();
+        Uri data = intent.getData();
+        String routeID;
+
+        if (data != null) {
+            routeID = data.getQueryParameter("routeID");
+        } else {
+            routeID = intent.getStringExtra(RoutesListActivity.ROUTE_ID);
+        }
+
+        Log.d(TAG, routeID);
+
+
         (new Utils.httpRequestJson(obj -> {
             if (!obj.get("status").getAsString().equals("success")) {
                 Toast.makeText(this, "Error: couldn't get route", Toast.LENGTH_LONG).show();
@@ -273,9 +291,11 @@ public class RouteActivity extends AppCompatActivity {
             if (bmpUri != null) {
 
                 Intent shareIntent = new Intent();
-                shareIntent.putExtra(Intent.EXTRA_TEXT, "I just found this awesome bicycle route in Cycling Fizz: \"" + route.getTitle() + "\"!");
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Check this route in Cycling Fizz!");
+                shareIntent.putExtra(Intent.EXTRA_TEXT, "I just found this awesome bicycle route in Cycling Fizz named, \"" + route.getTitle() + "\"!\n\n" +
+                        "https://stations.cfservertest.ga/route?routeID=" + route.getId());
                 shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
-                shareIntent.setType("*/*");
+                shareIntent.setType("image/*");
                 shareIntent.setAction(Intent.ACTION_SEND);
                 shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 startActivity(Intent.createChooser(shareIntent, "Share map image"));

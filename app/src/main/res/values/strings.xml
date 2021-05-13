@@ -38,6 +38,9 @@
     <string name="sort">Sort</string>
     <string name="leave_comment">Leave a comment</string>
     <string name="done">Done</string>
+    <string name="view_more">View More</string>
+    <string name="ignore">Ignore</string>
+
 
     <!-- States -->
     <string name="recording">Recording...</string>
@@ -164,7 +167,7 @@
     <string name="user_location_turn_on_setting">Open Settings</string>
 
     <!-- Keys TODO: move somewhere else -->
-    <string name="mapbox_access_token" translatable="false">pk.eyJ1IjoiYmVycmUiLCJhIjoiY2s2YmYzNmxlMGhiZjNubXZ2YzJtY3kxZyJ9.mKwbVWXuigynJ_m2ePSRFA</string>
+    <string name="mapbox_access_token" translatable="false">pk.eyJ1IjoiYmVycmUiLCJhIjoiY2tvbXlhNTQyMTdqbDJ2bzBrYXprdDVnbSJ9.-SjB3Hp2spLDCOwXxr_LFw</string>
     <string name="google_API_KEY" translatable="false">AIzaSyBycELmIsSb30MHTmFol4Ez5lXSc1IA7eg</string>
     <string name="google_signing_secret" translatable="false">DTDrKz5z8ti16fOGYOhIkPNFkXk=</string>
     <string name="created_by">Created by </string>

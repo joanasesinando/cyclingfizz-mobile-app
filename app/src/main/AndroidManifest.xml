@@ -36,7 +36,6 @@
         tools:replace="android:icon,android:theme">
         <activity android:name=".AddCommentActivity" />
         <activity android:name=".ViewPOIActivity" />
-        <activity android:name=".RouteActivity" />
         <activity android:name=".EditPOIActivity" />
         <activity android:name=".MapPreviewActivity" />
         <activity android:name=".NewRouteActivity" />
@@ -47,6 +46,29 @@
         <activity android:name=".StreetViewActivity" />
         <activity android:name=".CyclewayActivity" />
         <activity android:name=".StationActivity" />
+<!--        <activity android:name=".RouteActivity" />-->
+        <activity
+            android:name=".RouteActivity">
+            <intent-filter android:autoVerify="true"
+                tools:targetApi="m">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- Accepts URIs that begin with "https://stations.cfservertest.ga/route” -->
+                <data android:scheme="https"
+                    android:host="stations.cfservertest.ga"
+                    android:pathPrefix="/route" />
+                <!-- note that the leading "/" is required for pathPrefix-->
+            </intent-filter>
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.VIEW" />-->
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--                <category android:name="android.intent.category.BROWSABLE" />-->
+<!--                &lt;!&ndash; Accepts URIs that begin with "cyclingfizz://route” &ndash;&gt;-->
+<!--                <data android:scheme="cyclingfizz"-->
+<!--                    android:host="route" />-->
+<!--            </intent-filter>-->
+        </activity>
         <activity android:name=".MapActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

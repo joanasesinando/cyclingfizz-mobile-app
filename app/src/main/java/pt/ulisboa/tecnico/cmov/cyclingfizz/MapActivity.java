@@ -124,6 +124,7 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textFont;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textIgnorePlacement;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textSize;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.visibility;
+import static pt.ulisboa.tecnico.cmov.cyclingfizz.ViewPOIActivity.ROUTE_ID;
 
 enum TrackingMode {
     FREE, FOLLOW_USER, FOLLOW_USER_WITH_BEARING
@@ -285,8 +286,27 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                         PointOfInterest poi = pathPlayer.checkIfNearPOI(userPoint);
                         if (poi != null) {
-                            // TODO: user near POI, prompt it!
-                            Log.d(TAG, "User near this poi -> " + poi);
+                            runOnUiThread(() -> {
+                                new MaterialAlertDialogBuilder(MapActivity.this)
+                                        .setTitle(poi.getName())
+                                        .setMessage(poi.getDescription())
+                                        .setNeutralButton(R.string.ignore, null)
+                                        .setPositiveButton(R.string.view_more, (dialog, which) -> {
+                                            SharedState sharedState = (SharedState) getApplicationContext();
+                                            sharedState.viewingPOI = poi;
+
+                                            Intent intent = new Intent(MapActivity.this, ViewPOIActivity.class);
+                                            Bundle bundle = new Bundle();
+                                            bundle.putString(ROUTE_ID, pathPlayer.getPlayingRoute().getId());
+                                            intent.putExtras(bundle);
+                                            startActivity(intent);
+                                            overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                                        }).show();
+                            });
+                        }
+
+                        if (pathPlayer.checkIfEnd(userPoint)) {
+                            stopPlaying();
                         }
                     }
                 })).start();
