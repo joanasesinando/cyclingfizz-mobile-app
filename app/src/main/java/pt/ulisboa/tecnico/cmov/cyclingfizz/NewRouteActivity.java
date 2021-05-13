@@ -9,6 +9,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -124,15 +125,14 @@ public class NewRouteActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         try {
             if (requestCode == PICK_IMAGES && resultCode == RESULT_OK && data != null) {
-                Log.d(TAG, String.valueOf(data.getData()));
                 // Get URI
                 Uri uri = data.getData();
                 image = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
-
+                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(image, 128, 128);
 
                 // Update view
                 ImageView thumbnail = findViewById(R.id.route_thumbnail);
-                thumbnail.setImageURI(uri);
+                thumbnail.setImageBitmap(thumbImage);
 
             } else {
                 Toast.makeText(this, "No photo selected", Toast.LENGTH_LONG).show();
@@ -441,7 +441,8 @@ public class NewRouteActivity extends AppCompatActivity {
             ArrayList<Bitmap> images = poi.getImages();
             if (images.size() > 0) {
                 ImageView thumbnail = layout.findViewById(R.id.poi_item_thumbnail);
-                thumbnail.setImageBitmap(images.get(0));
+                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(images.get(0), 128, 128);
+                thumbnail.setImageBitmap(thumbImage);
             }
 
             //Set title

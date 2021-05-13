@@ -9,8 +9,10 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -453,10 +455,12 @@ public class RouteActivity extends AppCompatActivity {
             order.setText(String.valueOf(i));
 
             // Set thumbnail
-            ArrayList<Bitmap> images = poi.getImages();
-            if (images.size() > 0) {
-                ImageView thumbnail = layout.findViewById(R.id.poi_item_thumbnail);
-                thumbnail.setImageBitmap(images.get(0));
+            if (poi.getMediaLinks().size() > 0) {
+                poi.downloadAndGetImage(0, bitmap -> {
+                    ImageView thumbnail = layout.findViewById(R.id.poi_item_thumbnail);
+                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
+                    thumbnail.setImageBitmap(thumbImage);
+                });
             }
 
             //Set title
@@ -526,7 +530,10 @@ public class RouteActivity extends AppCompatActivity {
 
                     ImageView avatar = layout.findViewById(R.id.review_item_avatar);
                     String avatarURL = obj.get("data").getAsJsonObject().get("avatar").getAsString();
-                    (new Utils.httpRequestImage(avatar::setImageBitmap)).execute(avatarURL);
+                    (new Utils.httpRequestImage(bitmap -> {
+                        Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
+                        avatar.setImageBitmap(thumbImage);
+                    })).execute(avatarURL);
 
                 })).execute(SERVER_URL + "/get-user-info?uid=" + review.getAuthorUID());
 
@@ -550,7 +557,8 @@ public class RouteActivity extends AppCompatActivity {
                         runOnUiThread(() -> {
                             GridLayout gallery = findViewById(R.id.review_item_gallery);
                             for (Bitmap bitmap : review.getImages()) {
-                                addImageToGallery(bitmap, gallery);
+                                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
+                                addImageToGallery(thumbImage, gallery);
                             }
                             if (review.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
                         });

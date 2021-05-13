@@ -3,6 +3,8 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.media.ThumbnailUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -187,7 +189,10 @@ public final class Sidebar {
 
         } else {
             if (user.getPhotoUrl() != null) {
-                (new Utils.httpRequestImage(userAvatar::setImageBitmap)).execute(user.getPhotoUrl().toString());
+                (new Utils.httpRequestImage(bitmap -> {
+                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
+                    userAvatar.setImageBitmap(thumbImage);
+                })).execute(user.getPhotoUrl().toString());
             } else {
                 userAvatar.setImageDrawable(ContextCompat.getDrawable(activity, R.drawable.ic_default_avatar));
             }

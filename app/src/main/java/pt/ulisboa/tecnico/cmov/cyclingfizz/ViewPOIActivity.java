@@ -7,6 +7,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -111,7 +112,8 @@ public class ViewPOIActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     GridLayout gallery = findViewById(R.id.poi_gallery);
                     for (Bitmap bitmap : poi.getImages()) {
-                        addImageToGallery(bitmap, gallery);
+                        Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 256, 256);
+                        addImageToGallery(thumbImage, gallery);
                     }
                     if (poi.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
                     progressIndicator.setVisibility(View.GONE);
@@ -206,7 +208,10 @@ public class ViewPOIActivity extends AppCompatActivity {
 
                     ImageView avatar = layout.findViewById(R.id.comment_item_avatar);
                     String avatarURL = obj.get("data").getAsJsonObject().get("avatar").getAsString();
-                    (new Utils.httpRequestImage(avatar::setImageBitmap)).execute(avatarURL);
+                    (new Utils.httpRequestImage(bitmap -> {
+                        Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
+                        avatar.setImageBitmap(thumbImage);
+                    })).execute(avatarURL);
 
                 })).execute(SERVER_URL + "/get-user-info?uid=" + comment.getAuthorUID());
 
@@ -220,7 +225,8 @@ public class ViewPOIActivity extends AppCompatActivity {
                         runOnUiThread(() -> {
                             GridLayout gallery = findViewById(R.id.comment_item_gallery);
                             for (Bitmap bitmap : comment.getImages()) {
-                                addImageToGallery(bitmap, gallery);
+                                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 256, 256);
+                                addImageToGallery(thumbImage, gallery);
                             }
                             if (comment.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
                         });

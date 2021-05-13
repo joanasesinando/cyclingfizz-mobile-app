@@ -144,6 +144,10 @@ public class PointOfInterest implements Serializable {
         }
     }
 
+    public void downloadAndGetImage(int index, Utils.OnTaskCompleted<Bitmap> callback) {
+        (new Utils.httpRequestImage(callback::onTaskCompleted)).execute(mediaLinks.get(index));
+    }
+
     public void getJsonAsync(Utils.OnTaskCompleted<JsonObject> callback) {
         JsonObject data = new JsonObject();
         data.addProperty("title", name);
