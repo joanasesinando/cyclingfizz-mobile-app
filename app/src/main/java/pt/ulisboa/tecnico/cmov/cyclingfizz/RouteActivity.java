@@ -365,7 +365,7 @@ public class RouteActivity extends AppCompatActivity {
                 shareIntent.setType("image/*");
                 shareIntent.setAction(Intent.ACTION_SEND);
                 shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                startActivity(Intent.createChooser(shareIntent, "Share map image"));
+                startActivity(Intent.createChooser(shareIntent, "Share Route"));
             }
             hasStartedSnapshotGeneration = false;
         }));
