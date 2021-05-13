@@ -448,7 +448,9 @@ public class EditCommentActivity extends AppCompatActivity {
     }
 
     private void deleteComment() {
-        // TODO
-        finish();
+        poi.removeComment(commentIndex, routeID, deleted -> {
+            if (deleted) finish();
+            else Toast.makeText(this, "Could not delete comment", Toast.LENGTH_SHORT).show();
+        });
     }
 }

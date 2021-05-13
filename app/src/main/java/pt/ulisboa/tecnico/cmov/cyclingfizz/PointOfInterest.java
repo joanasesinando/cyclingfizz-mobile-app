@@ -235,6 +235,30 @@ public class PointOfInterest implements Serializable {
         }
     }
 
+    public void removeComment(int commentIndex, String routeID, Utils.OnTaskCompleted<Boolean> callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                JsonObject data = new JsonObject();
+                data.addProperty("id_token", idToken);
+                data.addProperty("route_id", routeID);
+                data.addProperty("poi_id", id);
+                data.addProperty("comment_id", comments.get(commentIndex).getId());
+
+                (new Utils.httpPostRequestJson(response -> {
+                    comments.remove(commentIndex);
+                    callback.onTaskCompleted(true);
+                }, data.toString())).execute(SERVER_URL + "/delete-comment-poi");
+            });
+        } else {
+            callback.onTaskCompleted(false);
+            Log.d(TAG, "Null User");
+        }
+    }
+
 
     public static class Comment implements Serializable {
 
@@ -262,6 +286,10 @@ public class PointOfInterest implements Serializable {
         public Comment(String msg, ArrayList<Bitmap> images) {
             // from Android
             this(null,null, null, msg, new ArrayList<>(), images);
+        }
+
+        public String getId() {
+            return id;
         }
 
         public String getCreationTimestamp() {
