@@ -34,7 +34,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CyclingFizz"
         tools:replace="android:icon,android:theme">
-        <activity android:name=".EditCommentActivity"></activity>
         <activity android:name=".AddCommentActivity" />
         <activity android:name=".ViewPOIActivity" />
         <activity android:name=".RouteActivity" />

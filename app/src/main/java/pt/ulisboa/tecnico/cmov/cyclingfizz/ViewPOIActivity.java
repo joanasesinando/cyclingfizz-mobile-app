@@ -2,6 +2,7 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
@@ -17,10 +18,12 @@ import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -243,17 +246,16 @@ public class ViewPOIActivity extends AppCompatActivity {
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 assert user != null;
                 if (comment.getAuthorUID().equals(user.getUid())) {
-                    ImageView editBtn = layout.findViewById(R.id.comment_item_edit);
-                    editBtn.setVisibility(View.VISIBLE);
+                    ImageView deleteBtn = layout.findViewById(R.id.comment_item_delete);
+                    deleteBtn.setVisibility(View.VISIBLE);
                     int commentIndex = i;
-                    editBtn.setOnClickListener(v -> {
-                        Intent intent = new Intent(this, EditCommentActivity.class);
-                        Bundle bundle = new Bundle();
-                        bundle.putString(ROUTE_ID, routeID);
-                        bundle.putInt(COMMENT_INDEX, commentIndex);
-                        intent.putExtras(bundle);
-                        startActivity(intent);
-                        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                    deleteBtn.setOnClickListener(v -> {
+                        new MaterialAlertDialogBuilder(this, R.style.SecondaryAlertDialog)
+                            .setTitle(R.string.delete_comment)
+                            .setMessage(R.string.delete_comment_warning)
+                            .setNeutralButton(R.string.cancel, null)
+                            .setPositiveButton(R.string.delete, (dialog, which) -> deleteComment(commentIndex))
+                            .show();
                     });
                 }
 
@@ -272,6 +274,13 @@ public class ViewPOIActivity extends AppCompatActivity {
         LinearLayout linearLayout = findViewById(R.id.comments_list);
         linearLayout.removeAllViews();
         setComments();
+    }
+
+    private void deleteComment(int commentIndex) {
+        poi.removeComment(commentIndex, routeID, deleted -> {
+            if (deleted) finish();
+            else Toast.makeText(this, "Could not delete comment", Toast.LENGTH_SHORT).show();
+        });
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)

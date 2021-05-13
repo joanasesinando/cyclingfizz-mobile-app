@@ -32,4 +32,13 @@
     <style name="SecondaryTextInput" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="colorControlActivated">@color/purple_500</item>
     </style>
+
+    <style name="SecondaryAlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="buttonBarPositiveButtonStyle">@style/PurpleButtonStyle</item>
+        <item name="buttonBarNeutralButtonStyle">@style/PurpleButtonStyle</item>
+    </style>
+    <style name="PurpleButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/purple_500</item>
+        <item name="rippleColor">@color/purple_500</item>
+    </style>
 </resources>

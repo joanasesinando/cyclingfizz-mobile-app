@@ -64,6 +64,9 @@
     <string name="route_being_played_warning">You are currently playing a route! Please stop the playing first.</string>
     <string name="route_being_recorded">Route being recorded</string>
     <string name="route_being_recorded_warning">You are currently recording a route! Please stop the recording first.</string>
+    <string name="delete_comment">Delete comment</string>
+    <string name="delete_comment_warning">You’re about to delete this comment. Are you sure you want to delete?</string>
+
 
     <!-- Messages -->
     <string name="route_recorded">Route recorded</string>

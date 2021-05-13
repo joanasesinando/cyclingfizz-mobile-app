@@ -125,18 +125,5 @@
             android:text="@string/done"
             app:icon="@drawable/ic_round_check_24"
             app:iconGravity="textStart" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/delete_comment"
-            style="@style/SecondaryOutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/quicksand_bold"
-            android:paddingVertical="8dp"
-            android:text="@string/delete"
-            app:icon="@drawable/ic_round_delete_24"
-            app:iconGravity="textStart"
-            app:rippleColor="@color/purple_alpha"
-            android:visibility="gone"/>
     </LinearLayout>
 </LinearLayout>
