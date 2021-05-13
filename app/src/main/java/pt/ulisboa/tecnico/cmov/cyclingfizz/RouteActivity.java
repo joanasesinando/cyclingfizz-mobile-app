@@ -5,12 +5,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.FileProvider;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,6 +51,9 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonOptions;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.mapboxsdk.utils.BitmapUtils;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -105,6 +112,7 @@ public class RouteActivity extends AppCompatActivity {
     private MapboxMap mapboxMap;
 
     DecimalFormat oneDecimalFormatter = new DecimalFormat("#.0");
+    private boolean hasStartedSnapshotGeneration;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -114,6 +122,9 @@ public class RouteActivity extends AppCompatActivity {
         setContentView(R.layout.route);
 
         mAuth = FirebaseAuth.getInstance();
+
+        hasStartedSnapshotGeneration = false;
+
 
         // Get route
         String routeID = getIntent().getStringExtra(RoutesListActivity.ROUTE_ID);
@@ -223,6 +234,16 @@ public class RouteActivity extends AppCompatActivity {
 
         // Set share btn click listener
         // TODO
+        toolbar.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.share) {
+                if (!hasStartedSnapshotGeneration) {
+                    hasStartedSnapshotGeneration = true;
+                    shareRouteShot();
+                }
+            };
+            return false;
+        });
 
         // Set play btn click listener
         FloatingActionButton playBtn = findViewById(R.id.route_play);
@@ -244,6 +265,55 @@ public class RouteActivity extends AppCompatActivity {
             startActivity(intent);
             overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
         });
+    }
+
+    private void shareRouteShot() {
+
+        mapboxMap.snapshot((snapshot -> {
+            Uri bmpUri = getLocalBitmapUri(snapshot);
+
+            Intent shareIntent = new Intent();
+            shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
+            shareIntent.setType("image/*");
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(shareIntent, "Share map image"));
+            hasStartedSnapshotGeneration = false;
+        }));
+
+    }
+
+
+    private Uri getLocalBitmapUri(Bitmap bmp) {
+        Uri bmpUri = null;
+        FileOutputStream out = null;
+
+        try {
+            // Create an image file name
+            String imageFileName = "share_image_" + System.currentTimeMillis();
+            File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            File file = File.createTempFile(
+                    imageFileName,  /* prefix */
+                    ".png",         /* suffix */
+                    storageDir      /* directory */
+            );
+
+            out = new FileOutputStream(file);
+            bmp.compress(Bitmap.CompressFormat.PNG, 90, out);
+            try {
+                out.close();
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+            bmpUri = FileProvider.getUriForFile(this,
+                    "pt.ulisboa.tecnico.cmov.cyclingfizz.fileprovider",
+                    file);
+
+        } catch (IOException e) {
+            Log.e(TAG, e.getMessage());
+        }
+        return bmpUri;
+
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
