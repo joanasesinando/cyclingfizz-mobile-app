@@ -19,6 +19,15 @@
         android:layout_height="wrap_content"
         android:visibility="gone"/>
 
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progress_indicator2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        app:indicatorColor="@color/pink"
+        app:trackColor="@color/offPink"
+        android:visibility="gone"/>
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"

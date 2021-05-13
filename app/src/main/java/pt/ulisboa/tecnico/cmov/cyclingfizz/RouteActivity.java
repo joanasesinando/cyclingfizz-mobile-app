@@ -32,6 +32,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonElement;
@@ -169,10 +170,10 @@ public class RouteActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void uiInit() {
         // Update view
+        uiUpdateUserRate();
         uiUpdateTopBar(route.getTitle());
         uiUpdateRouteRate();
         updateAuthor();
-        uiUpdateUserRate();
         uiUpdateCard(findViewById(R.id.route_description), R.drawable.ic_description,
                 getString(R.string.description), route.getDescription());
         updatePOIs();
@@ -221,6 +222,10 @@ public class RouteActivity extends AppCompatActivity {
         // Check if user played this route
         route.checkIfUserPlayedRoute(hasPlayed -> {
             if (hasPlayed) {
+
+                CircularProgressIndicator progressIndicator = findViewById(R.id.route_rate_card_progress_indicator);
+                progressIndicator.setVisibility(View.VISIBLE);
+
                 // Check if review already posted
                 route.getReviewOfCurrentUser(review -> {
                     if (review != null) {
@@ -266,6 +271,7 @@ public class RouteActivity extends AppCompatActivity {
                     }
 
                     View rateView = findViewById(R.id.route_rate_card);
+                    progressIndicator.setVisibility(View.GONE);
                     rateView.setVisibility(View.VISIBLE);
                 });
             }
@@ -402,6 +408,29 @@ public class RouteActivity extends AppCompatActivity {
         }
         return bmpUri;
 
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void addImageToGallery(Bitmap bitmap, GridLayout gallery) {
+        final float scale = getResources().getDisplayMetrics().density;
+
+        // Create wrapper
+        ConstraintLayout imgWrapper = new ConstraintLayout(this);
+        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+        params.width = (int) (110 * scale);
+        params.height = (int) (110 * scale);
+        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        imgWrapper.setLayoutParams(params);
+
+        // Create image
+        ImageView newImg = new ImageView(this);
+        newImg.setImageBitmap(bitmap);
+        newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        LinearLayout.LayoutParams newImgParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        newImg.setLayoutParams(newImgParams);
+        imgWrapper.addView(newImg);
+
+        gallery.addView(imgWrapper, params);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -762,29 +791,6 @@ public class RouteActivity extends AppCompatActivity {
             MaterialCardView reviewsCard = findViewById(R.id.route_reviews);
             reviewsCard.setVisibility(View.VISIBLE);
         }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private void addImageToGallery(Bitmap bitmap, GridLayout gallery) {
-        final float scale = getResources().getDisplayMetrics().density;
-
-        // Create wrapper
-        ConstraintLayout imgWrapper = new ConstraintLayout(this);
-        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = (int) (110 * scale);
-        params.height = (int) (110 * scale);
-        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-        imgWrapper.setLayoutParams(params);
-
-        // Create image
-        ImageView newImg = new ImageView(this);
-        newImg.setImageBitmap(bitmap);
-        newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        LinearLayout.LayoutParams newImgParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        newImg.setLayoutParams(newImgParams);
-        imgWrapper.addView(newImg);
-
-        gallery.addView(imgWrapper, params);
     }
 
 

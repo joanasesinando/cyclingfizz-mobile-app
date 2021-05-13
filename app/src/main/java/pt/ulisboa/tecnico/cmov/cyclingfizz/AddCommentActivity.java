@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.File;
@@ -411,7 +412,12 @@ public class AddCommentActivity extends AppCompatActivity {
         boolean error = checkForErrors(message);
 
         if (!error) {
-            poi.addComment(routeID, message, images, commentJson -> finish());
+            LinearProgressIndicator progressIndicator = findViewById(R.id.progress_indicator2);
+            progressIndicator.setVisibility(View.VISIBLE);
+            poi.addComment(routeID, message, images, commentJson -> {
+                progressIndicator.setVisibility(View.GONE);
+                finish();
+            });
         }
     }
 }

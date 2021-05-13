@@ -30,6 +30,7 @@ import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.File;
@@ -386,7 +387,12 @@ public class AddReviewActivity extends AppCompatActivity {
         String message = msgInput.getEditText() != null ? msgInput.getEditText().getText().toString() : null;
 
         if (rate != 0) {
-            route.addReview(message, rate, images, reviewJson -> finish());
+            LinearProgressIndicator progressIndicator = findViewById(R.id.progress_indicator2);
+            progressIndicator.setVisibility(View.VISIBLE);
+            route.addReview(message, rate, images, reviewJson -> {
+                progressIndicator.setVisibility(View.GONE);
+                finish();
+            });
         }
     }
 }

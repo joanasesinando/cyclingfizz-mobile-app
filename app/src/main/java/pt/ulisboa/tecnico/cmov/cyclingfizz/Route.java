@@ -266,7 +266,6 @@ public class Route implements Serializable {
                 String idToken = result.getToken();
 
                 (new Utils.httpRequestJson(response -> {
-                    Log.d(TAG, String.valueOf(response));
                     if (!response.get("status").getAsString().equals("success") || response.get("has_played").isJsonNull()) {
                         callback.onTaskCompleted(false);
                         return;

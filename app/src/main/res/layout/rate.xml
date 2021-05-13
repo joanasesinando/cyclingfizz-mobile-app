@@ -67,7 +67,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:src="@drawable/ic_round_star_border_24"
-                    app:tint="@color/material_on_surface_disabled" />
+                    app:tint="@color/mtrl_textinput_default_box_stroke_color" />
 
                 <ImageView
                     android:id="@+id/rate_star2"
@@ -77,7 +77,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:src="@drawable/ic_round_star_border_24"
-                    app:tint="@color/material_on_surface_disabled" />
+                    app:tint="@color/mtrl_textinput_default_box_stroke_color" />
 
                 <ImageView
                     android:id="@+id/rate_star3"
@@ -87,7 +87,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:src="@drawable/ic_round_star_border_24"
-                    app:tint="@color/material_on_surface_disabled" />
+                    app:tint="@color/mtrl_textinput_default_box_stroke_color" />
 
                 <ImageView
                     android:id="@+id/rate_star4"
@@ -97,7 +97,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:src="@drawable/ic_round_star_border_24"
-                    app:tint="@color/material_on_surface_disabled" />
+                    app:tint="@color/mtrl_textinput_default_box_stroke_color" />
 
                 <ImageView
                     android:id="@+id/rate_star5"
@@ -107,7 +107,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:src="@drawable/ic_round_star_border_24"
-                    app:tint="@color/material_on_surface_disabled" />
+                    app:tint="@color/mtrl_textinput_default_box_stroke_color" />
             </LinearLayout>
 
             <com.google.android.material.button.MaterialButton

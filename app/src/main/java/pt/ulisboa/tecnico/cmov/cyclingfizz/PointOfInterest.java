@@ -304,6 +304,10 @@ public class PointOfInterest implements Serializable {
             return msg;
         }
 
+        public ArrayList<String> getMediaLinks() {
+            return mediaLinks;
+        }
+
         public ArrayList<Bitmap> getImages() {
             return images;
         }

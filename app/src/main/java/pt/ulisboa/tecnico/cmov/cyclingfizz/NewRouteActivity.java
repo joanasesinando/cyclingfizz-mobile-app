@@ -497,11 +497,11 @@ public class NewRouteActivity extends AppCompatActivity {
 
         if (!error) {
             LinearProgressIndicator progressIndicator = findViewById(R.id.progress_indicator);
+            progressIndicator.setVisibility(View.VISIBLE);
             pathRecorder.saveRecording(name, description, image, result -> {
                 progressIndicator.setVisibility(View.GONE);
                 finish();
             });
-            progressIndicator.setVisibility(View.VISIBLE);
         }
     }
 

@@ -118,7 +118,7 @@ public class ViewPOIActivity extends AppCompatActivity {
                     GridLayout gallery = findViewById(R.id.poi_gallery);
                     for (Bitmap bitmap : poi.getImages()) {
                         Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 256, 256);
-                        addImageToGallery(thumbImage, gallery);
+                        addImageToGallery(thumbImage, gallery, 110);
                     }
                     if (poi.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
                     progressIndicator.setVisibility(View.GONE);
@@ -159,14 +159,14 @@ public class ViewPOIActivity extends AppCompatActivity {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
-    private void addImageToGallery(Bitmap bitmap, GridLayout gallery) {
+    private void addImageToGallery(Bitmap bitmap, GridLayout gallery, int size) {
         final float scale = getResources().getDisplayMetrics().density;
 
         // Create wrapper
         ConstraintLayout imgWrapper = new ConstraintLayout(this);
         GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = (int) (110 * scale);
-        params.height = (int) (110 * scale);
+        params.width = (int) (size * scale);
+        params.height = (int) (size * scale);
         params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
         imgWrapper.setLayoutParams(params);
 
@@ -234,7 +234,7 @@ public class ViewPOIActivity extends AppCompatActivity {
                             GridLayout gallery = findViewById(R.id.comment_item_gallery);
                             for (Bitmap bitmap : comment.getImages()) {
                                 Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 256, 256);
-                                addImageToGallery(thumbImage, gallery);
+                                addImageToGallery(thumbImage, gallery, 75);
                             }
                             if (comment.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
                         });

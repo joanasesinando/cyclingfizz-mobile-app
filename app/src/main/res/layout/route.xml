@@ -82,6 +82,16 @@
                     app:layout_constraintTop_toTopOf="parent"/>
             </androidx.constraintlayout.widget.ConstraintLayout>
 
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/route_rate_card_progress_indicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="16dp"
+                android:indeterminate="true"
+                app:indicatorColor="@color/orange_500"
+                android:visibility="gone"/>
+
             <include
                 android:id="@+id/route_rate_card"
                 android:layout_width="match_parent"
