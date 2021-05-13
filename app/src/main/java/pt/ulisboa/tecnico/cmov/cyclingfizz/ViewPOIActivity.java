@@ -11,6 +11,7 @@ import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +29,7 @@ import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.gson.JsonElement;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -210,11 +212,14 @@ public class ViewPOIActivity extends AppCompatActivity {
                     name.setText(userName);
 
                     ImageView avatar = layout.findViewById(R.id.comment_item_avatar);
-                    String avatarURL = obj.get("data").getAsJsonObject().get("avatar").getAsString();
-                    (new Utils.httpRequestImage(bitmap -> {
-                        Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
-                        avatar.setImageBitmap(thumbImage);
-                    })).execute(avatarURL);
+                    JsonElement avatarURLElement = obj.get("data").getAsJsonObject().get("avatar");
+                    if (!avatarURLElement.isJsonNull()) {
+                        String avatarURL = avatarURLElement.getAsString();
+                        (new Utils.httpRequestImage(bitmap -> {
+                            Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
+                            avatar.setImageBitmap(thumbImage);
+                        })).execute(avatarURL);
+                    }
 
                 })).execute(SERVER_URL + "/get-user-info?uid=" + comment.getAuthorUID());
 

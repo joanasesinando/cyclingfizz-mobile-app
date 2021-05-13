@@ -34,7 +34,7 @@ public class PathPlayer {
 
     public void playRoute(Route route) {
         routePlaying = route;
-        Log.d(TAG, String.valueOf(routePlaying));
+        route.setRouteAsPlayedInServer(ignored -> {});
     }
 
     public void stopRoute() {

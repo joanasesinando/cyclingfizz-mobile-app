@@ -28,7 +28,8 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp">
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="18dp">
 
                 <LinearLayout
                     android:id="@+id/route_rate"
@@ -81,10 +82,17 @@
                     app:layout_constraintTop_toTopOf="parent"/>
             </androidx.constraintlayout.widget.ConstraintLayout>
 
+            <include
+                android:id="@+id/route_rate_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                layout="@layout/rate"
+                android:visibility="gone"/>
+
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
                 android:id="@+id/previewRouteMaplay">
 
                 <com.mapbox.mapboxsdk.maps.MapView

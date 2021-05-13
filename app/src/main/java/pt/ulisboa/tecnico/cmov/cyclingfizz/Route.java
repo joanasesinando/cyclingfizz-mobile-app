@@ -227,8 +227,87 @@ public class Route implements Serializable {
         return new ArrayList<>(line.coordinates());
     }
 
+    public void getReviewOfCurrentUser(Utils.OnTaskCompleted<Review> callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-    public void reviewRoute(String msg, int rate, ArrayList<Bitmap> images, Utils.OnTaskCompleted<Review> callback) {
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                (new Utils.httpRequestJson(response -> {
+                    JsonElement reviewElement = response.get("review_id");
+                    if (!response.get("status").getAsString().equals("success") || reviewElement.isJsonNull()) {
+                        callback.onTaskCompleted(null);
+                        return;
+                    }
+
+                    String reviewID = reviewElement.getAsString();
+                    for (Review review : reviews) {
+                        if (review.getId().equals(reviewID)) {
+                            callback.onTaskCompleted(review);
+                            return;
+                        }
+                    }
+                })).execute(SERVER_URL + "/get-review-by-user-and-route?idToken=" + idToken + "&route_id=" + id);
+            });
+            return;
+
+        } else {
+            Log.d(TAG, "Null User");
+        }
+        callback.onTaskCompleted(null);
+    }
+
+    public void checkIfUserPlayedRoute(Utils.OnTaskCompleted<Boolean> callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                (new Utils.httpRequestJson(response -> {
+                    Log.d(TAG, String.valueOf(response));
+                    if (!response.get("status").getAsString().equals("success") || response.get("has_played").isJsonNull()) {
+                        callback.onTaskCompleted(false);
+                        return;
+                    }
+
+                    callback.onTaskCompleted(response.get("has_played").getAsBoolean());
+                })).execute(SERVER_URL + "/check-if-user-played-route?idToken=" + idToken + "&route_id=" + id);
+            });
+            return;
+
+        } else {
+            Log.d(TAG, "Null User");
+        }
+        callback.onTaskCompleted(false);
+    }
+
+    public void setRouteAsPlayedInServer(Utils.OnTaskCompleted<Boolean> callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                (new Utils.httpRequestJson(response -> {
+                    if (!response.get("status").getAsString().equals("success")) {
+                        callback.onTaskCompleted(false);
+                        return;
+                    }
+
+                    callback.onTaskCompleted(true);
+                })).execute(SERVER_URL + "/play-route?idToken=" + idToken + "&route_id=" + id);
+            });
+            return;
+
+        } else {
+            Log.d(TAG, "Null User");
+        }
+        callback.onTaskCompleted(false);
+    }
+
+    public void addReview(String msg, int rate, ArrayList<Bitmap> images, Utils.OnTaskCompleted<Review> callback) {
         Review review = new Review(msg, rate, images);
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -238,13 +317,14 @@ public class Route implements Serializable {
 
                 review.uploadImages(ignored -> {
                     review.getJsonAsync(data -> {
-                        data.addProperty("idToken", idToken);
+                        data.addProperty("id_token", idToken);
                         data.addProperty("route_id", id);
 
                         (new Utils.httpPostRequestJson(response -> {
-
-                            addReviewFromJson(response.get("review").getAsJsonObject(), response.get("id").getAsString());
-                            callback.onTaskCompleted(Review.fromJson(response.get("review").getAsJsonObject(), response.get("id").getAsString()));
+                            Log.d(TAG, String.valueOf(response));
+                            JsonObject reviewJson = response.get("review").getAsJsonObject();
+                            addReviewFromJson(reviewJson.get("review").getAsJsonObject(), reviewJson.get("id").getAsString());
+                            callback.onTaskCompleted(Review.fromJson(reviewJson.get("review").getAsJsonObject(), reviewJson.get("id").getAsString()));
                         }, data.toString())).execute(SERVER_URL + "/review-route");
                     });
                 });
@@ -285,6 +365,10 @@ public class Route implements Serializable {
         public Review(String msg, int rate, ArrayList<Bitmap> images) {
             // from android
             this(null, null, msg, rate, null, new ArrayList<>(), images);
+        }
+
+        public String getId() {
+            return id;
         }
 
         public String getAuthorUID() {

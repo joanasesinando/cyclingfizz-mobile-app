@@ -37,10 +37,12 @@
     <string name="quit">Quit</string>
     <string name="sort">Sort</string>
     <string name="leave_comment">Leave a comment</string>
+    <string name="leave_review">Leave a review</string>
     <string name="done">Done</string>
     <string name="view_more">View More</string>
     <string name="ignore">Ignore</string>
 
+    <string name="edit_review">Edit review</string>
 
     <!-- States -->
     <string name="recording">Recording...</string>
@@ -151,6 +153,11 @@
 
     <!-- Comments -->
     <string name="write_comment">Write your comment...</string>
+
+    <!-- Reviews -->
+    <string name="write_review">Describe your experience (optional)</string>
+    <string name="rate_route">Rate this route</string>
+    <string name="tell_others_what_you_think">Tell others what you think</string>
 
 
     <!-- Location Permissions -->

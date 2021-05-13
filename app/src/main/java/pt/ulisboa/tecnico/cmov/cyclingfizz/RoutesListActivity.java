@@ -15,6 +15,7 @@ import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -216,5 +217,20 @@ public class RoutesListActivity extends AppCompatActivity {
                     .show();
             }
         });
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ------------ ACTIVITY LIFECYCLE ------------ ***/
+    /*** -------------------------------------------- ***/
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    public void onRestart() {
+        super.onRestart();
+
+        LinearLayout linearLayout = findViewById(R.id.routes_list);
+        linearLayout.removeAllViews();
+        updateRouteListView();
     }
 }

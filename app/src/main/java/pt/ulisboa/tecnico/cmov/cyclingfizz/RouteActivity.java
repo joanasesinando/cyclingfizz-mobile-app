@@ -9,6 +9,7 @@ import androidx.core.content.FileProvider;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.media.ThumbnailUtils;
@@ -16,10 +17,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -27,10 +28,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonElement;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
@@ -98,6 +101,7 @@ public class RouteActivity extends AppCompatActivity {
     static String SERVER_URL = Utils.STATIONS_SERVER_URL;
     public final static String POI = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI";
     public final static String ROUTE_ID = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_ID";
+    public final static String RATE = "pt.ulisboa.tecnico.cmov.cyclingfizz.RATE";
 
     static String PATH_SOURCE_ID = "path-source";
     static String PATH_LAYER_ID = "path-layer";
@@ -144,9 +148,6 @@ public class RouteActivity extends AppCompatActivity {
             routeID = intent.getStringExtra(RoutesListActivity.ROUTE_ID);
         }
 
-        Log.d(TAG, routeID);
-
-
         (new Utils.httpRequestJson(obj -> {
             if (!obj.get("status").getAsString().equals("success")) {
                 Toast.makeText(this, "Error: couldn't get route", Toast.LENGTH_LONG).show();
@@ -169,8 +170,9 @@ public class RouteActivity extends AppCompatActivity {
     private void uiInit() {
         // Update view
         uiUpdateTopBar(route.getTitle());
-        uiUpdateRate();
+        uiUpdateRouteRate();
         updateAuthor();
+        uiUpdateUserRate();
         uiUpdateCard(findViewById(R.id.route_description), R.drawable.ic_description,
                 getString(R.string.description), route.getDescription());
         updatePOIs();
@@ -191,7 +193,7 @@ public class RouteActivity extends AppCompatActivity {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
-    private void uiUpdateRate() {
+    private void uiUpdateRouteRate() {
         int rateCount = route.getRates().size();
 
         TextView reviews = findViewById(R.id.route_nr_reviews);
@@ -212,6 +214,71 @@ public class RouteActivity extends AppCompatActivity {
 
         ImageView rateIcon = findViewById(R.id.route_rate_icon);
         rateIcon.setColorFilter(getColorFromRate(rateAvg));
+    }
+
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private void uiUpdateUserRate() {
+        // Check if user played this route
+        route.checkIfUserPlayedRoute(hasPlayed -> {
+            if (hasPlayed) {
+                // Check if review already posted
+                route.getReviewOfCurrentUser(review -> {
+                    if (review != null) {
+                        MaterialButton editReviewBtn = findViewById(R.id.edit_review);
+                        editReviewBtn.setVisibility(View.VISIBLE);
+
+                        for (int i = 1; i <= 5; i++) {
+                            ImageView star = findViewById(getResources().getIdentifier("rate_star" + i, "id", getPackageName()));
+
+                            if (i <= review.getRate()) {
+                                star.setImageDrawable(getDrawable(R.drawable.ic_round_star_24));
+                                star.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange_500)));
+                            }
+
+                            int rate = i;
+                            star.setOnClickListener(v -> {
+                                SharedState sharedState = (SharedState) getApplicationContext();
+                                sharedState.editingReview = review;
+
+                                Intent intent = new Intent(this, EditReviewActivity.class);
+                                intent.putExtra(RATE, rate);
+                                startActivity(intent);
+                                overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                            });
+                        }
+
+                    } else {
+                        for (int i = 1; i <= 5; i++) {
+                            ImageView star = findViewById(getResources().getIdentifier("rate_star" + i, "id", getPackageName()));
+                            int rate = i;
+                            star.setOnClickListener(v -> {
+                                setRate(rate);
+
+                                SharedState sharedState = (SharedState) getApplicationContext();
+                                sharedState.reviewingRoute = route;
+
+                                Intent intent = new Intent(this, AddReviewActivity.class);
+                                intent.putExtra(RATE, rate);
+                                startActivity(intent);
+                                overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                            });
+                        }
+                    }
+
+                    View rateView = findViewById(R.id.route_rate_card);
+                    rateView.setVisibility(View.VISIBLE);
+                });
+            }
+        });
+    }
+
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private void setRate(int rate) {
+        for (int i = 1; i <= rate; i++) {
+            ImageView star = findViewById(getResources().getIdentifier("rate_star" + i, "id", getPackageName()));
+            star.setImageDrawable(getDrawable(R.drawable.ic_round_star_24));
+            star.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange_500)));
+        }
     }
 
     private void updateAuthor() {
@@ -614,22 +681,26 @@ public class RouteActivity extends AppCompatActivity {
                     if (!obj.get("status").getAsString().equals("success")) return;
 
                     TextView name = layout.findViewById(R.id.review_item_name);
+                    Log.d(TAG, String.valueOf(obj));
                     String userName = obj.get("data").getAsJsonObject().get("name").getAsString();
                     name.setText(userName);
 
                     ImageView avatar = layout.findViewById(R.id.review_item_avatar);
-                    String avatarURL = obj.get("data").getAsJsonObject().get("avatar").getAsString();
-                    (new Utils.httpRequestImage(bitmap -> {
-                        Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
-                        avatar.setImageBitmap(thumbImage);
-                    })).execute(avatarURL);
+                    JsonElement avatarURLElement = obj.get("data").getAsJsonObject().get("avatar");
+                    if (!avatarURLElement.isJsonNull()) {
+                        String avatarURL = avatarURLElement.getAsString();
+                        (new Utils.httpRequestImage(bitmap -> {
+                            Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
+                            avatar.setImageBitmap(thumbImage);
+                        })).execute(avatarURL);
+                    }
 
                 })).execute(SERVER_URL + "/get-user-info?uid=" + review.getAuthorUID());
 
 
                 // Set comment
                 TextView comment = layout.findViewById(R.id.review_item_comment);
-                comment.setText(review.getMsg() != null ? review.getMsg() : getString(R.string.no_comment));
+                comment.setText(review.getMsg() != null && !review.getMsg().equals("") ? review.getMsg() : getString(R.string.no_comment));
 
                 // Set rate
                 int rate = review.getRate();
@@ -714,5 +785,37 @@ public class RouteActivity extends AppCompatActivity {
         imgWrapper.addView(newImg);
 
         gallery.addView(imgWrapper, params);
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ------------ ACTIVITY LIFECYCLE ------------ ***/
+    /*** -------------------------------------------- ***/
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    public void onRestart() {
+        super.onRestart();
+
+        (new Utils.httpRequestJson(obj -> {
+            if (!obj.get("status").getAsString().equals("success")) {
+                Toast.makeText(this, "Error: couldn't get route", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            route = Route.fromJson(obj.get("data").getAsJsonObject());
+
+            // Clean Reviews
+            LinearLayout linearLayout = findViewById(R.id.reviews_list);
+            linearLayout.removeAllViews();
+
+            View rateCard = findViewById(R.id.route_rate_card);
+            rateCard.setVisibility(View.GONE);
+
+            uiUpdateUserRate();
+            updateReviews();
+            uiUpdateRouteRate();
+
+        })).execute(SERVER_URL + "/get-route-by-id?routeID=" + route.getId());
     }
 }
