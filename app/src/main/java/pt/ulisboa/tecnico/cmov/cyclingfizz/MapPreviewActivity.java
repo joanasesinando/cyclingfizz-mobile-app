@@ -159,9 +159,13 @@ public class MapPreviewActivity extends AppCompatActivity {
                     if ("POI".equals(itemSelected)) {
                         int poiIndex = feature.getNumberProperty("id").intValue();
                         PointOfInterest poi = pois.get(poiIndex);
+
+                        SharedState sharedState = (SharedState) getApplicationContext();
+                        sharedState.viewingPOI = poi;
+
                         intent = new Intent(this, ViewPOIActivity.class);
                         bundle = new Bundle();
-                        bundle.putSerializable(POI, poi);
+                        bundle.putString(ROUTE_ID, routeID);
                         intent.putExtras(bundle);
                         startActivity(intent);
                         overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);

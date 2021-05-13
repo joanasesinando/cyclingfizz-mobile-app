@@ -186,6 +186,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public final static String USER_LOCATION = "pt.ulisboa.tecnico.cmov.cyclingfizz.USER_LOCATION";
     public final static String POI_INDEX = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI_INDEX";
     public final static String POI_LOCATION = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI_LOCATION";
+    public final static String ROUTE_ID = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_ID";
 
     private MapView mapView;
     private MapboxMap mapboxMap;
@@ -445,10 +446,25 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 switch (itemSelected) {
                     case "POI":
                         int poiIndex = feature.getNumberProperty("id").intValue();
-                        intent = new Intent(this, EditPOIActivity.class);
-                        intent.putExtra(POI_INDEX, poiIndex);
-                        startActivity(intent);
-                        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                        if (pathRecorder.isRecording()) {
+                            intent = new Intent(this, EditPOIActivity.class);
+                            intent.putExtra(POI_INDEX, poiIndex);
+                            startActivity(intent);
+                            overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+
+                        } else if (pathPlayer.isPlayingRoute()) {
+                            Route routePlaying = pathPlayer.getPlayingRoute();
+                            PointOfInterest poi = routePlaying.getAllPOIs().get(poiIndex);
+                            SharedState sharedState = (SharedState) getApplicationContext();
+                            sharedState.viewingPOI = poi;
+
+                            intent = new Intent(this, ViewPOIActivity.class);
+                            bundle = new Bundle();
+                            bundle.putString(ROUTE_ID, routePlaying.getId());
+                            intent.putExtras(bundle);
+                            startActivity(intent);
+                            overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                        }
                         break;
 
                     case "gira-station":

@@ -502,7 +502,7 @@ public class RouteActivity extends AppCompatActivity {
         bundle.putString(ROUTE_ID, route.getId());
         intent.putExtras(bundle);
         startActivity(intent);
-        overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
     }
 
 
