@@ -268,19 +268,20 @@ public class RouteActivity extends AppCompatActivity {
     }
 
     private void shareRouteShot() {
-
         mapboxMap.snapshot((snapshot -> {
             Uri bmpUri = getLocalBitmapUri(snapshot);
+            if (bmpUri != null) {
 
-            Intent shareIntent = new Intent();
-            shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
-            shareIntent.setType("image/*");
-            shareIntent.setAction(Intent.ACTION_SEND);
-            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(Intent.createChooser(shareIntent, "Share map image"));
+                Intent shareIntent = new Intent();
+                shareIntent.putExtra(Intent.EXTRA_TEXT, "I just found this awesome bicycle route in Cycling Fizz: \"" + route.getTitle() + "\"!");
+                shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
+                shareIntent.setType("*/*");
+                shareIntent.setAction(Intent.ACTION_SEND);
+                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivity(Intent.createChooser(shareIntent, "Share map image"));
+            }
             hasStartedSnapshotGeneration = false;
         }));
-
     }
 
 
