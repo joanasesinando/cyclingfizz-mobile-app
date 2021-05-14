@@ -17,6 +17,7 @@
     <string name="start">Start</string>
     <string name="link">Get URL</string>
     <string name="share">Share</string>
+    <string name="flag_as_inappropriate">Flag as inappropriate</string>
     <string name="filter">Filter</string>
     <string name="filter_gira">Gira stations</string>
     <string name="filter_cycleways">Cycleways</string>

@@ -69,6 +69,10 @@ public class CyclewayActivity extends AppCompatActivity {
         uiUpdateTopBar(tags.has("name") ?
                 Utils.capitalize(tags.get("name").getAsString()) : getString(R.string.no_name));
 
+        // Hide top bar menu
+        MaterialToolbar topBar = findViewById(R.id.cycleway_toolbar).findViewById(R.id.taller_top_bar);
+        topBar.getMenu().clear();
+
         // Set navigation estimates
         uiUpdateNavigationEstimates();
 
