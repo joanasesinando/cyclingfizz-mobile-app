@@ -70,8 +70,7 @@ public class AddPOIActivity extends AppCompatActivity {
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
-                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    startActivityForResult(intent, TAKE_PHOTO);
+                    sendTakePhotoIntent();
                 }
             });
 
@@ -126,6 +125,7 @@ public class AddPOIActivity extends AppCompatActivity {
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else {
+                Log.d(TAG, "currentPhotoPath = " + currentPhotoPath);
                 Toast.makeText(this, "No photos selected", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
@@ -133,6 +133,30 @@ public class AddPOIActivity extends AppCompatActivity {
             Log.e(TAG, e.getMessage());
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void sendTakePhotoIntent() {
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            if (intent.resolveActivity(getPackageManager()) != null) {
+
+                File photoFile = createImageFile();
+
+                // Continue only if the File was successfully created
+                if (photoFile != null) {
+                    Uri photoURI = FileProvider.getUriForFile(this,
+                            "pt.ulisboa.tecnico.cmov.cyclingfizz.fileprovider",
+                            photoFile);
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                } else {
+                    Log.e(TAG, "Entra no else, photoFile = null");
+                }
+                startActivityForResult(intent, TAKE_PHOTO);
+            }
+
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.CAMERA);
+        }
     }
 
 
@@ -156,25 +180,7 @@ public class AddPOIActivity extends AppCompatActivity {
         // Set take photo btn listener
         MaterialButton takePhotoBtn = findViewById(R.id.poi_take_photo);
         takePhotoBtn.setOnClickListener(v -> {
-            if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                if (intent.resolveActivity(getPackageManager()) != null) {
-
-                    File photoFile = createImageFile();
-
-                    // Continue only if the File was successfully created
-                    if (photoFile != null) {
-                        Uri photoURI = FileProvider.getUriForFile(this,
-                                "pt.ulisboa.tecnico.cmov.cyclingfizz.fileprovider",
-                                photoFile);
-                        intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                    }
-                    startActivityForResult(intent, TAKE_PHOTO);
-                }
-
-            } else {
-                requestPermissionLauncher.launch(Manifest.permission.CAMERA);
-            }
+            sendTakePhotoIntent();
         });
 
         // Set pick photos btn listener
@@ -348,6 +354,8 @@ public class AddPOIActivity extends AppCompatActivity {
 
     @SuppressLint("SimpleDateFormat")
     private File createImageFile() {
+        Log.e(TAG, "createImageFile");
+
         try {
             // Create an image file name
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -358,6 +366,9 @@ public class AddPOIActivity extends AppCompatActivity {
                     ".jpg",         /* suffix */
                     storageDir      /* directory */
             );
+            Log.e(TAG, "get path");
+            Log.e(TAG, image.getAbsolutePath());
+
             currentPhotoPath = image.getAbsolutePath();
             return image;
         } catch (IOException e) {

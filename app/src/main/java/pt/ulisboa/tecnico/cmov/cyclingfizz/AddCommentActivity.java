@@ -65,8 +65,7 @@ public class AddCommentActivity extends AppCompatActivity {
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
-                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    startActivityForResult(intent, TAKE_PHOTO);
+                    sendTakePhotoIntent();
                 }
             });
 
@@ -130,6 +129,30 @@ public class AddCommentActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    private void sendTakePhotoIntent() {
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            if (intent.resolveActivity(getPackageManager()) != null) {
+
+                File photoFile = createImageFile();
+
+                // Continue only if the File was successfully created
+                if (photoFile != null) {
+                    Uri photoURI = FileProvider.getUriForFile(this,
+                            "pt.ulisboa.tecnico.cmov.cyclingfizz.fileprovider",
+                            photoFile);
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                } else {
+                    Log.e(TAG, "Entra no else, photoFile = null");
+                }
+                startActivityForResult(intent, TAKE_PHOTO);
+            }
+
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.CAMERA);
+        }
+    }
+
 
     /*** -------------------------------------------- ***/
     /*** -------------- USER INTERFACE -------------- ***/
@@ -151,25 +174,7 @@ public class AddCommentActivity extends AppCompatActivity {
         // Set take photo btn listener
         MaterialButton takePhotoBtn = findViewById(R.id.leave_comment_take_photo);
         takePhotoBtn.setOnClickListener(v -> {
-            if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                if (intent.resolveActivity(getPackageManager()) != null) {
-
-                    File photoFile = createImageFile();
-
-                    // Continue only if the File was successfully created
-                    if (photoFile != null) {
-                        Uri photoURI = FileProvider.getUriForFile(this,
-                                "pt.ulisboa.tecnico.cmov.cyclingfizz.fileprovider",
-                                photoFile);
-                        intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                    }
-                    startActivityForResult(intent, TAKE_PHOTO);
-                }
-
-            } else {
-                requestPermissionLauncher.launch(Manifest.permission.CAMERA);
-            }
+            sendTakePhotoIntent();
         });
 
         // Set pick photos btn listener
