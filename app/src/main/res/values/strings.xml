@@ -166,6 +166,10 @@
     <string name="rate_route">Rate this route</string>
     <string name="tell_others_what_you_think">Tell others what you think</string>
 
+    <!-- Reviews -->
+    <string name="are_you_sure_flag">Are you sure?</string>
+    <string name="are_you_sure_flag_message">You are about to flag this as inappropriate or incorrect. You won\'t be able to see this information again.\n\nDo you want to proceed?</string>
+    <string name="are_you_sure_flag_positive">Flag</string>
 
     <!-- Location Permissions -->
 

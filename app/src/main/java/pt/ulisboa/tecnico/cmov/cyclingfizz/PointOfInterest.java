@@ -140,7 +140,7 @@ public class PointOfInterest implements Serializable {
 
         for (String mediaLink : mediaLinks) {
 
-            if (mediaLinksDownloaded.containsKey(mediaLink) && mediaLinksDownloaded.get(mediaLink)) break;
+            if (mediaLinksDownloaded.containsKey(mediaLink) && mediaLinksDownloaded.get(mediaLink)) continue;
 
             (new Utils.httpRequestImage(response -> {
                 images.add(response);
@@ -371,7 +371,7 @@ public class PointOfInterest implements Serializable {
             }
 
             for (String mediaLink : mediaLinks) {
-                if (mediaLinksDownloaded.containsKey(mediaLink) && mediaLinksDownloaded.get(mediaLink)) break;
+                if (mediaLinksDownloaded.containsKey(mediaLink) && mediaLinksDownloaded.get(mediaLink)) continue;
 
                 (new Utils.httpRequestImage(response -> {
                     images.add(response);

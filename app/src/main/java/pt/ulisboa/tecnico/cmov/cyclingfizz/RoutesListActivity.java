@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.GridLayout;
@@ -70,85 +71,87 @@ public class RoutesListActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void updateRouteListView() {
 
-        (new Utils.httpRequestJson(obj -> {
-            if (!obj.get("status").getAsString().equals("success")) return;
-            LinearLayout linearLayout = findViewById(R.id.routes_list);
+        getFlaggedRoutesId(flaggedRoutes -> {
+            (new Utils.httpRequestJson(obj -> {
+                if (!obj.get("status").getAsString().equals("success")) return;
+                LinearLayout linearLayout = findViewById(R.id.routes_list);
 
-            for (JsonElement routeJsonElement : obj.get("data").getAsJsonArray()) {
-                JsonObject routeJson = routeJsonElement.getAsJsonObject();
-                LayoutInflater inflater = LayoutInflater.from(this);
-                ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.route_card, null, false);
+                for (JsonElement routeJsonElement : obj.get("data").getAsJsonArray()) {
+                    JsonObject routeJson = routeJsonElement.getAsJsonObject();
+                    LayoutInflater inflater = LayoutInflater.from(this);
+                    ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.route_card, null, false);
 
-                if (!routeJson.isJsonNull()) {
+                    if (!routeJson.isJsonNull()) {
 
-                    // Get views to update
-                    TextView titleView = layout.findViewById(R.id.route_card_title);
-                    TextView descriptionView = layout.findViewById(R.id.route_card_description);
-                    TextView routeCardRateValueView = layout.findViewById(R.id.route_card_rate_value);
-                    ImageView routeCardRateIconView = layout.findViewById(R.id.route_card_rate_icon);
+                        // Get views to update
+                        TextView titleView = layout.findViewById(R.id.route_card_title);
+                        TextView descriptionView = layout.findViewById(R.id.route_card_description);
+                        TextView routeCardRateValueView = layout.findViewById(R.id.route_card_rate_value);
+                        ImageView routeCardRateIconView = layout.findViewById(R.id.route_card_rate_icon);
 
-                    Route route = Route.fromJson(routeJson);
+                        Route route = Route.fromJson(routeJson);
+                        if (route.isFlagged()) continue;
+                        if (flaggedRoutes.contains(route.getId())) continue;
 
-                    // Set thumbnail
-                    if (routeJson.has("media_link")) {
-                        (new Thread(() -> {
-                            route.downloadImage(ignored -> {
-                                runOnUiThread(() -> {
-                                    ImageView thumbnail = layout.findViewById(R.id.route_card_thumbnail);
-                                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(route.getImage(), 128, 128);
-                                    thumbnail.setImageBitmap(thumbImage);
+                        // Set thumbnail
+                        if (routeJson.has("media_link")) {
+                            (new Thread(() -> {
+                                route.downloadImage(ignored -> {
+                                    runOnUiThread(() -> {
+                                        ImageView thumbnail = layout.findViewById(R.id.route_card_thumbnail);
+                                        Bitmap thumbImage = ThumbnailUtils.extractThumbnail(route.getImage(), 128, 128);
+                                        thumbnail.setImageBitmap(thumbImage);
+                                    });
                                 });
-                            });
-                        })).start();
-                    }
-
-                    // Set title & description
-                    titleView.setText(route.getTitle());
-                    descriptionView.setText(route.getDescription());
-
-                    // Set avg rate
-                    if (routeJson.get("reviews") != null && !routeJson.get("reviews").isJsonNull()) {
-                        float rateSum = 0;
-                        int rateCount = 0;
-
-                        JsonObject reviewsJson = routeJson.get("reviews").getAsJsonObject();
-
-                        for (String reviewID : reviewsJson.keySet()) {
-                            route.addReviewFromJson(reviewsJson.get(reviewID).getAsJsonObject(), reviewID);
+                            })).start();
                         }
 
-                        for (String reviewID : reviewsJson.keySet()) {
-                            JsonElement reviewJson = reviewsJson.get(reviewID);
-                            if (reviewJson.getAsJsonObject().has("rate")) {
-                                int rate = reviewJson.getAsJsonObject().get("rate").getAsInt();
-                                rateSum += rate;
-                                rateCount++;
+                        // Set title & description
+                        titleView.setText(route.getTitle());
+                        descriptionView.setText(route.getDescription());
+
+                        // Set avg rate
+                        if (routeJson.get("reviews") != null && !routeJson.get("reviews").isJsonNull()) {
+                            float rateSum = 0;
+                            int rateCount = 0;
+
+                            JsonObject reviewsJson = routeJson.get("reviews").getAsJsonObject();
+
+                            for (String reviewID : reviewsJson.keySet()) {
+                                route.addReviewFromJson(reviewsJson.get(reviewID).getAsJsonObject(), reviewID);
                             }
+
+                            for (String reviewID : reviewsJson.keySet()) {
+                                JsonElement reviewJson = reviewsJson.get(reviewID);
+                                if (reviewJson.getAsJsonObject().has("rate")) {
+                                    int rate = reviewJson.getAsJsonObject().get("rate").getAsInt();
+                                    rateSum += rate;
+                                    rateCount++;
+                                }
+                            }
+
+                            float rateAvg = rateSum / rateCount;
+
+                            routeCardRateValueView.setText(oneDecimalFormatter.format(rateAvg));
+                            routeCardRateValueView.setTextColor(getColorFromRate(rateAvg));
+                            routeCardRateIconView.setColorFilter(getColorFromRate(rateAvg));
                         }
 
-                        float rateAvg = rateSum / rateCount;
+                        String routeID = routeJson.get("id") != null && !routeJson.get("id").isJsonNull() ? routeJson.get("id").getAsString() : null;
 
-                        routeCardRateValueView.setText(oneDecimalFormatter.format(rateAvg));
-                        routeCardRateValueView.setTextColor(getColorFromRate(rateAvg));
-                        routeCardRateIconView.setColorFilter(getColorFromRate(rateAvg));
+                        if (routeID != null) layout.setOnClickListener(v -> {
+                            Intent intent = new Intent(this, RouteActivity.class);
+                            intent.putExtra(ROUTE_ID, routeID);
+                            startActivity(intent);
+                            overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                        });
                     }
 
-                    String routeID = routeJson.get("id") != null && !routeJson.get("id").isJsonNull() ? routeJson.get("id").getAsString() : null;
-
-                    if (routeID != null) layout.setOnClickListener(v -> {
-                        Intent intent = new Intent(this, RouteActivity.class);
-                        intent.putExtra(ROUTE_ID, routeID);
-                        startActivity(intent);
-                        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
-                    });
+                    linearLayout.addView(layout);
                 }
 
-                linearLayout.addView(layout);
-            }
-
-        })).execute(SERVER_URL + "/get-routes");
-
-
+            })).execute(SERVER_URL + "/get-routes");
+        });
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -156,6 +159,33 @@ public class RoutesListActivity extends AppCompatActivity {
         if (rate < 2.5f) return getColor(R.color.pink);
         if (rate < 4.0f) return getColor(R.color.warning);
         return getColor(R.color.success);
+    }
+
+    private void getFlaggedRoutesId(Utils.OnTaskCompleted<ArrayList<String>> callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+                (new Utils.httpRequestJson(response -> {
+                    if (!response.get("status").getAsString().equals("success")) {
+                        callback.onTaskCompleted(new ArrayList<>());
+                        return;
+                    }
+                    ArrayList<String> flaggedRoutes = new ArrayList<>();
+                    JsonArray flaggedRoutesJson = response.get("flagged_routes").getAsJsonArray();
+
+                    for (JsonElement flaggedRouteJson : flaggedRoutesJson) {
+                        flaggedRoutes.add(flaggedRouteJson.getAsString());
+                    }
+
+                    callback.onTaskCompleted(flaggedRoutes);
+                })).execute(SERVER_URL + "/get-flagged-routes-by-user?idToken=" + idToken);
+
+            });
+        } else {
+            callback.onTaskCompleted(new ArrayList<>());
+        }
     }
 
     private void uiSetClickListeners() {

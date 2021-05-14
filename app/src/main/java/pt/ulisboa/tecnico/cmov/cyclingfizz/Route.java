@@ -34,9 +34,10 @@ public class Route implements Serializable {
     private ArrayList<Review> reviews = new ArrayList<>();
     private Bitmap image;
     private String mediaLink;
+    private final int flags;
 
 
-    private Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, Bitmap bitmap, String mediaLink) {
+    private Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, Bitmap bitmap, String mediaLink, int flags) {
         this.routeJson = routeJson;
         this.idToken = idToken;
         this.title = title;
@@ -46,14 +47,17 @@ public class Route implements Serializable {
         this.authorUID = authorUID;
         this.image = bitmap;
         this.mediaLink = mediaLink;
+        this.flags = flags;
     }
 
-    private Route(String routeJson, String title, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, String mediaLink) {
-        this(routeJson, null, title, description, POIs, id, authorUID, null, mediaLink);
+    private Route(String routeJson, String title, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, String mediaLink, int flags) {
+        // from server
+        this(routeJson, null, title, description, POIs, id, authorUID, null, mediaLink, flags);
     }
 
     public Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs, Bitmap bitmap) {
-        this(routeJson, idToken, title, description, POIs, null, null, bitmap, null);
+        // from android
+        this(routeJson, idToken, title, description, POIs, null, null, bitmap, null, 0);
     }
 
     public Feature getRouteFeature() {
@@ -118,7 +122,8 @@ public class Route implements Serializable {
                 POISs,
                 json.get("id").getAsString(),
                 json.get("author_uid").getAsString(),
-                json.has("media_link") && !json.get("media_link").isJsonNull() ? json.get("media_link").getAsString() : null
+                json.has("media_link") && !json.get("media_link").isJsonNull() ? json.get("media_link").getAsString() : null,
+                json.has("flags") && !json.get("flags").isJsonNull() ? json.get("flags").getAsInt() : 0
         );
 
         if (json.get("reviews") != null && json.has("reviews")) {
@@ -349,7 +354,32 @@ public class Route implements Serializable {
                 });
             }
         });
+    }
 
+    public void flag(Utils.OnTaskCompleted<Void> callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+                JsonObject data = new JsonObject();
+                data.addProperty("idToken", idToken);
+                data.addProperty("route_id", id);
+
+                new Utils.httpPostRequestJson(response -> {
+                    callback.onTaskCompleted(null);
+                }, data.toString()).execute(SERVER_URL + "/flag-route");
+
+            });
+        } else {
+            callback.onTaskCompleted(null);
+            Log.d(TAG, "Null User");
+        }
+    }
+
+
+    public boolean isFlagged() {
+        return flags >= Utils.MAX_FLAGS_FROM_BAN;
     }
 
     public static class Review implements Serializable {
@@ -456,7 +486,7 @@ public class Route implements Serializable {
             }
 
             for (String mediaLink : mediaLinks) {
-                if (mediaLinksDownloaded.containsKey(mediaLink) && mediaLinksDownloaded.get(mediaLink)) break;
+                if (mediaLinksDownloaded.containsKey(mediaLink) && mediaLinksDownloaded.get(mediaLink)) continue;
 
                 (new Utils.httpRequestImage(response -> {
                     images.add(response);

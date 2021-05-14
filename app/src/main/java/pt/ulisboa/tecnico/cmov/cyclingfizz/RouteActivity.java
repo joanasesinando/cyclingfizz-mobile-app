@@ -333,7 +333,18 @@ public class RouteActivity extends AppCompatActivity {
                     hasStartedSnapshotGeneration = true;
                     shareRouteShot();
                 }
-            };
+            } else if (id == R.id.flag){
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.are_you_sure_flag)
+                        .setMessage(R.string.are_you_sure_flag_message)
+                        .setNeutralButton(R.string.cancel, null)
+                        .setPositiveButton(R.string.are_you_sure_flag_positive, (dialog, which) -> {
+                            route.flag(ignored -> {
+                                finish();
+                            });
+                        })
+                        .show();
+            }
             return false;
         });
 
