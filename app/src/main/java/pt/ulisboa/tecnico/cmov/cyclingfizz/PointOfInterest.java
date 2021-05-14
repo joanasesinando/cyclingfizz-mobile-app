@@ -15,6 +15,7 @@ import com.mapbox.geojson.Point;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class PointOfInterest implements Serializable {
@@ -24,14 +25,16 @@ public class PointOfInterest implements Serializable {
 
 
     private final Point coord;
-    private String id;
+    private final String id;
     private String name;
     private String description;
-    private ArrayList<Bitmap> images = new ArrayList<>();
+    private ArrayList<Bitmap> images;
 
-    private ArrayList<String> mediaLinks = new ArrayList<>();
+    private final ArrayList<String> mediaLinks;
+    private final HashMap<String, Boolean> mediaLinksDownloaded = new HashMap<>();
 
-    private ArrayList<Comment> comments = new ArrayList<>();
+
+    private final ArrayList<Comment> comments = new ArrayList<>();
 
     private boolean alreadyVisited = false;
 
@@ -129,15 +132,20 @@ public class PointOfInterest implements Serializable {
     }
 
     public void downloadImages(Utils.OnTaskCompleted<Void> callback) {
-        if (mediaLinks.size() == images.size()) {
+
+        if (mediaLinks.size() == images.size() && Utils.areAllTrue(mediaLinksDownloaded.values())) {
             callback.onTaskCompleted(null);
+            return;
         }
 
         for (String mediaLink : mediaLinks) {
 
+            if (mediaLinksDownloaded.containsKey(mediaLink) && mediaLinksDownloaded.get(mediaLink)) break;
+
             (new Utils.httpRequestImage(response -> {
                 images.add(response);
-                if (mediaLinks.size() == images.size()) {
+                mediaLinksDownloaded.put(mediaLink, true);
+                if (mediaLinks.size() == images.size() && Utils.areAllTrue(mediaLinksDownloaded.values())) {
                     callback.onTaskCompleted(null);
                 }
             })).execute(mediaLink);
@@ -145,7 +153,7 @@ public class PointOfInterest implements Serializable {
     }
 
     public void downloadAndGetImage(int index, Utils.OnTaskCompleted<Bitmap> callback) {
-        (new Utils.httpRequestImage(callback::onTaskCompleted)).execute(mediaLinks.get(index));
+        (new Utils.httpRequestImage(callback)).execute(mediaLinks.get(index));
     }
 
     public void getJsonAsync(Utils.OnTaskCompleted<JsonObject> callback) {
@@ -214,19 +222,17 @@ public class PointOfInterest implements Serializable {
             user.getIdToken(true).addOnSuccessListener(result -> {
                 String idToken = result.getToken();
 
-                comment.uploadImages(ignored -> {
-                    comment.getJsonAsync(data -> {
-                        data.addProperty("id_token", idToken);
-                        data.addProperty("route_id", idRoute);
-                        data.addProperty("poi_id", id);
+                comment.uploadImages(ignored -> comment.getJsonAsync(data -> {
+                    data.addProperty("id_token", idToken);
+                    data.addProperty("route_id", idRoute);
+                    data.addProperty("poi_id", id);
 
-                        (new Utils.httpPostRequestJson(response -> {
-                            JsonObject commentJson = response.get("comment").getAsJsonObject();
-                            addCommentFromJson(commentJson.get("comment").getAsJsonObject(), commentJson.get("id").getAsString());
-                            callback.onTaskCompleted(Comment.fromJson(commentJson.get("comment").getAsJsonObject(), commentJson.get("id").getAsString()));
-                        }, data.toString())).execute(SERVER_URL + "/comment-poi");
-                    });
-                });
+                    (new Utils.httpPostRequestJson(response -> {
+                        JsonObject commentJson = response.get("comment").getAsJsonObject();
+                        addCommentFromJson(commentJson.get("comment").getAsJsonObject(), commentJson.get("id").getAsString());
+                        callback.onTaskCompleted(Comment.fromJson(commentJson.get("comment").getAsJsonObject(), commentJson.get("id").getAsString()));
+                    }, data.toString())).execute(SERVER_URL + "/comment-poi");
+                }));
 
             });
         } else {
@@ -259,15 +265,22 @@ public class PointOfInterest implements Serializable {
         }
     }
 
+    public void preload(Utils.OnTaskCompleted<Boolean> callback) {
+        downloadImages(ignored -> callback.onTaskCompleted(true));
+
+    }
+
 
     public static class Comment implements Serializable {
 
-        private String id;
+        private final String id;
         private final String creationTimestamp;
         private final String authorUID;
         private final String msg;
         private final ArrayList<String> mediaLinks;
         private final ArrayList<Bitmap> images;
+        private final HashMap<String, Boolean> mediaLinksDownloaded = new HashMap<>();
+
 
         private Comment(String id, String creationTimestamp, String authorUID, String msg, ArrayList<String> mediaLinks, ArrayList<Bitmap> images) {
             this.id = id;
@@ -353,15 +366,17 @@ public class PointOfInterest implements Serializable {
         }
 
         public void downloadImages(Utils.OnTaskCompleted<Void> callback) {
-            if (mediaLinks.size() == images.size()) {
+            if (mediaLinks.size() == images.size() && Utils.areAllTrue(mediaLinksDownloaded.values())) {
                 callback.onTaskCompleted(null);
             }
 
             for (String mediaLink : mediaLinks) {
+                if (mediaLinksDownloaded.containsKey(mediaLink) && mediaLinksDownloaded.get(mediaLink)) break;
 
                 (new Utils.httpRequestImage(response -> {
                     images.add(response);
-                    if (mediaLinks.size() == images.size()) {
+                    mediaLinksDownloaded.put(mediaLink, true);
+                    if (mediaLinks.size() == images.size() && Utils.areAllTrue(mediaLinksDownloaded.values())) {
                         callback.onTaskCompleted(null);
                     }
                 })).execute(mediaLink);

@@ -47,6 +47,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.List;
 
 import javax.crypto.Mac;
@@ -72,6 +73,14 @@ public final class Utils {
     public static String STATIONS_SERVER_URL = "https://stations.cfservertest.ga";
 //    public static String STATIONS_SERVER_URL = "https://3ab402fbd2c6.ngrok.io";
     public static String MAP_SERVER_URL = "https://map.cfservertest.ga";
+
+
+    public static boolean areAllTrue(Collection<Boolean> booleans) {
+        for (boolean b : booleans) {
+            if (!b) return false;
+        }
+        return true;
+    }
 
 
     /*** -------------------------------------------- ***/
@@ -203,7 +212,6 @@ public final class Utils {
     /*** -------------------------------------------- ***/
     /*** --------------- HTTP REQUESTS -------------- ***/
     /*** -------------------------------------------- ***/
-
 
 
     public interface OnTaskCompleted<T> {
@@ -417,43 +425,4 @@ public final class Utils {
         }
     }
 
-
-    /*** -------------------------------------------- ***/
-    /*** -------------- Text To Speech -------------- ***/
-    /*** -------------------------------------------- ***/
-
-
-//    public static void synthesizeText(String text) throws Exception {
-//        // Instantiates a client
-//        try (TextToSpeechClient textToSpeechClient = TextToSpeechClient.create()) {
-//            // Set the text input to be synthesized
-//            SynthesisInput input = SynthesisInput.newBuilder().setText(text).build();
-//
-//            // Build the voice request
-//            VoiceSelectionParams voice =
-//                    VoiceSelectionParams.newBuilder()
-//                            .setLanguageCode("en-US") // languageCode = "en_us"
-//                            .setSsmlGender(SsmlVoiceGender.FEMALE) // ssmlVoiceGender = SsmlVoiceGender.FEMALE
-//                            .build();
-//
-//            // Select the type of audio file you want returned
-//            AudioConfig audioConfig =
-//                    AudioConfig.newBuilder()
-//                            .setAudioEncoding(AudioEncoding.MP3) // MP3 audio.
-//                            .build();
-//
-//            // Perform the text-to-speech request
-//            SynthesizeSpeechResponse response =
-//                    textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
-//
-//            // Get the audio contents from the response
-//            ByteString audioContents = response.getAudioContent();
-//
-//            // Write the response to the output file.
-//            try (OutputStream out = new FileOutputStream("output.mp3")) {
-//                out.write(audioContents.toByteArray());
-//                System.out.println("Audio content written to file \"output.mp3\"");
-//            }
-//        }
-//    }
 }

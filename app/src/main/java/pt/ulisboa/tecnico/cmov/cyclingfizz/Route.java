@@ -16,6 +16,8 @@ import com.mapbox.geojson.Point;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Route implements Serializable {
 
@@ -314,25 +316,40 @@ public class Route implements Serializable {
             user.getIdToken(true).addOnSuccessListener(result -> {
                 String idToken = result.getToken();
 
-                review.uploadImages(ignored -> {
-                    review.getJsonAsync(data -> {
-                        data.addProperty("id_token", idToken);
-                        data.addProperty("route_id", id);
+                review.uploadImages(ignored -> review.getJsonAsync(data -> {
+                    data.addProperty("id_token", idToken);
+                    data.addProperty("route_id", id);
 
-                        (new Utils.httpPostRequestJson(response -> {
-                            Log.d(TAG, String.valueOf(response));
-                            JsonObject reviewJson = response.get("review").getAsJsonObject();
-                            addReviewFromJson(reviewJson.get("review").getAsJsonObject(), reviewJson.get("id").getAsString());
-                            callback.onTaskCompleted(Review.fromJson(reviewJson.get("review").getAsJsonObject(), reviewJson.get("id").getAsString()));
-                        }, data.toString())).execute(SERVER_URL + "/review-route");
-                    });
-                });
+                    (new Utils.httpPostRequestJson(response -> {
+                        Log.d(TAG, String.valueOf(response));
+                        JsonObject reviewJson = response.get("review").getAsJsonObject();
+                        addReviewFromJson(reviewJson.get("review").getAsJsonObject(), reviewJson.get("id").getAsString());
+                        callback.onTaskCompleted(Review.fromJson(reviewJson.get("review").getAsJsonObject(), reviewJson.get("id").getAsString()));
+                    }, data.toString())).execute(SERVER_URL + "/review-route");
+                }));
 
             });
         } else {
             callback.onTaskCompleted(null);
             Log.d(TAG, "Null User");
         }
+    }
+
+
+    public void preload(Utils.OnTaskCompleted<Boolean> callback) {
+
+        downloadImage(ignored -> {
+            AtomicInteger poisPreloaded = new AtomicInteger();
+            for (PointOfInterest poi : getAllPOIs()) {
+                poi.preload(ignored_poi -> {
+                    poisPreloaded.getAndIncrement();
+                    if (poisPreloaded.get() == getAllPOIs().size()) {
+                        callback.onTaskCompleted(true);
+                    }
+                });
+            }
+        });
+
     }
 
     public static class Review implements Serializable {
@@ -343,8 +360,11 @@ public class Route implements Serializable {
         private final String msg;
         private final int rate;
 
-        private ArrayList<Bitmap> images = new ArrayList<>();
-        private ArrayList<String> mediaLinks = new ArrayList<>();
+        private final ArrayList<Bitmap> images;
+        private final ArrayList<String> mediaLinks;
+
+        private final HashMap<String, Boolean> mediaLinksDownloaded = new HashMap<>();
+
 
         private Review(String id, String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks, ArrayList<Bitmap> images) {
             this.id = id;
@@ -431,15 +451,17 @@ public class Route implements Serializable {
         }
 
         public void downloadImages(Utils.OnTaskCompleted<Void> callback) {
-            if (mediaLinks.size() == images.size()) {
+            if (mediaLinks.size() == images.size() && Utils.areAllTrue(mediaLinksDownloaded.values())) {
                 callback.onTaskCompleted(null);
             }
 
             for (String mediaLink : mediaLinks) {
+                if (mediaLinksDownloaded.containsKey(mediaLink) && mediaLinksDownloaded.get(mediaLink)) break;
 
                 (new Utils.httpRequestImage(response -> {
                     images.add(response);
-                    if (mediaLinks.size() == images.size()) {
+                    mediaLinksDownloaded.put(mediaLink, true);
+                    if (mediaLinks.size() == images.size() && Utils.areAllTrue(mediaLinksDownloaded.values())) {
                         callback.onTaskCompleted(null);
                     }
                 })).execute(mediaLink);
@@ -483,6 +505,7 @@ public class Route implements Serializable {
             );
         }
     }
+
 
 }
 

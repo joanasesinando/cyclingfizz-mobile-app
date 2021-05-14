@@ -290,7 +290,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                         Point userPoint = Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude());
 
-                        if (userLocation != null && Utils.distanceBetweenPointsInMeters(
+                        if (previousLocation != null && userLocation != null && Utils.distanceBetweenPointsInMeters(
                                 Point.fromLngLat(previousLocation.getLongitude(), previousLocation.getLatitude()),
                                 userPoint) < 2.5) return;
 
@@ -524,6 +524,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         } else if (pathPlayer.isPlayingRoute()) {
                             Route routePlaying = pathPlayer.getPlayingRoute();
                             PointOfInterest poi = routePlaying.getAllPOIs().get(poiIndex);
+                            Log.d(TAG, "POI Image Size: " + poi.getImages().size());
+                            Log.d(TAG, "POI media Size: " + poi.getMediaLinks().size());
                             SharedState sharedState = (SharedState) getApplicationContext();
                             sharedState.viewingPOI = poi;
 

@@ -34,12 +34,18 @@ public class PathPlayer {
         return routePlaying;
     }
 
-    public void playRoute(Route route) {
+    public void playRoute(Route route, Utils.OnTaskCompleted<Boolean> callback) {
         routePlaying = route;
-        (new Thread(() -> {
-            checkIfRouteRated();
-            route.setRouteAsPlayedInServer(ignored -> {});
-        })).start();
+
+        routePlaying.preload(preloaded -> {
+            (new Thread(() -> {
+                checkIfRouteRated();
+                route.setRouteAsPlayedInServer(ignored -> {});
+            })).start();
+            callback.onTaskCompleted(preloaded);
+        });
+
+
     }
 
     public void stopRoute() {

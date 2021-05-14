@@ -353,11 +353,12 @@ public class RouteActivity extends AppCompatActivity {
             // Prevent screen from turning off while recording
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-            PathPlayer.getInstance().playRoute(route);
-            Intent intent = new Intent(this, MapActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intent);
-            overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+            PathPlayer.getInstance().playRoute(route, preloaded -> {
+                Intent intent = new Intent(this, MapActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+            });
         });
     }
 
