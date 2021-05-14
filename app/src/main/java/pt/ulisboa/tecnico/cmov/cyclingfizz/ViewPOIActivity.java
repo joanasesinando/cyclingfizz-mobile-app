@@ -149,12 +149,29 @@ public class ViewPOIActivity extends AppCompatActivity {
         // Set add comment btn click listener
         MaterialButton addCommentBtn = findViewById(R.id.leave_comment);
         addCommentBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(this, AddCommentActivity.class);
-            Bundle bundle = new Bundle();
-            bundle.putString(ROUTE_ID, routeID);
-            intent.putExtras(bundle);
-            startActivity(intent);
-            overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+            if (user != null) {
+                Intent intent = new Intent(this, AddCommentActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putString(ROUTE_ID, routeID);
+                intent.putExtras(bundle);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+
+            } else {
+                new MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.sign_in_required)
+                    .setMessage(R.string.leaving_a_comment_dialog_warning)
+                    .setNeutralButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.sign_in, (dialog, which) -> {
+                        // Respond to positive button press
+                        Intent intent = new Intent(this, LoginActivity.class);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+                    })
+                    .show();
+            }
         });
     }
 
