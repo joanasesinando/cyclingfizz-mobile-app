@@ -306,7 +306,31 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         }
 
                         if (pathPlayer.checkIfEnd(userPoint)) {
-                            stopPlaying();
+                            runOnUiThread(() -> {
+                                new MaterialAlertDialogBuilder(MapActivity.this)
+                                        .setTitle(R.string.route_play_finished)
+                                        .setMessage(R.string.route_play_finished_message)
+                                        .setNeutralButton(R.string.no, null)
+                                        .setPositiveButton(R.string.stop_route, (dialog, which) -> {
+                                            if (!pathPlayer.isRouteAlreadyRated()) {
+                                                 new MaterialAlertDialogBuilder(MapActivity.this)
+                                                         .setTitle(R.string.ask_rate_route)
+                                                         .setMessage(R.string.ask_rate_route_message)
+                                                         .setNeutralButton(R.string.ignore, (dialogRate, whichRate) -> {
+                                                             stopPlaying();
+                                                         })
+                                                         .setPositiveButton(R.string.rate_route, (dialogRate, whichRate) -> {
+                                                             Intent intent = new Intent(MapActivity.this, RouteActivity.class);
+                                                             intent.putExtra(ROUTE_ID, pathPlayer.getPlayingRoute().getId());
+                                                             stopPlaying();
+                                                             startActivity(intent);
+                                                             overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                                                         }).show();
+                                            } else {
+                                                stopPlaying();
+                                            }
+                                        }).show();
+                            });
                         }
                     }
                 })).start();
@@ -1244,6 +1268,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void stopPlaying() {
+        // Allow screen to turn off
+        Log.e(TAG, "Ja passou");
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         cleanRoute();
         pathPlayer.stopRoute();
         hidePlayingRouteUI();

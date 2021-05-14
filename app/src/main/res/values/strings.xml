@@ -41,6 +41,8 @@
     <string name="done">Done</string>
     <string name="view_more">View More</string>
     <string name="ignore">Ignore</string>
+    <string name="no">No</string>
+    <string name="stop_route">Stop route</string>
 
     <string name="edit_review">Edit review</string>
 
@@ -76,6 +78,10 @@
     <!-- Messages -->
     <string name="route_recorded">Route recorded</string>
     <string name="route_recorded_message">Congratulations, you’ve just recorded a new route!</string>
+    <string name="route_play_finished">Route Ended</string>
+    <string name="route_play_finished_message">Congratulations, you’ve just completed the route! Do you what to stop playing it?</string>
+    <string name="ask_rate_route">Rate route?</string>
+    <string name="ask_rate_route_message">Did you like this route? Review it and let other user know your opinion!</string>
 
     <!-- Welcome -->
     <string name="motto">Discover Lisbon’s attractions\nand hotspots by bike</string>

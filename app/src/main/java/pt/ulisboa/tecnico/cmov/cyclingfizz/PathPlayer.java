@@ -10,10 +10,12 @@ import com.mapbox.geojson.Point;
 public class PathPlayer {
     static String TAG = "Cycling_Fizz@PathPlayer";
     static String SERVER_URL = Utils.STATIONS_SERVER_URL;
-    static final int MAX_DISTANCE_FROM_POI = 10;
+    static final int MAX_DISTANCE_FROM_POI = 5;
 
     private static PathPlayer INSTANCE = null;
     private final FirebaseAuth mAuth;
+    private boolean reachedEnd = false;
+    private boolean routeAlreadyRated = false;
 
     private Route routePlaying;
 
@@ -34,7 +36,10 @@ public class PathPlayer {
 
     public void playRoute(Route route) {
         routePlaying = route;
-        route.setRouteAsPlayedInServer(ignored -> {});
+        (new Thread(() -> {
+            checkIfRouteRated();
+            route.setRouteAsPlayedInServer(ignored -> {});
+        })).start();
     }
 
     public void stopRoute() {
@@ -60,81 +65,20 @@ public class PathPlayer {
     }
 
     public boolean checkIfEnd(Point point) {
-        if (isPlayingRoute() && Utils.distanceBetweenPointsInMeters(routePlaying.getPath().get(routePlaying.getPath().size() - 1), point) < MAX_DISTANCE_FROM_POI)
-            return false;
-
+        if (!reachedEnd && isPlayingRoute() && Utils.distanceBetweenPointsInMeters(routePlaying.getPath().get(routePlaying.getPath().size() - 1), point) < MAX_DISTANCE_FROM_POI) {
+            reachedEnd = true;
+            return true;
+        }
         return false;
     }
 
-    public void commentPOI(int POIindex, String comment, Utils.OnTaskCompleted<Boolean> callback) {
-        FirebaseUser user = mAuth.getCurrentUser();
-
-        if (user != null) {
-            user.getIdToken(true).addOnSuccessListener(result -> {
-                String idToken = result.getToken();
-
-                JsonObject data = new JsonObject();
-                data.addProperty("id_token", idToken);
-                data.addProperty("route_id", routePlaying.getId());
-                data.addProperty("poi_id", POIindex);
-                data.addProperty("comment", comment);
-                //fixme add media link
-
-                (new Utils.httpPostRequestJson(obj -> {
-                    callback.onTaskCompleted(obj.get("status").getAsString().equals("success"));
-                }, data.toString())).execute(SERVER_URL + "/comment-poi");
-            });
-        } else {
-            callback.onTaskCompleted(false);
-            Log.d(TAG, "Null User");
-        }
+    private void checkIfRouteRated() {
+        routePlaying.getReviewOfCurrentUser(review -> {
+            routeAlreadyRated = review != null;
+        });
     }
 
-    public void commentRoute(String comment, Utils.OnTaskCompleted<Boolean> callback) { // FIXME: remove? only rate
-        FirebaseUser user = mAuth.getCurrentUser();
-
-        if (user != null) {
-            user.getIdToken(true).addOnSuccessListener(result -> {
-                String idToken = result.getToken();
-
-                JsonObject data = new JsonObject();
-                data.addProperty("id_token", idToken);
-                data.addProperty("route_id", routePlaying.getId());
-                data.addProperty("comment", comment);
-                //fixme add media link
-
-                (new Utils.httpPostRequestJson(obj -> {
-                    callback.onTaskCompleted(obj.get("status").getAsString().equals("success"));
-                }, data.toString())).execute(SERVER_URL + "/comment-poi");
-            });
-        } else {
-            callback.onTaskCompleted(false);
-            Log.d(TAG, "Null User");
-        }
+    public boolean isRouteAlreadyRated() {
+        return routeAlreadyRated;
     }
-
-    public void rateRoute(int rate, Utils.OnTaskCompleted<Boolean> callback) { // FIXME: should swap with old rate if user has already rated
-        FirebaseUser user = mAuth.getCurrentUser();
-
-        if (user != null) {
-            user.getIdToken(true).addOnSuccessListener(result -> {
-                String idToken = result.getToken();
-
-                JsonObject data = new JsonObject();
-                data.addProperty("id_token", idToken);
-                data.addProperty("route_id", routePlaying.getId());
-                data.addProperty("rate", rate);
-                //fixme add media link
-
-                (new Utils.httpPostRequestJson(obj -> {
-                    callback.onTaskCompleted(obj.get("status").getAsString().equals("success"));
-                }, data.toString())).execute(SERVER_URL + "/rate-poi");
-            });
-        } else {
-            callback.onTaskCompleted(false);
-            Log.d(TAG, "Null User");
-        }
-    }
-
-
 }

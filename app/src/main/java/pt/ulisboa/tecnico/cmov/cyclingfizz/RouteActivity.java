@@ -20,6 +20,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.ImageView;
@@ -343,6 +344,8 @@ public class RouteActivity extends AppCompatActivity {
                         .show();
                 return;
             }
+            // Prevent screen from turning off while recording
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
             PathPlayer.getInstance().playRoute(route);
             Intent intent = new Intent(this, MapActivity.class);
