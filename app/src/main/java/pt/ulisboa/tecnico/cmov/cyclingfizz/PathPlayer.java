@@ -10,7 +10,7 @@ import com.mapbox.geojson.Point;
 public class PathPlayer {
     static String TAG = "Cycling_Fizz@PathPlayer";
     static String SERVER_URL = Utils.STATIONS_SERVER_URL;
-    static final int MAX_DISTANCE_FROM_POI = 5;
+    static final int MAX_DISTANCE_FROM_POI = 7;
 
     private static PathPlayer INSTANCE = null;
     private final FirebaseAuth mAuth;

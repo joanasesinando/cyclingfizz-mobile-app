@@ -29,6 +29,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Messenger;
 import android.os.SystemClock;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -91,6 +92,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -201,6 +203,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private boolean endTripFlag = false;
 
+    TextToSpeech t2s;
+
     /// -------------- PERMISSIONS -------------- ///
 
     private final ActivityResultLauncher<String> requestPermissionLauncher =
@@ -247,6 +251,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         pathRecorder = PathRecorder.getInstance();
         pathPlayer = PathPlayer.getInstance();
 
+        t2s = new TextToSpeech(getApplicationContext(), status -> {
+            if(status != TextToSpeech.ERROR) {
+                t2s.setLanguage(Locale.US);
+            }
+        });
+
         setContentView(R.layout.map);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -287,6 +297,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         PointOfInterest poi = pathPlayer.checkIfNearPOI(userPoint);
                         if (poi != null) {
                             runOnUiThread(() -> {
+                                speakPOI(poi);
                                 new MaterialAlertDialogBuilder(MapActivity.this)
                                         .setTitle(poi.getName())
                                         .setMessage(poi.getDescription())
@@ -307,6 +318,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
                         if (pathPlayer.checkIfEnd(userPoint)) {
                             runOnUiThread(() -> {
+                                speakEndRoute();
                                 new MaterialAlertDialogBuilder(MapActivity.this)
                                         .setTitle(R.string.route_play_finished)
                                         .setMessage(R.string.route_play_finished_message)
@@ -336,6 +348,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 })).start();
             }
 
+
+
             @Override
             public void onLocationAvailability(LocationAvailability locationAvailability) {
                 if (locationAvailability == null) return;
@@ -356,6 +370,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Init Wifi Direct
         registerBroadcastReceiver();
         turnWifiOn();
+    }
+
+
+    private void speakPOI(PointOfInterest pointOfInterest) {
+        if (t2s == null || t2s.isSpeaking()) return;
+        t2s.speak("You just reached, " + pointOfInterest.getName(), TextToSpeech.QUEUE_FLUSH, null);
+    }
+
+    private void speakEndRoute() {
+        if (t2s == null || t2s.isSpeaking()) return;
+        t2s.speak("You just reached the end of the route!", TextToSpeech.QUEUE_FLUSH, null);
     }
 
 
