@@ -18,7 +18,6 @@
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE" />
         </intent>
-
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
@@ -38,7 +37,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CyclingFizz"
         tools:replace="android:icon,android:theme">
-        <activity android:name=".EditReviewActivity"></activity>
+        <activity android:name=".SlideshowActivity"></activity>
+        <activity android:name=".EditReviewActivity" />
         <activity android:name=".AddReviewActivity" />
         <activity android:name=".AddCommentActivity" />
         <activity android:name=".ViewPOIActivity" />
@@ -51,29 +51,30 @@
         <activity android:name=".LoginActivity" />
         <activity android:name=".StreetViewActivity" />
         <activity android:name=".CyclewayActivity" />
-        <activity android:name=".StationActivity" />
-<!--        <activity android:name=".RouteActivity" />-->
-        <activity
-            android:name=".RouteActivity">
-            <intent-filter android:autoVerify="true"
+        <activity android:name=".StationActivity" /> <!-- <activity android:name=".RouteActivity" /> -->
+        <activity android:name=".RouteActivity">
+            <intent-filter
+                android:autoVerify="true"
                 tools:targetApi="m">
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <!-- Accepts URIs that begin with "https://stations.cfservertest.ga/route” -->
-                <data android:scheme="https"
+                <data
                     android:host="stations.cfservertest.ga"
-                    android:pathPrefix="/route" />
-                <!-- note that the leading "/" is required for pathPrefix-->
+                    android:pathPrefix="/route"
+                    android:scheme="https" />
+                <!-- note that the leading "/" is required for pathPrefix -->
             </intent-filter>
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.VIEW" />-->
-<!--                <category android:name="android.intent.category.DEFAULT" />-->
-<!--                <category android:name="android.intent.category.BROWSABLE" />-->
-<!--                &lt;!&ndash; Accepts URIs that begin with "cyclingfizz://route” &ndash;&gt;-->
-<!--                <data android:scheme="cyclingfizz"-->
-<!--                    android:host="route" />-->
-<!--            </intent-filter>-->
+            <!-- <intent-filter> -->
+            <!-- <action android:name="android.intent.action.VIEW" /> -->
+            <!-- <category android:name="android.intent.category.DEFAULT" /> -->
+            <!-- <category android:name="android.intent.category.BROWSABLE" /> -->
+            <!-- &lt;!&ndash; Accepts URIs that begin with "cyclingfizz://route” &ndash;&gt; -->
+            <!-- <data android:scheme="cyclingfizz" -->
+            <!-- android:host="route" /> -->
+            <!-- </intent-filter> -->
         </activity>
         <activity android:name=".MapActivity">
             <intent-filter>

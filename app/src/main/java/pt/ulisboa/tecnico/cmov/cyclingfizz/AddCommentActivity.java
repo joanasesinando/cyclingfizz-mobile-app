@@ -65,6 +65,7 @@ public class AddCommentActivity extends AppCompatActivity {
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
+                    Log.d(TAG, "passou por aqui");
                     sendTakePhotoIntent();
                 }
             });
@@ -120,6 +121,7 @@ public class AddCommentActivity extends AppCompatActivity {
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else {
+                Log.d(TAG, "current photo path = " + currentPhotoPath);
                 Toast.makeText(this, "No photos selected", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
@@ -362,6 +364,7 @@ public class AddCommentActivity extends AppCompatActivity {
                     ".jpg",         /* suffix */
                     storageDir      /* directory */
             );
+            Log.d(TAG, image.getAbsolutePath());
             currentPhotoPath = image.getAbsolutePath();
             return image;
         } catch (IOException e) {

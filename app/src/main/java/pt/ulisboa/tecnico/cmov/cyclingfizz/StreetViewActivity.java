@@ -27,7 +27,7 @@ public class StreetViewActivity extends AppCompatActivity implements OnStreetVie
         SupportStreetViewPanoramaFragment streetViewPanoramaFragment = (SupportStreetViewPanoramaFragment) getSupportFragmentManager().findFragmentById(R.id.gms_street_view);
         streetViewPanoramaFragment.getStreetViewPanoramaAsync(this);
 
-        // Set click listener for close btn
+        // Set click listener for back btn
         MaterialToolbar materialToolbar = findViewById(R.id.backBar);
         materialToolbar.setNavigationOnClickListener(this::closeBtnClicked);
     }

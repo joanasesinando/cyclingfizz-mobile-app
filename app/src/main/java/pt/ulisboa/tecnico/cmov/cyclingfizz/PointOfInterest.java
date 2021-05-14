@@ -132,7 +132,6 @@ public class PointOfInterest implements Serializable {
     }
 
     public void downloadImages(Utils.OnTaskCompleted<Void> callback) {
-
         if (mediaLinks.size() == images.size() && Utils.areAllTrue(mediaLinksDownloaded.values())) {
             callback.onTaskCompleted(null);
             return;
@@ -366,13 +365,19 @@ public class PointOfInterest implements Serializable {
         }
 
         public void downloadImages(Utils.OnTaskCompleted<Void> callback) {
+            Log.d(TAG, "gonna download images");
+            Log.d(TAG, "already got " + images.size() + " of " + mediaLinks.size());
+
             if (mediaLinks.size() == images.size() && Utils.areAllTrue(mediaLinksDownloaded.values())) {
                 callback.onTaskCompleted(null);
+                return;
             }
+
+            Log.d(TAG, "downloading");
 
             for (String mediaLink : mediaLinks) {
                 if (mediaLinksDownloaded.containsKey(mediaLink) && mediaLinksDownloaded.get(mediaLink)) continue;
-
+                Log.d(TAG, "downloading -> " + mediaLink);
                 (new Utils.httpRequestImage(response -> {
                     images.add(response);
                     mediaLinksDownloaded.put(mediaLink, true);

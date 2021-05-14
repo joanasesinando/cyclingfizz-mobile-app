@@ -116,9 +116,10 @@ public class ViewPOIActivity extends AppCompatActivity {
             poi.downloadImages(ignored -> {
                 runOnUiThread(() -> {
                     GridLayout gallery = findViewById(R.id.poi_gallery);
+                    int index = 0;
                     for (Bitmap bitmap : poi.getImages()) {
                         Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 256, 256);
-                        addImageToGallery(thumbImage, gallery, 110);
+                        addImageToGallery(thumbImage, gallery, 110, poi.getImages(), index++);
                     }
                     if (poi.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
                     progressIndicator.setVisibility(View.GONE);
@@ -176,7 +177,7 @@ public class ViewPOIActivity extends AppCompatActivity {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
-    private void addImageToGallery(Bitmap bitmap, GridLayout gallery, int size) {
+    private void addImageToGallery(Bitmap bitmap, GridLayout gallery, int size, ArrayList<Bitmap> images, int index) {
         final float scale = getResources().getDisplayMetrics().density;
 
         // Create wrapper
@@ -196,6 +197,15 @@ public class ViewPOIActivity extends AppCompatActivity {
         imgWrapper.addView(newImg);
 
         gallery.addView(imgWrapper, params);
+
+        imgWrapper.setOnClickListener(v -> {
+            Log.d(TAG, String.valueOf(images.size()));
+            ((SharedState) getApplicationContext()).slideshowImages = images;
+            Intent intent = new Intent(this, SlideshowActivity.class);
+            intent.putExtra("index", index);
+            startActivity(intent);
+            overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+        });
     }
 
     /*** -------------------------------------------- ***/
@@ -248,10 +258,11 @@ public class ViewPOIActivity extends AppCompatActivity {
                 (new Thread(() -> {
                     comment.downloadImages(ignored -> {
                         runOnUiThread(() -> {
-                            GridLayout gallery = findViewById(R.id.comment_item_gallery);
+                            GridLayout gallery = layout.findViewById(R.id.comment_item_gallery);
+                            int index = 0;
                             for (Bitmap bitmap : comment.getImages()) {
                                 Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 256, 256);
-                                addImageToGallery(thumbImage, gallery, 75);
+                                addImageToGallery(thumbImage, gallery, 75, comment.getImages(), index++);
                             }
                             if (comment.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
                         });
@@ -266,8 +277,8 @@ public class ViewPOIActivity extends AppCompatActivity {
 
                 // Enable editing if created by user
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                assert user != null;
-                if (comment.getAuthorUID().equals(user.getUid())) {
+
+                if (user != null && comment.getAuthorUID().equals(user.getUid())) {
                     ImageView deleteBtn = layout.findViewById(R.id.comment_item_delete);
                     deleteBtn.setVisibility(View.VISIBLE);
                     int commentIndex = i;
@@ -307,8 +318,8 @@ public class ViewPOIActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onRestart() {
+        super.onRestart();
         poi = ((SharedState) getApplicationContext()).viewingPOI;
         updateComments();
     }

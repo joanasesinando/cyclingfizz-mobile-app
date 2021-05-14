@@ -495,6 +495,7 @@ public class Route implements Serializable {
         public void downloadImages(Utils.OnTaskCompleted<Void> callback) {
             if (mediaLinks.size() == images.size() && Utils.areAllTrue(mediaLinksDownloaded.values())) {
                 callback.onTaskCompleted(null);
+                return;
             }
 
             for (String mediaLink : mediaLinks) {
