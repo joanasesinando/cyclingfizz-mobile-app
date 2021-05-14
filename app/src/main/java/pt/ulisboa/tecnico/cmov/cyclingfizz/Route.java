@@ -161,6 +161,14 @@ public class Route implements Serializable {
         return reviews;
     }
 
+    public ArrayList<Review> getReviewsNotFlagged() {
+        ArrayList<Review> result = new ArrayList<>();
+        for (Review review : getReviews()) {
+            if (!review.isFlagged()) result.add(review);
+        }
+        return result;
+    }
+
     public void setReviews(ArrayList<Review> reviews) {
         this.reviews = reviews;
     }
@@ -390,13 +398,16 @@ public class Route implements Serializable {
         private final String msg;
         private final int rate;
 
+        private final int flags;
+
+
         private final ArrayList<Bitmap> images;
         private final ArrayList<String> mediaLinks;
 
         private final HashMap<String, Boolean> mediaLinksDownloaded = new HashMap<>();
 
 
-        private Review(String id, String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks, ArrayList<Bitmap> images) {
+        private Review(String id, String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks, ArrayList<Bitmap> images, int flags) {
             this.id = id;
             this.creationTimestamp = creationTimestamp;
             this.authorUID = authorUID;
@@ -404,16 +415,17 @@ public class Route implements Serializable {
             this.rate = rate;
             this.mediaLinks = mediaLinks;
             this.images = images;
+            this.flags = flags;
         }
 
-        public Review(String id, String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks) {
+        public Review(String id, String authorUID, String msg, int rate, String creationTimestamp, ArrayList<String> mediaLinks, int flags) {
             // from server
-            this(id, authorUID, msg, rate, creationTimestamp, mediaLinks, new ArrayList<>());
+            this(id, authorUID, msg, rate, creationTimestamp, mediaLinks, new ArrayList<>(), flags);
         }
 
         public Review(String msg, int rate, ArrayList<Bitmap> images) {
             // from android
-            this(null, null, msg, rate, null, new ArrayList<>(), images);
+            this(null, null, msg, rate, null, new ArrayList<>(), images, 0);
         }
 
         public String getId() {
@@ -531,9 +543,37 @@ public class Route implements Serializable {
                     json.has("msg") ? json.get("msg").getAsString() : null,
                     json.has("rate") ? json.get("rate").getAsInt() : null,
                     json.has("creation_timestamp") ? json.get("creation_timestamp").getAsString() : null,
-                    mediaLinks
-            );
+                    mediaLinks,
+                    json.has("flags") ? json.get("flags").getAsInt() : 0
+                    );
         }
+
+        public void flag(String route_id, Utils.OnTaskCompleted<Void> callback) {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+            if (user != null) {
+                user.getIdToken(true).addOnSuccessListener(result -> {
+                    String idToken = result.getToken();
+                    JsonObject data = new JsonObject();
+                    data.addProperty("idToken", idToken);
+                    data.addProperty("route_id", route_id);
+                    data.addProperty("review_id", id);
+
+                    new Utils.httpPostRequestJson(response -> {
+                        callback.onTaskCompleted(null);
+                    }, data.toString()).execute(SERVER_URL + "/flag-review");
+
+                });
+            } else {
+                callback.onTaskCompleted(null);
+                Log.d(TAG, "Null User");
+            }
+        }
+
+        public boolean isFlagged() {
+            return flags >= Utils.MAX_FLAGS_FROM_BAN;
+        }
+
     }
 
 

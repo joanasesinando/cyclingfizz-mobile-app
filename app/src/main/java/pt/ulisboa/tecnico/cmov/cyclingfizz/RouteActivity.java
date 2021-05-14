@@ -17,10 +17,14 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.ImageView;
@@ -36,6 +40,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
@@ -105,6 +110,8 @@ public class RouteActivity extends AppCompatActivity {
     public final static String ROUTE_ID = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_ID";
     public final static String RATE = "pt.ulisboa.tecnico.cmov.cyclingfizz.RATE";
 
+    public final static int REVIEW_ID_LAYOUT_TAG = 0;
+
     static String PATH_SOURCE_ID = "path-source";
     static String PATH_LAYER_ID = "path-layer";
 
@@ -164,9 +171,37 @@ public class RouteActivity extends AppCompatActivity {
     }
 
 
+
     /*** -------------------------------------------- ***/
     /*** -------------- USER INTERFACE -------------- ***/
     /*** -------------------------------------------- ***/
+    Route.Review review;
+    // Menu for flag create
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        review = (Route.Review) v.getTag();
+
+        getMenuInflater().inflate(R.menu.flag_menu, menu);
+    }
+
+
+    // Menu for flag onclick
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    @Override
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
+        int itemId = item.getItemId();
+        
+        if (itemId == R.id.flag_as_inappropriate) {
+            Toast.makeText(this, "ID: " + review.getId(), Toast.LENGTH_LONG).show();
+            review.flag(route.getId(),ignored -> {
+                cleanReviews();
+                updateReviews();
+            });
+            return true;
+        }
+        return super.onContextItemSelected(item);
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void uiInit() {
@@ -455,6 +490,34 @@ public class RouteActivity extends AppCompatActivity {
         return getColor(R.color.success);
     }
 
+    private void getFlaggedReviewsId(Utils.OnTaskCompleted<ArrayList<String>> callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+                (new Utils.httpRequestJson(response -> {
+                    Log.d(TAG, String.valueOf(response));
+                    if (!response.get("status").getAsString().equals("success")) {
+                        callback.onTaskCompleted(new ArrayList<>());
+                        return;
+                    }
+                    ArrayList<String> flaggedReviews = new ArrayList<>();
+                    JsonArray flaggedReviewsJson = response.get("flagged_reviews").getAsJsonArray();
+
+                    for (JsonElement flaggedReviewJson : flaggedReviewsJson) {
+                        flaggedReviews.add(flaggedReviewJson.getAsString());
+                    }
+
+                    callback.onTaskCompleted(flaggedReviews);
+                })).execute(SERVER_URL + "/get-flagged-reviews-by-user-and-route?idToken=" + idToken + "&route_id=" + route.getId());
+
+            });
+        } else {
+            callback.onTaskCompleted(new ArrayList<>());
+        }
+    }
+
 
     /*** -------------------------------------------- ***/
     /*** --------------- ROUTE PREVIEW -------------- ***/
@@ -702,110 +765,130 @@ public class RouteActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void updateReviews() {
-        ArrayList<Route.Review> reviews = route.getReviews();
-        int reviewsCount = reviews.size();
+        getFlaggedReviewsId(flaggedReviews -> {
+            ArrayList<Route.Review> reviews = route.getReviewsNotFlagged();
+            int reviewsCount = reviews.size();
 
-        if (reviewsCount > 0) {
-            // Set total number reviews
-            TextView total = findViewById(R.id.reviews_card_subtitle);
-            String s = reviewsCount + " " + getString(R.string.reviews).toLowerCase();
-            if (reviewsCount == 1) s = s.substring(0, s.length() - 1);
-            total.setText(s);
+            if (reviewsCount > 0) {
+                // Set total number reviews
+                TextView total = findViewById(R.id.reviews_card_subtitle);
+                String s = reviewsCount + " " + getString(R.string.reviews).toLowerCase();
+                if (reviewsCount == 1) s = s.substring(0, s.length() - 1);
+                total.setText(s);
 
-            int rateSum = 0;
-            Integer[] histogramCounts = Collections.nCopies(5, 0).toArray(new Integer[0]);
-            LinearLayout linearLayout = findViewById(R.id.reviews_list);
-            for (Route.Review review : reviews) {
-                rateSum += review.getRate();
-                LayoutInflater inflater = LayoutInflater.from(this);
-                ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.review_item, null, false);
-
-                // Set avatar & name
-                (new Utils.httpRequestJson(obj -> {
-                    if (!obj.get("status").getAsString().equals("success")) return;
-
-                    TextView name = layout.findViewById(R.id.review_item_name);
-                    Log.d(TAG, String.valueOf(obj));
-                    String userName = obj.get("data").getAsJsonObject().get("name").getAsString();
-                    name.setText(userName);
-
-                    ImageView avatar = layout.findViewById(R.id.review_item_avatar);
-                    JsonElement avatarURLElement = obj.get("data").getAsJsonObject().get("avatar");
-                    if (!avatarURLElement.isJsonNull()) {
-                        String avatarURL = avatarURLElement.getAsString();
-                        (new Utils.httpRequestImage(bitmap -> {
-                            Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
-                            avatar.setImageBitmap(thumbImage);
-                        })).execute(avatarURL);
-                    }
-
-                })).execute(SERVER_URL + "/get-user-info?uid=" + review.getAuthorUID());
+                int rateSum = 0;
+                Integer[] histogramCounts = Collections.nCopies(5, 0).toArray(new Integer[0]);
+                LinearLayout linearLayout = findViewById(R.id.reviews_list);
 
 
-                // Set comment
-                TextView comment = layout.findViewById(R.id.review_item_comment);
-                comment.setText(review.getMsg() != null && !review.getMsg().equals("") ? review.getMsg() : getString(R.string.no_comment));
+                for (Route.Review review : reviews) {
+                    rateSum += review.getRate();
+                    LayoutInflater inflater = LayoutInflater.from(this);
+                    ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.review_item, null, false);
 
-                // Set rate
-                int rate = review.getRate();
-                histogramCounts[Math.round(rate) > 5 ? 4 : Math.round(rate) - 1]++;
-                TextView rateValue = layout.findViewById(R.id.review_item_rate_value);
-                ImageView rateIcon = layout.findViewById(R.id.review_item_rate_icon);
-                rateValue.setText(String.valueOf(rate));
-                rateValue.setTextColor(getColorFromRate(rate));
-                rateIcon.setColorFilter(getColorFromRate(rate));
+                    // Set avatar & name
+                    (new Utils.httpRequestJson(obj -> {
+                        if (!obj.get("status").getAsString().equals("success")) return;
 
-                // Set images
-                (new Thread(() -> {
-                    review.downloadImages(ignored -> {
-                        runOnUiThread(() -> {
-                            GridLayout gallery = findViewById(R.id.review_item_gallery);
-                            for (Bitmap bitmap : review.getImages()) {
+                        TextView name = layout.findViewById(R.id.review_item_name);
+                        Log.d(TAG, String.valueOf(obj));
+                        String userName = obj.get("data").getAsJsonObject().get("name").getAsString();
+                        name.setText(userName);
+
+                        ImageView avatar = layout.findViewById(R.id.review_item_avatar);
+                        JsonElement avatarURLElement = obj.get("data").getAsJsonObject().get("avatar");
+                        if (!avatarURLElement.isJsonNull()) {
+                            String avatarURL = avatarURLElement.getAsString();
+                            (new Utils.httpRequestImage(bitmap -> {
                                 Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
-                                addImageToGallery(thumbImage, gallery);
-                            }
-                            if (review.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
+                                avatar.setImageBitmap(thumbImage);
+                            })).execute(avatarURL);
+                        }
+
+                        // set context menu for flag
+                        layout.setTag(review);
+                        registerForContextMenu(layout);
+
+                    })).execute(SERVER_URL + "/get-user-info?uid=" + review.getAuthorUID());
+
+
+                    // Set comment
+                    TextView comment = layout.findViewById(R.id.review_item_comment);
+                    comment.setText(review.getMsg() != null && !review.getMsg().equals("") ? review.getMsg() : getString(R.string.no_comment));
+
+                    // Set rate
+                    int rate = review.getRate();
+                    histogramCounts[Math.round(rate) > 5 ? 4 : Math.round(rate) - 1]++;
+                    TextView rateValue = layout.findViewById(R.id.review_item_rate_value);
+                    ImageView rateIcon = layout.findViewById(R.id.review_item_rate_icon);
+                    rateValue.setText(String.valueOf(rate));
+                    rateValue.setTextColor(getColorFromRate(rate));
+                    rateIcon.setColorFilter(getColorFromRate(rate));
+
+                    // Set images
+                    (new Thread(() -> {
+                        review.downloadImages(ignored -> {
+                            runOnUiThread(() -> {
+                                GridLayout gallery = layout.findViewById(R.id.review_item_gallery);
+                                for (Bitmap bitmap : review.getImages()) {
+                                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
+                                    addImageToGallery(thumbImage, gallery);
+                                }
+                                if (review.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
+                            });
                         });
-                    });
-                })).start();
+                    })).start();
 
-                // Set date
-                TextView date = layout.findViewById(R.id.review_item_date);
-                Timestamp timestamp = new Timestamp(Long.parseLong(review.getCreationTimestamp()));
-                LocalDate localDate = timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                date.setText(localDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)));
+                    // Set date
+                    TextView date = layout.findViewById(R.id.review_item_date);
+                    Timestamp timestamp = new Timestamp(Long.parseLong(review.getCreationTimestamp()));
+                    LocalDate localDate = timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                    date.setText(localDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)));
 
-                linearLayout.addView(layout);
+
+                    if (!flaggedReviews.contains(review.getId())) {
+                        linearLayout.addView(layout);
+                    }
+                }
+
+                // Set histogram
+                float rateAvg = (float) rateSum / reviewsCount;
+                TextView avg = findViewById(R.id.histogram_avg);
+                avg.setText(oneDecimalFormatter.format(rateAvg));
+                avg.setTextColor(getColorFromRate(rateAvg));
+
+                int maxRate = Math.min(Math.round(rateAvg), 5);
+                for (int i = 1; i <= maxRate; i++) {
+                    ImageView star = findViewById(getResources().getIdentifier("histogram_star" + i, "id", getPackageName()));
+                    star.setColorFilter(getColorFromRate(rateAvg));
+                }
+
+                final float scale = getResources().getDisplayMetrics().density;
+                for (int i = 1; i <= 5; i++) {
+                    LinearLayout bar = findViewById(getResources().getIdentifier("histogram_bar" + i, "id", getPackageName()));
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, (int) (5 * scale));
+                    params.weight = (float) histogramCounts[i - 1] / reviewsCount;
+                    bar.setLayoutParams(params);
+                }
+
+                TextView totalReviews = findViewById(R.id.histogram_total);
+                String str = "(" + reviewsCount + ")";
+                totalReviews.setText(str);
+
+                // Show reviews' card
+                MaterialCardView reviewsCard = findViewById(R.id.route_reviews);
+                reviewsCard.setVisibility(View.VISIBLE);
             }
+        });
+    }
 
-            // Set histogram
-            float rateAvg = (float) rateSum / reviewsCount;
-            TextView avg = findViewById(R.id.histogram_avg);
-            avg.setText(oneDecimalFormatter.format(rateAvg));
-            avg.setTextColor(getColorFromRate(rateAvg));
+    private void cleanReviews() {
+        // Clean Reviews
+        LinearLayout linearLayout = findViewById(R.id.reviews_list);
+        linearLayout.removeAllViews();
 
-            int maxRate = Math.round(rateAvg) > 5 ? 5 : Math.round(rateAvg);
-            for (int i = 1; i <= maxRate; i++) {
-                ImageView star = findViewById(getResources().getIdentifier("histogram_star" + i, "id", getPackageName()));
-                star.setColorFilter(getColorFromRate(rateAvg));
-            }
-
-            final float scale = getResources().getDisplayMetrics().density;
-            for (int i = 1; i <= 5; i++) {
-                LinearLayout bar = findViewById(getResources().getIdentifier("histogram_bar" + i, "id", getPackageName()));
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, (int) (5 * scale));
-                params.weight = (float) histogramCounts[i - 1] / reviewsCount;
-                bar.setLayoutParams(params);
-            }
-
-            TextView totalReviews = findViewById(R.id.histogram_total);
-            String str = "(" + reviewsCount + ")";
-            totalReviews.setText(str);
-
-            // Show reviews' card
-            MaterialCardView reviewsCard = findViewById(R.id.route_reviews);
-            reviewsCard.setVisibility(View.VISIBLE);
-        }
+        View rateCard = findViewById(R.id.route_rate_card);
+        rateCard.setVisibility(View.GONE);
     }
 
 
@@ -826,9 +909,7 @@ public class RouteActivity extends AppCompatActivity {
 
             route = Route.fromJson(obj.get("data").getAsJsonObject());
 
-            // Clean Reviews
-            LinearLayout linearLayout = findViewById(R.id.reviews_list);
-            linearLayout.removeAllViews();
+            cleanReviews();
 
             View rateCard = findViewById(R.id.route_rate_card);
             rateCard.setVisibility(View.GONE);

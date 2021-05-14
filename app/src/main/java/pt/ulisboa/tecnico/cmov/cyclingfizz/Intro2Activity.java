@@ -29,12 +29,14 @@ public class Intro2Activity extends AppCompatActivity {
         Intent intent = new Intent(this, MapActivity.class);
         startActivity(intent);
         overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+        finish();
     }
 
     public void goToIntro3(View view) {
         Intent intent = new Intent(this, Intro3Activity.class);
         startActivity(intent);
         overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+        finish();
     }
 
     @Override

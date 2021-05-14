@@ -29,6 +29,8 @@ public class Intro3Activity extends AppCompatActivity {
         Intent intent = new Intent(this, MapActivity.class);
         startActivity(intent);
         overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+        finish();
+
     }
 
 
