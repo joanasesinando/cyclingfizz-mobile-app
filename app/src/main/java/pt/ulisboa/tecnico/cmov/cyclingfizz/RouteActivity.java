@@ -402,7 +402,9 @@ public class RouteActivity extends AppCompatActivity {
             // Prevent screen from turning off while recording
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+            Log.d(TAG, "play route");
             PathPlayer.getInstance().playRoute(route, preloaded -> {
+                Log.d(TAG, "start activity");
                 Intent intent = new Intent(this, MapActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);

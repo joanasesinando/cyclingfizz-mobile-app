@@ -44,8 +44,6 @@ public class PathPlayer {
             })).start();
             callback.onTaskCompleted(preloaded);
         });
-
-
     }
 
     public void stopRoute() {

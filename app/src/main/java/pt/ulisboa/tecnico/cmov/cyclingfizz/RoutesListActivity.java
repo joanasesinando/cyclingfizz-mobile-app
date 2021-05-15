@@ -9,19 +9,14 @@ import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonArray;
@@ -40,8 +35,6 @@ public class RoutesListActivity extends AppCompatActivity {
     Sidebar sidebar;
     FirebaseAuth mAuth;
     DecimalFormat oneDecimalFormatter = new DecimalFormat("#.0");
-
-    ArrayList<Route> routes = new ArrayList<>();
 
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -70,7 +63,6 @@ public class RoutesListActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void updateRouteListView() {
-
         getFlaggedRoutesId(flaggedRoutes -> {
             (new Utils.httpRequestJson(obj -> {
                 if (!obj.get("status").getAsString().equals("success")) return;

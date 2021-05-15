@@ -1557,7 +1557,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     /*** -------------------------------------------- ***/
 
     private void returnedToMap() {
-        Log.e(TAG, "returned to map");
         if (pathRecorder.isPreparingToRecord()) {
             ExtendedFloatingActionButton recordBtn = findViewById(R.id.btn_map_record_route);
             recordBtn.setVisibility(View.VISIBLE);
