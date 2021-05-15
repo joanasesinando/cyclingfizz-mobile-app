@@ -9,9 +9,9 @@
         app:showAsAction="always" />
 
     <item
-        android:id="@+id/filter"
-        android:icon="@drawable/ic_round_filter_list_24"
-        android:title="@string/filter"
+        android:id="@+id/sort"
+        android:icon="@drawable/ic_round_sort_24"
+        android:title="@string/sort"
         app:showAsAction="always" />
 
 </menu>

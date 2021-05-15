@@ -418,7 +418,7 @@ public class RouteActivity extends AppCompatActivity {
             RadioGroup radioGroup = customDialog.findViewById(R.id.sort_radio_group);
             radioGroup.check(sortBy);
 
-            // Show end trip dialog
+            // Show sort dialog
             new MaterialAlertDialogBuilder(this)
                 .setView(customDialog)
                 .setNegativeButton(R.string.cancel, null)

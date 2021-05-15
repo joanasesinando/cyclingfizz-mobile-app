@@ -258,7 +258,7 @@ public class ViewPOIActivity extends AppCompatActivity {
             // Show end trip dialog
             new MaterialAlertDialogBuilder(this)
                     .setView(customDialog)
-                    .setNeutralButton(R.string.cancel, null)
+                    .setNegativeButton(R.string.cancel, null)
                     .setPositiveButton(R.string.apply, (dialog, which) -> {
                         sortBy = radioGroup.getCheckedRadioButtonId();
                         updateComments();

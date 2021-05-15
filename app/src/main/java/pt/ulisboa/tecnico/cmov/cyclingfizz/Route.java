@@ -26,6 +26,7 @@ public class Route implements Serializable {
     static String SERVER_URL = Utils.STATIONS_SERVER_URL;
 
     private final String id;
+    private final String creationTimestamp;
     private final String routeJson;
     private final String idToken;
     private final String authorUID;
@@ -38,9 +39,10 @@ public class Route implements Serializable {
     private final int flags;
 
 
-    private Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, Bitmap bitmap, String mediaLink, int flags) {
+    private Route(String routeJson, String idToken, String title, String creationTimestamp, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, Bitmap bitmap, String mediaLink, int flags) {
         this.routeJson = routeJson;
         this.idToken = idToken;
+        this.creationTimestamp = creationTimestamp;
         this.title = title;
         this.description = description;
         this.POIs = POIs;
@@ -51,14 +53,14 @@ public class Route implements Serializable {
         this.flags = flags;
     }
 
-    private Route(String routeJson, String title, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, String mediaLink, int flags) {
+    private Route(String routeJson, String title, String creationTimestamp, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, String mediaLink, int flags) {
         // from server
-        this(routeJson, null, title, description, POIs, id, authorUID, null, mediaLink, flags);
+        this(routeJson, null, title, creationTimestamp, description, POIs, id, authorUID, null, mediaLink, flags);
     }
 
     public Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs, Bitmap bitmap) {
         // from android
-        this(routeJson, idToken, title, description, POIs, null, null, bitmap, null, 0);
+        this(routeJson, idToken, title, null, description, POIs, null, null, bitmap, null, 0);
     }
 
     public Feature getRouteFeature() {
@@ -119,6 +121,7 @@ public class Route implements Serializable {
         Route route = new Route(
                 json.get("route").getAsString(),
                 json.get("title").getAsString(),
+                json.get("creation_timestamp").getAsString(),
                 json.get("description").getAsString(),
                 POISs,
                 json.get("id").getAsString(),
@@ -144,6 +147,10 @@ public class Route implements Serializable {
 
     public String getIdToken() {
         return idToken;
+    }
+
+    public String getMediaLink() {
+        return mediaLink;
     }
 
     public String getAuthorUID() {
@@ -236,6 +243,25 @@ public class Route implements Serializable {
         }
         return rates;
     }
+
+    public ArrayList<Integer> getRatesNotFlagged() {
+        ArrayList<Integer> rates = new ArrayList<>();
+        for (Review review : getReviewsNotFlagged()) {
+            rates.add(review.getRate());
+        }
+        return rates;
+    }
+
+    public int getAvgRateNotFlagged() {
+        int rateAvg = 0;
+        int count = getRatesNotFlagged().size();
+
+        for (int rate : getRatesNotFlagged()) {
+            rateAvg += rate/count;
+        }
+        return rateAvg;
+    }
+
 
     public ArrayList<Point> getPath() {
         LineString line = (LineString) getRouteFeature().geometry();
@@ -393,6 +419,58 @@ public class Route implements Serializable {
 
     public boolean isFlagged() {
         return flags >= Utils.MAX_FLAGS_FROM_BAN;
+    }
+
+    public String getCreationTimestamp() {
+        return creationTimestamp;
+    }
+
+    static class SortByBestRate implements Comparator<Route> {
+
+        @Override
+        public int compare(Route r1, Route r2) {
+            if (r1.getAvgRateNotFlagged() == r2.getAvgRateNotFlagged()) {
+                return r1.flags - r2.flags;
+            } else {
+                return r2.getAvgRateNotFlagged() - r1.getAvgRateNotFlagged();
+            }
+        }
+    }
+
+    static class SortByWorstRate implements Comparator<Route> {
+
+        @Override
+        public int compare(Route r1, Route r2) {
+            if (r1.getAvgRateNotFlagged() == r2.getAvgRateNotFlagged()) {
+                return r1.flags - r2.flags;
+            } else {
+                return r1.getAvgRateNotFlagged() - r2.getAvgRateNotFlagged();
+            }
+        }
+    }
+
+    static class SortByMostRecent implements Comparator<Route> {
+
+        @Override
+        public int compare(Route r1, Route r2) {
+            if (r1.getCreationTimestamp().equals(r2.getCreationTimestamp())) {
+                return r1.flags - r2.flags;
+            } else {
+                return (int) (Long.parseLong(r1.getCreationTimestamp()) - Long.parseLong(r2.getCreationTimestamp()));
+            }
+        }
+    }
+
+    static class SortByLeastRecent implements Comparator<Route> {
+
+        @Override
+        public int compare(Route r1, Route r2) {
+            if (r1.getCreationTimestamp().equals(r2.getCreationTimestamp())) {
+                return r1.flags - r2.flags;
+            } else {
+                return (int) (Long.parseLong(r2.getCreationTimestamp()) - Long.parseLong(r1.getCreationTimestamp()));
+            }
+        }
     }
 
     public static class Review implements Serializable {
