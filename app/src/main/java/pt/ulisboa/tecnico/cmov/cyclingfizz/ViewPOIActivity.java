@@ -244,105 +244,107 @@ public class ViewPOIActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void uiSetComments() {
-        ArrayList<PointOfInterest.Comment> comments = poi.getComments();
-        int commentsCount = comments.size();
+        getFlaggedCommentsId(flaggedComments -> {
+            ArrayList<PointOfInterest.Comment> comments = poi.getCommentsNotFlagged(flaggedComments);
+            int commentsCount = comments.size();
 
-        if (commentsCount > 0) {
-            // Set total number comments
-            TextView total = findViewById(R.id.comments_card_subtitle);
-            String s = commentsCount + " " + getString(R.string.comments).toLowerCase();
-            if (commentsCount == 1) s = s.substring(0, s.length() - 1);
-            total.setText(s);
+            if (commentsCount > 0) {
+                // Set total number comments
+                TextView total = findViewById(R.id.comments_card_subtitle);
+                String s = commentsCount + " " + getString(R.string.comments).toLowerCase();
+                if (commentsCount == 1) s = s.substring(0, s.length() - 1);
+                total.setText(s);
 
-            LinearLayout linearLayout = findViewById(R.id.comments_list);
-            for (int i = 0; i < commentsCount; i++) {
-                PointOfInterest.Comment comment = comments.get(i);
+                LinearLayout linearLayout = findViewById(R.id.comments_list);
+                for (int i = 0; i < commentsCount; i++) {
+                    PointOfInterest.Comment comment = comments.get(i);
 
-                LayoutInflater inflater = LayoutInflater.from(this);
-                ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.comment_item, null, false);
+                    LayoutInflater inflater = LayoutInflater.from(this);
+                    ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.comment_item, null, false);
 
-                // Set avatar & name
-                (new Utils.httpRequestJson(obj -> {
-                    if (!obj.get("status").getAsString().equals("success")) return;
+                    // Set avatar & name
+                    (new Utils.httpRequestJson(obj -> {
+                        if (!obj.get("status").getAsString().equals("success")) return;
 
-                    TextView name = layout.findViewById(R.id.comment_item_name);
-                    String userName = obj.get("data").getAsJsonObject().get("name").getAsString();
-                    name.setText(userName);
+                        TextView name = layout.findViewById(R.id.comment_item_name);
+                        String userName = obj.get("data").getAsJsonObject().get("name").getAsString();
+                        name.setText(userName);
 
-                    ImageView avatar = layout.findViewById(R.id.comment_item_avatar);
-                    JsonElement avatarURLElement = obj.get("data").getAsJsonObject().get("avatar");
-                    if (!avatarURLElement.isJsonNull()) {
-                        String avatarURL = avatarURLElement.getAsString();
-                        (new Utils.httpRequestImage(bitmap -> {
-                            Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_SMALL, Utils.THUMBNAIL_SIZE_SMALL);
-                            avatar.setImageBitmap(thumbImage);
-                        })).execute(avatarURL);
+                        ImageView avatar = layout.findViewById(R.id.comment_item_avatar);
+                        JsonElement avatarURLElement = obj.get("data").getAsJsonObject().get("avatar");
+                        if (!avatarURLElement.isJsonNull()) {
+                            String avatarURL = avatarURLElement.getAsString();
+                            (new Utils.httpRequestImage(bitmap -> {
+                                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_SMALL, Utils.THUMBNAIL_SIZE_SMALL);
+                                avatar.setImageBitmap(thumbImage);
+                            })).execute(avatarURL);
+                        }
+
+                    })).execute(SERVER_URL + "/get-user-info?uid=" + comment.getAuthorUID());
+
+                    // Set message
+                    TextView msg = layout.findViewById(R.id.comment_item_msg);
+                    msg.setText(comment.getMsg());
+
+                    // Set images
+                    (new Thread(() -> {
+                        comment.downloadImages(ignored -> {
+                            runOnUiThread(() -> {
+                                GridLayout gallery = layout.findViewById(R.id.comment_item_gallery);
+                                ArrayList<Bitmap> commentImages = comment.getImages();
+
+                                for (int j = 0; j < commentImages.size(); j++) {
+                                    Bitmap bitmap = commentImages.get(j);
+                                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_MEDIUM, Utils.THUMBNAIL_SIZE_MEDIUM);
+                                    ViewGroup imgWrapper = Utils.addImageToGallery(this, thumbImage, gallery, Utils.GALLERY_IMAGE_SIZE_SMALL, false, Utils.NO_COLOR);
+
+                                    // Set click listeners
+                                    final int index = j;
+                                    imgWrapper.setOnClickListener(v -> {
+                                        ((SharedState) getApplicationContext()).slideshowImages = commentImages;
+                                        Intent intent = new Intent(this, SlideshowActivity.class);
+                                        intent.putExtra("index", index);
+                                        startActivity(intent);
+                                        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                                    });
+                                }
+
+                                if (commentImages.size() > 0) gallery.setVisibility(View.VISIBLE);
+                            });
+                        });
+                    })).start();
+
+                    // Set date
+                    TextView date = layout.findViewById(R.id.comment_item_date);
+                    Timestamp timestamp = new Timestamp(Long.parseLong(comment.getCreationTimestamp()));
+                    LocalDate localDate = timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                    date.setText(localDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)));
+
+                    // Enable editing if created by user
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+                    if (user != null && comment.getAuthorUID().equals(user.getUid())) {
+                        ImageView deleteBtn = layout.findViewById(R.id.comment_item_delete);
+                        deleteBtn.setVisibility(View.VISIBLE);
+                        int commentIndex = i;
+                        deleteBtn.setOnClickListener(v -> {
+                            new MaterialAlertDialogBuilder(this, R.style.SecondaryAlertDialog)
+                                .setTitle(R.string.delete_comment)
+                                .setMessage(R.string.delete_comment_warning)
+                                .setNeutralButton(R.string.cancel, null)
+                                .setPositiveButton(R.string.delete, (dialog, which) -> deleteComment(commentIndex))
+                                .show();
+                        });
                     }
 
-                })).execute(SERVER_URL + "/get-user-info?uid=" + comment.getAuthorUID());
-
-                // Set message
-                TextView msg = layout.findViewById(R.id.comment_item_msg);
-                msg.setText(comment.getMsg());
-
-                // Set images
-                (new Thread(() -> {
-                    comment.downloadImages(ignored -> {
-                        runOnUiThread(() -> {
-                            GridLayout gallery = layout.findViewById(R.id.comment_item_gallery);
-                            ArrayList<Bitmap> commentImages = comment.getImages();
-
-                            for (int j = 0; j < commentImages.size(); j++) {
-                                Bitmap bitmap = commentImages.get(j);
-                                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_MEDIUM, Utils.THUMBNAIL_SIZE_MEDIUM);
-                                ViewGroup imgWrapper = Utils.addImageToGallery(this, thumbImage, gallery, Utils.GALLERY_IMAGE_SIZE_SMALL, false, Utils.NO_COLOR);
-
-                                // Set click listeners
-                                final int index = j;
-                                imgWrapper.setOnClickListener(v -> {
-                                    ((SharedState) getApplicationContext()).slideshowImages = commentImages;
-                                    Intent intent = new Intent(this, SlideshowActivity.class);
-                                    intent.putExtra("index", index);
-                                    startActivity(intent);
-                                    overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
-                                });
-                            }
-
-                            if (commentImages.size() > 0) gallery.setVisibility(View.VISIBLE);
-                        });
-                    });
-                })).start();
-
-                // Set date
-                TextView date = layout.findViewById(R.id.comment_item_date);
-                Timestamp timestamp = new Timestamp(Long.parseLong(comment.getCreationTimestamp()));
-                LocalDate localDate = timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                date.setText(localDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)));
-
-                // Enable editing if created by user
-                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
-                if (user != null && comment.getAuthorUID().equals(user.getUid())) {
-                    ImageView deleteBtn = layout.findViewById(R.id.comment_item_delete);
-                    deleteBtn.setVisibility(View.VISIBLE);
-                    int commentIndex = i;
-                    deleteBtn.setOnClickListener(v -> {
-                        new MaterialAlertDialogBuilder(this, R.style.SecondaryAlertDialog)
-                            .setTitle(R.string.delete_comment)
-                            .setMessage(R.string.delete_comment_warning)
-                            .setNeutralButton(R.string.cancel, null)
-                            .setPositiveButton(R.string.delete, (dialog, which) -> deleteComment(commentIndex))
-                            .show();
-                    });
+                    linearLayout.addView(layout);
                 }
 
-                linearLayout.addView(layout);
+                // Show comments' card
+                MaterialCardView commentsCard = findViewById(R.id.poi_comments);
+                commentsCard.setVisibility(View.VISIBLE);
             }
-
-            // Show comments' card
-            MaterialCardView commentsCard = findViewById(R.id.poi_comments);
-            commentsCard.setVisibility(View.VISIBLE);
-        }
+        });
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
