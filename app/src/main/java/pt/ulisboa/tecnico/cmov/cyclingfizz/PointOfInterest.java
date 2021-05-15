@@ -249,7 +249,16 @@ public class PointOfInterest implements Serializable {
         }
     }
 
-    public void removeComment(int commentIndex, String routeID, Utils.OnTaskCompleted<Boolean> callback) {
+    private void removeCommentById(String commentID) {
+        for (Comment comment : comments) {
+            if (comment.getId().equals(commentID)) {
+                comments.remove(comment);
+                return;
+            }
+        }
+    }
+
+    public void removeComment(String commentID, String routeID, Utils.OnTaskCompleted<Boolean> callback) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         if (user != null) {
@@ -260,10 +269,10 @@ public class PointOfInterest implements Serializable {
                 data.addProperty("id_token", idToken);
                 data.addProperty("route_id", routeID);
                 data.addProperty("poi_id", id);
-                data.addProperty("comment_id", comments.get(commentIndex).getId());
+                data.addProperty("comment_id", commentID);
 
                 (new Utils.httpPostRequestJson(response -> {
-                    comments.remove(commentIndex);
+                    removeCommentById(commentID);
                     callback.onTaskCompleted(true);
                 }, data.toString())).execute(SERVER_URL + "/delete-comment-poi");
             });

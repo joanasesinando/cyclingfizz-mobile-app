@@ -269,6 +269,15 @@ public class RouteActivity extends AppCompatActivity {
                     if (review != null) {
                         MaterialButton editReviewBtn = findViewById(R.id.edit_review);
                         editReviewBtn.setVisibility(View.VISIBLE);
+                        editReviewBtn.setOnClickListener(v -> {
+                            SharedState sharedState = (SharedState) getApplicationContext();
+                            sharedState.editingReview = review;
+                            sharedState.reviewingRoute = route;
+
+                            Intent intent = new Intent(this, EditReviewActivity.class);
+                            startActivity(intent);
+                            overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                        });
 
                         for (int i = 1; i <= 5; i++) {
                             ImageView star = findViewById(getResources().getIdentifier("rate_star" + i, "id", getPackageName()));
@@ -276,12 +285,17 @@ public class RouteActivity extends AppCompatActivity {
                             if (i <= review.getRate()) {
                                 star.setImageDrawable(getDrawable(R.drawable.ic_round_star_24));
                                 star.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange_500)));
+
+                            } else {
+                                star.setImageDrawable(getDrawable(R.drawable.ic_round_star_border_24));
+                                star.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.mtrl_textinput_default_box_stroke_color)));
                             }
 
                             int rate = i;
                             star.setOnClickListener(v -> {
                                 SharedState sharedState = (SharedState) getApplicationContext();
                                 sharedState.editingReview = review;
+                                sharedState.reviewingRoute = route;
 
                                 Intent intent = new Intent(this, EditReviewActivity.class);
                                 intent.putExtra(RATE, rate);
@@ -294,6 +308,11 @@ public class RouteActivity extends AppCompatActivity {
                         for (int i = 1; i <= 5; i++) {
                             ImageView star = findViewById(getResources().getIdentifier("rate_star" + i, "id", getPackageName()));
                             int rate = i;
+
+                            // Reset rate
+                            star.setImageDrawable(getDrawable(R.drawable.ic_round_star_border_24));
+                            star.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.mtrl_textinput_default_box_stroke_color)));
+
                             star.setOnClickListener(v -> {
                                 setRate(rate);
 
@@ -307,10 +326,9 @@ public class RouteActivity extends AppCompatActivity {
                             });
                         }
                     }
-
                     View rateView = findViewById(R.id.route_rate_card);
-                    progressIndicator.setVisibility(View.GONE);
                     rateView.setVisibility(View.VISIBLE);
+                    progressIndicator.setVisibility(View.GONE);
                 });
             }
         });
@@ -910,13 +928,21 @@ public class RouteActivity extends AppCompatActivity {
         });
     }
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     private void cleanReviews() {
         // Clean Reviews
         LinearLayout linearLayout = findViewById(R.id.reviews_list);
         linearLayout.removeAllViews();
 
+        // Reset rate
         View rateCard = findViewById(R.id.route_rate_card);
         rateCard.setVisibility(View.GONE);
+
+        for (int i = 1; i <= 5; i++) {
+            ImageView star = findViewById(getResources().getIdentifier("rate_star" + i, "id", getPackageName()));
+            star.setImageDrawable(getDrawable(R.drawable.ic_round_star_border_24));
+            star.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.mtrl_textinput_default_box_stroke_color)));
+        }
     }
 
 
@@ -938,9 +964,6 @@ public class RouteActivity extends AppCompatActivity {
             route = Route.fromJson(obj.get("data").getAsJsonObject());
 
             cleanReviews();
-
-            View rateCard = findViewById(R.id.route_rate_card);
-            rateCard.setVisibility(View.GONE);
 
             uiUpdateUserRate();
             updateReviews();
