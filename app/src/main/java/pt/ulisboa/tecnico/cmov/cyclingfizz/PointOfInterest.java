@@ -87,6 +87,14 @@ public class PointOfInterest implements Serializable {
         return comments;
     }
 
+    public ArrayList<Comment> getCommentsNotFlagged(ArrayList<String> commentsIdsFlaggedByUser) {
+        ArrayList<Comment> result = new ArrayList<>();
+        for (Comment comment : getComments()) {
+            if (!comment.isFlagged() && !commentsIdsFlaggedByUser.contains(comment.getId())) result.add(comment);
+        }
+        return result;
+    }
+
     public ArrayList<String> getMediaLinks() {
         return mediaLinks;
     }
@@ -280,24 +288,26 @@ public class PointOfInterest implements Serializable {
         private final ArrayList<Bitmap> images;
         private final HashMap<String, Boolean> mediaLinksDownloaded = new HashMap<>();
 
+        private final int flags;
 
-        private Comment(String id, String creationTimestamp, String authorUID, String msg, ArrayList<String> mediaLinks, ArrayList<Bitmap> images) {
+        private Comment(String id, String creationTimestamp, String authorUID, String msg, ArrayList<String> mediaLinks, ArrayList<Bitmap> images, int flags) {
             this.id = id;
             this.creationTimestamp = creationTimestamp;
             this.authorUID = authorUID;
             this.msg = msg;
             this.mediaLinks = mediaLinks;
             this.images = images;
+            this.flags = flags;
         }
 
-        public Comment(String id, String creationTimestamp, String authorUID, String msg, ArrayList<String> mediaLinks) {
+        public Comment(String id, String creationTimestamp, String authorUID, String msg, ArrayList<String> mediaLinks, int flags) {
             // from server
-            this(id, creationTimestamp, authorUID, msg, mediaLinks, new ArrayList<>());
+            this(id, creationTimestamp, authorUID, msg, mediaLinks, new ArrayList<>(), flags);
         }
 
         public Comment(String msg, ArrayList<Bitmap> images) {
             // from Android
-            this(null,null, null, msg, new ArrayList<>(), images);
+            this(null,null, null, msg, new ArrayList<>(), images, 0);
         }
 
         public String getId() {
@@ -365,19 +375,13 @@ public class PointOfInterest implements Serializable {
         }
 
         public void downloadImages(Utils.OnTaskCompleted<Void> callback) {
-            Log.d(TAG, "gonna download images");
-            Log.d(TAG, "already got " + images.size() + " of " + mediaLinks.size());
-
             if (mediaLinks.size() == images.size() && Utils.areAllTrue(mediaLinksDownloaded.values())) {
                 callback.onTaskCompleted(null);
                 return;
             }
 
-            Log.d(TAG, "downloading");
-
             for (String mediaLink : mediaLinks) {
                 if (mediaLinksDownloaded.containsKey(mediaLink) && mediaLinksDownloaded.get(mediaLink)) continue;
-                Log.d(TAG, "downloading -> " + mediaLink);
                 (new Utils.httpRequestImage(response -> {
                     images.add(response);
                     mediaLinksDownloaded.put(mediaLink, true);
@@ -417,8 +421,36 @@ public class PointOfInterest implements Serializable {
                     json.has("creation_timestamp") ? json.get("creation_timestamp").getAsString() : null,
                     json.has("author_uid") ? json.get("author_uid").getAsString() : null,
                     json.has("msg") ? json.get("msg").getAsString() : null,
-                    mediaLinks
-            );
+                    mediaLinks,
+                    json.has("flags") ? json.get("flags").getAsInt() : 0
+                    );
+        }
+
+        public void flag(String route_id, String poi_id, Utils.OnTaskCompleted<Void> callback) {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+            if (user != null) {
+                user.getIdToken(true).addOnSuccessListener(result -> {
+                    String idToken = result.getToken();
+                    JsonObject data = new JsonObject();
+                    data.addProperty("idToken", idToken);
+                    data.addProperty("route_id", route_id);
+                    data.addProperty("poi_id", poi_id);
+                    data.addProperty("comment_id", id);
+
+                    new Utils.httpPostRequestJson(response -> {
+                        callback.onTaskCompleted(null);
+                    }, data.toString()).execute(SERVER_URL + "/flag-comment");
+
+                });
+            } else {
+                callback.onTaskCompleted(null);
+                Log.d(TAG, "Null User");
+            }
+        }
+
+        public boolean isFlagged() {
+            return flags >= Utils.MAX_FLAGS_FROM_BAN;
         }
     }
 }
