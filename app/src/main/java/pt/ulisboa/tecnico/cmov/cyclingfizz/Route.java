@@ -353,6 +353,11 @@ public class Route implements Serializable {
     public void preload(Utils.OnTaskCompleted<Boolean> callback) {
         downloadImage(ignored -> {
             AtomicInteger poisPreloaded = new AtomicInteger();
+
+            if (getAllPOIs().size() == 0) {
+                callback.onTaskCompleted(true);
+            }
+
             for (PointOfInterest poi : getAllPOIs()) {
                 poi.preload(ignored_poi -> {
                     poisPreloaded.getAndIncrement();
