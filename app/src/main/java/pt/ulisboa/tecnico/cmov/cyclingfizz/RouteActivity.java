@@ -184,11 +184,18 @@ public class RouteActivity extends AppCompatActivity {
         int itemId = item.getItemId();
         
         if (itemId == R.id.flag_as_inappropriate) {
-            Toast.makeText(this, "ID: " + review.getId(), Toast.LENGTH_LONG).show();
-            review.flag(route.getId(),ignored -> {
-                cleanReviews();
-                updateReviews();
-            });
+
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.are_you_sure_flag)
+                    .setMessage(R.string.are_you_sure_flag_message)
+                    .setNeutralButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.are_you_sure_flag_positive, (dialog, which) -> {
+                        review.flag(route.getId(),ignored -> {
+                            cleanReviews();
+                            updateReviews();
+                        });
+                    })
+                    .show();
             return true;
         }
         return super.onContextItemSelected(item);
@@ -465,7 +472,6 @@ public class RouteActivity extends AppCompatActivity {
             user.getIdToken(true).addOnSuccessListener(result -> {
                 String idToken = result.getToken();
                 (new Utils.httpRequestJson(response -> {
-                    Log.d(TAG, String.valueOf(response));
                     if (!response.get("status").getAsString().equals("success")) {
                         callback.onTaskCompleted(new ArrayList<>());
                         return;

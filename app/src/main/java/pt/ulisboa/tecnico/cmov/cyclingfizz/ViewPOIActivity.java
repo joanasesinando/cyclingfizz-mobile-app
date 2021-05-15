@@ -1,6 +1,7 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
 import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -10,7 +11,10 @@ import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.GridLayout;
@@ -27,6 +31,7 @@ import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
 import java.sql.Timestamp;
@@ -66,6 +71,40 @@ public class ViewPOIActivity extends AppCompatActivity {
     /*** -------------------------------------------- ***/
     /*** -------------- USER INTERFACE -------------- ***/
     /*** -------------------------------------------- ***/
+
+    PointOfInterest.Comment comment;
+    // Menu for flag create
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        comment = (PointOfInterest.Comment) v.getTag();
+
+        getMenuInflater().inflate(R.menu.flag_menu, menu);
+    }
+
+
+    // Menu for flag onclick
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    @Override
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
+        int itemId = item.getItemId();
+
+        if (itemId == R.id.flag_as_inappropriate) {
+
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.are_you_sure_flag)
+                    .setMessage(R.string.are_you_sure_flag_message)
+                    .setNeutralButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.are_you_sure_flag_positive, (dialog, which) -> {
+                        comment.flag(routeID, poi.getId(),ignored -> {
+                            updateComments();
+                        });
+                    })
+                    .show();
+            return true;
+        }
+        return super.onContextItemSelected(item);
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void setUI() {
@@ -318,6 +357,33 @@ public class ViewPOIActivity extends AppCompatActivity {
             if (deleted) finish();
             else Toast.makeText(this, "Could not delete comment", Toast.LENGTH_SHORT).show();
         });
+    }
+
+    private void getFlaggedCommentsId(Utils.OnTaskCompleted<ArrayList<String>> callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+                (new Utils.httpRequestJson(response -> {
+                    if (!response.get("status").getAsString().equals("success")) {
+                        callback.onTaskCompleted(new ArrayList<>());
+                        return;
+                    }
+                    ArrayList<String> flaggedComments = new ArrayList<>();
+                    JsonArray flaggedCommentsJson = response.get("flagged_comments").getAsJsonArray();
+
+                    for (JsonElement flaggedReviewJson : flaggedCommentsJson) {
+                        flaggedComments.add(flaggedReviewJson.getAsString());
+                    }
+
+                    callback.onTaskCompleted(flaggedComments);
+                })).execute(SERVER_URL + "/get-flagged-comments-by-user-and-route-and-poi?idToken=" + idToken + "&route_id=" + routeID + "&poi_id=" + poi.getId());
+
+            });
+        } else {
+            callback.onTaskCompleted(new ArrayList<>());
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
