@@ -41,7 +41,7 @@ public class SlideshowActivity extends AppCompatActivity {
 
         // Change toolbar title
         MaterialToolbar toolbar = findViewById(R.id.slideshow_toolbar).findViewById(R.id.backBar);
-        toolbar.setTitle("This is a drill"); // TODO
+        toolbar.setTitle("Gallery");
 
         // Set click listener for back btn
         toolbar.setNavigationOnClickListener(v -> finish());
