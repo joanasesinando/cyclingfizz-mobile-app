@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -86,7 +87,9 @@ public class AddReviewActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         try {
+            GridLayout gallery = findViewById(R.id.leave_review_gallery);
             if (requestCode == PICK_IMAGES && resultCode == RESULT_OK && data != null) {
+
                 for (int i = 0; i < data.getClipData().getItemCount(); i++) {
                     // Get URI
                     ClipData.Item item = data.getClipData().getItemAt(i);
@@ -97,9 +100,8 @@ public class AddReviewActivity extends AppCompatActivity {
                     images.add(bitmap);
 
                     // Update view
-                    addImageToGallery(bitmap);
+                    updateImageView(bitmap, gallery, images.size() - 1 + i, findViewById(R.id.leave_review_select_items_toolbar).findViewById(R.id.topAppBar));
                 }
-                GridLayout gallery = findViewById(R.id.leave_review_gallery);
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else if (requestCode == TAKE_PHOTO && resultCode == RESULT_OK && currentPhotoPath != null) {
@@ -111,8 +113,7 @@ public class AddReviewActivity extends AppCompatActivity {
                 images.add(bitmap);
 
                 // Update view
-                addImageToGallery(bitmap);
-                GridLayout gallery = findViewById(R.id.leave_review_gallery);
+                updateImageView(bitmap, gallery, images.size() - 1, findViewById(R.id.leave_review_select_items_toolbar).findViewById(R.id.topAppBar));
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else {
@@ -198,10 +199,10 @@ public class AddReviewActivity extends AppCompatActivity {
 
         // Set selecting items top bar btns listeners
         MaterialToolbar selectItemsToolbar = findViewById(R.id.leave_review_select_items_toolbar).findViewById(R.id.topAppBar);
-        selectItemsToolbar.setNavigationOnClickListener(v -> quitDeletingImages());
+        selectItemsToolbar.setNavigationOnClickListener(v -> quitDeletingImages(findViewById(R.id.leave_review_gallery)));
         selectItemsToolbar.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.delete_items) deleteImages();
+            if (id == R.id.delete_items) deleteImages(findViewById(R.id.leave_review_gallery));
             return false;
         });
     }
@@ -238,125 +239,47 @@ public class AddReviewActivity extends AppCompatActivity {
     /*** -------------------------------------------- ***/
 
     @RequiresApi(api = Build.VERSION_CODES.M)
-    private void addImageToGallery(Bitmap bitmap) {
-        GridLayout gallery = findViewById(R.id.leave_review_gallery);
-        final float scale = getResources().getDisplayMetrics().density;
-
-        // Create wrapper
-        ConstraintLayout imgWrapper = new ConstraintLayout(this);
-        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = (int) (110 * scale);
-        params.height = (int) (110 * scale);
-        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-        imgWrapper.setLayoutParams(params);
-
-        // Create image
-        ImageView newImg = new ImageView(this);
-        newImg.setImageBitmap(bitmap);
-        newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        LinearLayout.LayoutParams newImgParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        newImg.setLayoutParams(newImgParams);
-        imgWrapper.addView(newImg);
-
-        // Create overlay (when selected)
-        LinearLayout overlay = new LinearLayout(this);
-        LinearLayout.LayoutParams overlayParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        overlay.setBackgroundColor(getColor(R.color.orange_500));
-        overlay.setAlpha(0.3f);
-        overlay.setVisibility(View.GONE);
-        imgWrapper.addView(overlay, overlayParams);
-
-        // Create checked icon (when selected)
-        ImageView icon = new ImageView(this);
-        icon.setImageResource(R.drawable.ic_round_check_circle_24);
-        icon.setPadding((int) (10 * scale), (int) (10 * scale), (int) (10 * scale), (int) (10 * scale));
-        icon.setColorFilter(getColor(R.color.white));
-        icon.setVisibility(View.GONE);
-        imgWrapper.addView(icon);
-
-        gallery.addView(imgWrapper, params);
+    private void updateImageView(Bitmap bitmap, GridLayout gallery, int index, MaterialToolbar toolbar) {
+        Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_MEDIUM, Utils.THUMBNAIL_SIZE_MEDIUM);
+        ViewGroup imgWrapper = Utils.addImageToGallery(this, thumbImage, gallery, Utils.GALLERY_IMAGE_SIZE_MEDIUM, true, getColor(R.color.purple_500));
 
         // Set click listeners
         imgWrapper.setOnLongClickListener(v -> {
             if (!isDeletingImages) toggleToolbar();
             isDeletingImages = true;
             View overlayChild = ((ViewGroup) v).getChildAt(1);
-            if (overlayChild.getVisibility() == View.VISIBLE) deselectImg(v);
-            else if (overlayChild.getVisibility() == View.GONE) selectImg(v);
+            if (overlayChild.getVisibility() == View.VISIBLE) Utils.deselectImage(gallery, imagesToDeleteIndexes, v, toolbar);
+            else if (overlayChild.getVisibility() == View.GONE) Utils.selectImage(gallery, imagesToDeleteIndexes, v, toolbar);
             return true;
         });
 
         imgWrapper.setOnClickListener(v -> {
             if (isDeletingImages) {
                 View overlayChild = ((ViewGroup) v).getChildAt(1);
+                if (overlayChild.getVisibility() == View.VISIBLE) Utils.deselectImage(gallery, imagesToDeleteIndexes, v, toolbar);
+                else if (overlayChild.getVisibility() == View.GONE) Utils.selectImage(gallery, imagesToDeleteIndexes, v, toolbar);
 
-                if (overlayChild.getVisibility() == View.VISIBLE) deselectImg(v);
-                else if (overlayChild.getVisibility() == View.GONE) selectImg(v);
+            } else {
+                ((SharedState) getApplicationContext()).slideshowImages = images;
+                Intent intent = new Intent(this, SlideshowActivity.class);
+                intent.putExtra("index", index);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
             }
         });
     }
 
-    private void selectImg(View view) {
-        // Add index to delete
-        GridLayout gallery = findViewById(R.id.leave_review_gallery);
-        imagesToDeleteIndexes.add(gallery.indexOfChild(view));
-
-        // Update toolbar
-        View toolbarLayout = findViewById(R.id.leave_review_select_items_toolbar);
-        MaterialToolbar toolbar = toolbarLayout.findViewById(R.id.topAppBar);
-        toolbar.setTitle(imagesToDeleteIndexes.size() + " selected");
-
-        // Show overlay and check
-        for (int i = 1; i < ((ViewGroup) view).getChildCount(); i++) {
-            View child = ((ViewGroup) view).getChildAt(i);
-            child.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private void deselectImg(View view) {
-        // Remove index to delete
-        GridLayout gallery = findViewById(R.id.leave_review_gallery);
-        imagesToDeleteIndexes.remove(gallery.indexOfChild(view));
-
-        // Update toolbar
-        View toolbar = findViewById(R.id.leave_review_select_items_toolbar);
-        MaterialToolbar topBar = toolbar.findViewById(R.id.topAppBar);
-        topBar.setTitle(imagesToDeleteIndexes.size() + " selected");
-
-        // Hide overlay and check
-        for (int i = 1; i < ((ViewGroup) view).getChildCount(); i++) {
-            View child = ((ViewGroup) view).getChildAt(i);
-            child.setVisibility(View.GONE);
-        }
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.M)
-    private void quitDeletingImages() {
+    private void quitDeletingImages(GridLayout gallery) {
         isDeletingImages = false;
         imagesToDeleteIndexes.clear();
         toggleToolbar();
-
-        // Hide overlay and checks
-        GridLayout gallery = findViewById(R.id.leave_review_gallery);
-        for (int i = 0; i < gallery.getChildCount(); i++) {
-            View imgWrapper = gallery.getChildAt(i);
-            for (int j = 1; j < ((ViewGroup) imgWrapper).getChildCount(); j++) {
-                View child = ((ViewGroup) imgWrapper).getChildAt(j);
-                child.setVisibility(View.GONE);
-            }
-        }
+        Utils.quitDeletingImages(gallery);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
-    private void deleteImages() {
-        GridLayout gallery = findViewById(R.id.leave_review_gallery);
-        Collections.sort(imagesToDeleteIndexes, Collections.reverseOrder());
-
-        for (int index : imagesToDeleteIndexes) {
-            images.remove(index);
-            gallery.removeViewAt(index);
-        }
-
+    private void deleteImages(GridLayout gallery) {
+        Utils.deleteImages(gallery, imagesToDeleteIndexes, images);
         isDeletingImages = false;
         imagesToDeleteIndexes.clear();
         toggleToolbar();

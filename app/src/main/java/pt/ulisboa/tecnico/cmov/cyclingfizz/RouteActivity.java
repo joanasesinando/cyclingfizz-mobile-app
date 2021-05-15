@@ -19,13 +19,10 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.AdapterView;
-import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -49,7 +46,6 @@ import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
-import com.mapbox.mapboxsdk.exceptions.MapboxConfigurationException;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -108,7 +104,6 @@ public class RouteActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@RouteActivity";
     static String SERVER_URL = Utils.STATIONS_SERVER_URL;
-    public final static String POI = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI";
     public final static String ROUTE_ID = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_ID";
     public final static String RATE = "pt.ulisboa.tecnico.cmov.cyclingfizz.RATE";
 
@@ -142,7 +137,6 @@ public class RouteActivity extends AppCompatActivity {
             Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
         }
         setContentView(R.layout.route);
-
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -186,7 +180,6 @@ public class RouteActivity extends AppCompatActivity {
 
         getMenuInflater().inflate(R.menu.flag_menu, menu);
     }
-
 
     // Menu for flag onclick
     @RequiresApi(api = Build.VERSION_CODES.R)
@@ -507,29 +500,6 @@ public class RouteActivity extends AppCompatActivity {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
-    private void addImageToGallery(Bitmap bitmap, GridLayout gallery) {
-        final float scale = getResources().getDisplayMetrics().density;
-
-        // Create wrapper
-        ConstraintLayout imgWrapper = new ConstraintLayout(this);
-        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = (int) (110 * scale);
-        params.height = (int) (110 * scale);
-        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-        imgWrapper.setLayoutParams(params);
-
-        // Create image
-        ImageView newImg = new ImageView(this);
-        newImg.setImageBitmap(bitmap);
-        newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        LinearLayout.LayoutParams newImgParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        newImg.setLayoutParams(newImgParams);
-        imgWrapper.addView(newImg);
-
-        gallery.addView(imgWrapper, params);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
     private int getColorFromRate(float rate) {
         if (rate < 2.5f) return getColor(R.color.pink);
         if (rate < 4.0f) return getColor(R.color.warning);
@@ -766,7 +736,7 @@ public class RouteActivity extends AppCompatActivity {
             if (poi.getMediaLinks().size() > 0) {
                 poi.downloadAndGetImage(0, bitmap -> {
                     ImageView thumbnail = layout.findViewById(R.id.poi_item_thumbnail);
-                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
+                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_SMALL, Utils.THUMBNAIL_SIZE_SMALL);
                     thumbnail.setImageBitmap(thumbImage);
                 });
             }
@@ -837,7 +807,6 @@ public class RouteActivity extends AppCompatActivity {
                         if (!obj.get("status").getAsString().equals("success")) return;
 
                         TextView name = layout.findViewById(R.id.review_item_name);
-                        Log.d(TAG, String.valueOf(obj));
                         String userName = obj.get("data").getAsJsonObject().get("name").getAsString();
                         name.setText(userName);
 
@@ -846,7 +815,7 @@ public class RouteActivity extends AppCompatActivity {
                         if (!avatarURLElement.isJsonNull()) {
                             String avatarURL = avatarURLElement.getAsString();
                             (new Utils.httpRequestImage(bitmap -> {
-                                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
+                                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_SMALL, Utils.THUMBNAIL_SIZE_SMALL);
                                 avatar.setImageBitmap(thumbImage);
                             })).execute(avatarURL);
                         }
@@ -876,11 +845,25 @@ public class RouteActivity extends AppCompatActivity {
                         review.downloadImages(ignored -> {
                             runOnUiThread(() -> {
                                 GridLayout gallery = layout.findViewById(R.id.review_item_gallery);
-                                for (Bitmap bitmap : review.getImages()) {
-                                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
-                                    addImageToGallery(thumbImage, gallery);
+                                ArrayList<Bitmap> reviewImages = review.getImages();
+
+                                for (int i = 0; i < reviewImages.size(); i++) {
+                                    Bitmap bitmap = reviewImages.get(i);
+                                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_MEDIUM, Utils.THUMBNAIL_SIZE_MEDIUM);
+                                    ViewGroup imgWrapper = Utils.addImageToGallery(this, thumbImage, gallery, Utils.GALLERY_IMAGE_SIZE_SMALL, false, Utils.NO_COLOR);
+
+                                    // Set click listeners
+                                    final int index = i;
+                                    imgWrapper.setOnClickListener(v -> {
+                                        ((SharedState) getApplicationContext()).slideshowImages = reviewImages;
+                                        Intent intent = new Intent(this, SlideshowActivity.class);
+                                        intent.putExtra("index", index);
+                                        startActivity(intent);
+                                        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                                    });
                                 }
-                                if (review.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
+
+                                if (reviewImages.size() > 0) gallery.setVisibility(View.VISIBLE);
                             });
                         });
                     })).start();

@@ -5,12 +5,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import com.google.android.material.appbar.MaterialToolbar;
@@ -21,37 +19,36 @@ public class SlideshowActivity extends AppCompatActivity {
 
     float initialX;
     ArrayList<Bitmap> images;
-    int index;
+    int startIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d("OI", "wtf");
         Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
         super.onCreate(savedInstanceState);
         setContentView(R.layout.slideshow);
 
         Intent intent = getIntent();
         images = ((SharedState) getApplicationContext()).slideshowImages;
-        index = intent.getIntExtra("index", 0);
+        startIndex = intent.getIntExtra("index", 0);
 
+        // Set images
         uiUpdateImages();
-
-        // Change toolbar title
-        MaterialToolbar toolbar = findViewById(R.id.slideshow_toolbar).findViewById(R.id.backBar);
-        toolbar.setTitle("This is a drill");
-
-        // Set click listener for back btn
-        toolbar.setNavigationOnClickListener(v -> finish());
 
         // Set first image
         ViewFlipper viewFlipper = findViewById(R.id.view_flipper);
-        viewFlipper.setDisplayedChild(index);
+        viewFlipper.setDisplayedChild(startIndex);
         setCounter();
+
+        // Change toolbar title
+        MaterialToolbar toolbar = findViewById(R.id.slideshow_toolbar).findViewById(R.id.backBar);
+        toolbar.setTitle("This is a drill"); // TODO
+
+        // Set click listener for back btn
+        toolbar.setNavigationOnClickListener(v -> finish());
     }
 
     public void uiUpdateImages() {
         ViewFlipper viewFlipper = findViewById(R.id.view_flipper);
-
         for (Bitmap image : images) {
             ImageView imageView = new ImageView(this);
             imageView.setImageBitmap(image);
@@ -62,6 +59,7 @@ public class SlideshowActivity extends AppCompatActivity {
     @Override
     public boolean onTouchEvent(MotionEvent touchEvent) {
         ViewFlipper viewFlipper = findViewById(R.id.view_flipper);
+        if (images.size() == 1) return false;
 
         switch (touchEvent.getAction()) {
             case MotionEvent.ACTION_DOWN:

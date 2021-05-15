@@ -128,7 +128,7 @@ public class NewRouteActivity extends AppCompatActivity {
                 // Get URI
                 Uri uri = data.getData();
                 image = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
-                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(image, 128, 128);
+                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(image, Utils.THUMBNAIL_SIZE_SMALL, Utils.THUMBNAIL_SIZE_SMALL);
 
                 // Update view
                 ImageView thumbnail = findViewById(R.id.route_thumbnail);
@@ -441,7 +441,7 @@ public class NewRouteActivity extends AppCompatActivity {
             ArrayList<Bitmap> images = poi.getImages();
             if (images.size() > 0) {
                 ImageView thumbnail = layout.findViewById(R.id.poi_item_thumbnail);
-                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(images.get(0), 128, 128);
+                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(images.get(0), Utils.THUMBNAIL_SIZE_SMALL, Utils.THUMBNAIL_SIZE_SMALL);
                 thumbnail.setImageBitmap(thumbImage);
             }
 
