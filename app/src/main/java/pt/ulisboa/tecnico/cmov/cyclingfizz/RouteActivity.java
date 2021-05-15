@@ -402,9 +402,7 @@ public class RouteActivity extends AppCompatActivity {
             // Prevent screen from turning off while recording
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-            Log.d(TAG, "play route");
             PathPlayer.getInstance().playRoute(route, preloaded -> {
-                Log.d(TAG, "start activity");
                 Intent intent = new Intent(this, MapActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
@@ -412,7 +410,9 @@ public class RouteActivity extends AppCompatActivity {
             });
         });
 
-        findViewById(R.id.sort).setOnClickListener(view -> {
+        // Set sort btn click listener
+        MaterialButton sortBtn = findViewById(R.id.sort);
+        sortBtn.setOnClickListener(view -> {
             View customDialog = LayoutInflater.from(this)
                     .inflate(R.layout.sort_dialog, null, false);
             RadioGroup radioGroup = customDialog.findViewById(R.id.sort_radio_group);
@@ -420,14 +420,14 @@ public class RouteActivity extends AppCompatActivity {
 
             // Show end trip dialog
             new MaterialAlertDialogBuilder(this)
-                    .setView(customDialog)
-                    .setNeutralButton(R.string.cancel, null)
-                    .setPositiveButton(R.string.apply, (dialog, which) -> {
-                        sortBy = radioGroup.getCheckedRadioButtonId();
-                        cleanReviews();
-                        updateReviews();
-                    })
-                    .show();
+                .setView(customDialog)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.apply, (dialog, which) -> {
+                    sortBy = radioGroup.getCheckedRadioButtonId();
+                    cleanReviews();
+                    updateReviews();
+                })
+                .show();
         });
     }
 

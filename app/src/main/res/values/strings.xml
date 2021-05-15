@@ -45,6 +45,7 @@
     <string name="ignore">Ignore</string>
     <string name="no">No</string>
     <string name="stop_route">Stop route</string>
+    <string name="sort_by">Sort by:</string>
 
     <string name="edit_review">Edit review</string>
 
@@ -163,13 +164,9 @@
     <!-- Comments -->
     <string name="write_comment">Write your comment…</string>
 
-    <!-- Sort Dialog -->
-    <string name="sort_reviews_by">Sort reviews by</string>
-    <string name="sort_comments_by">Sort comments by</string>
-    <string name="sort_routes_by">Sort routes by</string>
-
-    <string name="sort_most_recent">Most recent</string>
-    <string name="sort_least_recent">Least recent</string>
+    <!-- Sort -->
+    <string name="sort_most_recent">Newest</string>
+    <string name="sort_least_recent">Oldest</string>
     <string name="sort_best_rate">Best rate</string>
     <string name="sort_worst_rate">Worst rate</string>
 

@@ -1,58 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginHorizontal="16dp">
 
-    <LinearLayout
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/sort_by"
+        android:textSize="18sp"
+        android:textColor="@color/dark"
+        android:fontFamily="@font/quicksand_bold"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="10dp"/>
+
+    <RadioGroup
+        android:id="@+id/sort_radio_group"
+        android:checkedButton="@+id/sort_best_rate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:orientation="vertical"
-        android:gravity="start"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_marginStart="26dp"
+        android:layout_marginTop="8dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/sort_reviews_by"
-            android:textSize="20sp"
-            android:textColor="@color/black"
-            android:textStyle="bold"
-            android:fontFamily="@font/quicksand">
-        </TextView>
-
-        <RadioGroup
-            android:id="@+id/sort_radio_group"
-            android:checkedButton="@+id/sort_best_rate"
+        <RadioButton
+            android:id="@+id/sort_best_rate"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp">
-            <RadioButton
-                android:id="@+id/sort_best_rate"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="@string/sort_best_rate"/>
-            <RadioButton
-                android:id="@+id/sort_worst_rate"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="@string/sort_worst_rate"/>
-            <RadioButton
-                android:id="@+id/sort_most_recent"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="@string/sort_most_recent"/>
-            <RadioButton
-                android:id="@+id/sort_least_recent"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="@string/sort_least_recent"/>
-        </RadioGroup>
+            android:layout_height="match_parent"
+            android:text="@string/sort_best_rate"
+            android:textColor="@color/dark"
+            android:fontFamily="@font/quicksand"/>
 
-    </LinearLayout>
+        <RadioButton
+            android:id="@+id/sort_worst_rate"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/sort_worst_rate"
+            android:textColor="@color/dark"
+            android:fontFamily="@font/quicksand"/>
 
+        <RadioButton
+            android:id="@+id/sort_most_recent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/sort_most_recent"
+            android:textColor="@color/dark"
+            android:fontFamily="@font/quicksand"/>
 
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <RadioButton
+            android:id="@+id/sort_least_recent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/sort_least_recent"
+            android:textColor="@color/dark"
+            android:fontFamily="@font/quicksand"/>
+    </RadioGroup>
+</LinearLayout>
