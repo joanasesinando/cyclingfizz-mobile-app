@@ -2,7 +2,6 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
@@ -11,7 +10,6 @@ import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,6 +40,7 @@ import java.util.ArrayList;
 public class ViewPOIActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@ViewPOI";
+
     static String SERVER_URL = Utils.STATIONS_SERVER_URL;
     public final static String ROUTE_ID = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_ID";
     public final static String COMMENT_INDEX = "pt.ulisboa.tecnico.cmov.cyclingfizz.COMMENT_INDEX";
@@ -70,16 +69,26 @@ public class ViewPOIActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void setUI() {
-        // Set purple status bar
-        getWindow().setStatusBarColor(getColor(R.color.purple_700));
-
-        // Set toolbar title as POI name
         MaterialToolbar toolbar = findViewById(R.id.poi_toolbar).findViewById(R.id.topAppBar);
-        toolbar.setTitle(poi.getName());
 
+        Utils.setStatusBarColor(this, getColor(R.color.purple_700));
+        uiSetToolbar(toolbar);
+        uiUpdateButtons(toolbar);
+        uiHideInputs();
+        uiSetDescription();
+        uiSetComments();
+        uiSetImages();
+    }
+
+    private void uiSetToolbar(MaterialToolbar toolbar) {
+        // Set toolbar title as POI name
+        toolbar.setTitle(poi.getName());
+    }
+
+    private void uiUpdateButtons(MaterialToolbar toolbar) {
         // Hide / change btns
-        MaterialButton takePhotosbtn = findViewById(R.id.poi_take_photo);
-        takePhotosbtn.setVisibility(View.GONE);
+        MaterialButton takePhotosBtn = findViewById(R.id.poi_take_photo);
+        takePhotosBtn.setVisibility(View.GONE);
 
         MaterialButton pickPhotosBtn = findViewById(R.id.poi_pick_photos);
         pickPhotosBtn.setVisibility(View.GONE);
@@ -92,36 +101,50 @@ public class ViewPOIActivity extends AppCompatActivity {
 
         MaterialButton commentBtn = findViewById(R.id.leave_comment);
         commentBtn.setVisibility(View.VISIBLE);
+    }
 
-        // Hide inputs
+    private void uiHideInputs() {
         TextInputLayout nameInput = findViewById(R.id.poi_name_input);
         nameInput.setVisibility(View.GONE);
 
         TextInputLayout descriptionInput = findViewById(R.id.poi_description_input);
         descriptionInput.setVisibility(View.GONE);
+    }
 
-        // Set description
+    private void uiSetDescription() {
         View description = findViewById(R.id.poi_description);
-        uiUpdateCard(description, R.drawable.ic_description,
-                getString(R.string.description), poi.getDescription());
+        uiUpdateCard(description, R.drawable.ic_description, getString(R.string.description), poi.getDescription());
         description.setVisibility(View.VISIBLE);
+    }
 
-        // Set comments
-        setComments();
-
-        // Set images
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void uiSetImages() {
         CircularProgressIndicator progressIndicator = findViewById(R.id.progress_indicator);
         progressIndicator.setVisibility(View.VISIBLE);
+
         (new Thread(() -> {
             poi.downloadImages(ignored -> {
                 runOnUiThread(() -> {
                     GridLayout gallery = findViewById(R.id.poi_gallery);
-                    int index = 0;
-                    for (Bitmap bitmap : poi.getImages()) {
-                        Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 256, 256);
-                        addImageToGallery(thumbImage, gallery, 110, poi.getImages(), index++);
+                    ArrayList<Bitmap> poiImages = poi.getImages();
+
+                    for (int i = 0; i < poiImages.size(); i++) {
+                        Bitmap bitmap = poiImages.get(i);
+                        Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_MEDIUM, Utils.THUMBNAIL_SIZE_MEDIUM);
+                        ViewGroup imgWrapper = Utils.addImageToGallery(this, thumbImage, gallery, Utils.GALLERY_IMAGE_SIZE_MEDIUM, false, Utils.NO_COLOR);
+
+                        // Set click listeners
+                        final int index = i;
+                        imgWrapper.setOnClickListener(v -> {
+                            ((SharedState) getApplicationContext()).slideshowImages = poiImages;
+                            Intent intent = new Intent(this, SlideshowActivity.class);
+                            intent.putExtra("index", index);
+                            startActivity(intent);
+                            overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                        });
                     }
-                    if (poi.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
+
+                    if (poiImages.size() > 0) gallery.setVisibility(View.VISIBLE);
                     progressIndicator.setVisibility(View.GONE);
                 });
             });
@@ -176,44 +199,12 @@ public class ViewPOIActivity extends AppCompatActivity {
         });
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private void addImageToGallery(Bitmap bitmap, GridLayout gallery, int size, ArrayList<Bitmap> images, int index) {
-        final float scale = getResources().getDisplayMetrics().density;
-
-        // Create wrapper
-        ConstraintLayout imgWrapper = new ConstraintLayout(this);
-        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = (int) (size * scale);
-        params.height = (int) (size * scale);
-        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-        imgWrapper.setLayoutParams(params);
-
-        // Create image
-        ImageView newImg = new ImageView(this);
-        newImg.setImageBitmap(bitmap);
-        newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        LinearLayout.LayoutParams newImgParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        newImg.setLayoutParams(newImgParams);
-        imgWrapper.addView(newImg);
-
-        gallery.addView(imgWrapper, params);
-
-        imgWrapper.setOnClickListener(v -> {
-            Log.d(TAG, String.valueOf(images.size()));
-            ((SharedState) getApplicationContext()).slideshowImages = images;
-            Intent intent = new Intent(this, SlideshowActivity.class);
-            intent.putExtra("index", index);
-            startActivity(intent);
-            overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
-        });
-    }
-
     /*** -------------------------------------------- ***/
     /*** ----------------- COMMENTS ----------------- ***/
     /*** -------------------------------------------- ***/
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void setComments() {
+    private void uiSetComments() {
         ArrayList<PointOfInterest.Comment> comments = poi.getComments();
         int commentsCount = comments.size();
 
@@ -224,9 +215,10 @@ public class ViewPOIActivity extends AppCompatActivity {
             if (commentsCount == 1) s = s.substring(0, s.length() - 1);
             total.setText(s);
 
-            int i = 0;
             LinearLayout linearLayout = findViewById(R.id.comments_list);
-            for (PointOfInterest.Comment comment : comments) {
+            for (int i = 0; i < commentsCount; i++) {
+                PointOfInterest.Comment comment = comments.get(i);
+
                 LayoutInflater inflater = LayoutInflater.from(this);
                 ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.comment_item, null, false);
 
@@ -243,14 +235,14 @@ public class ViewPOIActivity extends AppCompatActivity {
                     if (!avatarURLElement.isJsonNull()) {
                         String avatarURL = avatarURLElement.getAsString();
                         (new Utils.httpRequestImage(bitmap -> {
-                            Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
+                            Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_SMALL, Utils.THUMBNAIL_SIZE_SMALL);
                             avatar.setImageBitmap(thumbImage);
                         })).execute(avatarURL);
                     }
 
                 })).execute(SERVER_URL + "/get-user-info?uid=" + comment.getAuthorUID());
 
-                // Set comment
+                // Set message
                 TextView msg = layout.findViewById(R.id.comment_item_msg);
                 msg.setText(comment.getMsg());
 
@@ -259,12 +251,25 @@ public class ViewPOIActivity extends AppCompatActivity {
                     comment.downloadImages(ignored -> {
                         runOnUiThread(() -> {
                             GridLayout gallery = layout.findViewById(R.id.comment_item_gallery);
-                            int index = 0;
-                            for (Bitmap bitmap : comment.getImages()) {
-                                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 256, 256);
-                                addImageToGallery(thumbImage, gallery, 75, comment.getImages(), index++);
+                            ArrayList<Bitmap> commentImages = comment.getImages();
+
+                            for (int j = 0; j < commentImages.size(); j++) {
+                                Bitmap bitmap = commentImages.get(j);
+                                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_MEDIUM, Utils.THUMBNAIL_SIZE_MEDIUM);
+                                ViewGroup imgWrapper = Utils.addImageToGallery(this, thumbImage, gallery, Utils.GALLERY_IMAGE_SIZE_SMALL, false, Utils.NO_COLOR);
+
+                                // Set click listeners
+                                final int index = j;
+                                imgWrapper.setOnClickListener(v -> {
+                                    ((SharedState) getApplicationContext()).slideshowImages = commentImages;
+                                    Intent intent = new Intent(this, SlideshowActivity.class);
+                                    intent.putExtra("index", index);
+                                    startActivity(intent);
+                                    overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                                });
                             }
-                            if (comment.getImages().size() > 0) gallery.setVisibility(View.VISIBLE);
+
+                            if (commentImages.size() > 0) gallery.setVisibility(View.VISIBLE);
                         });
                     });
                 })).start();
@@ -293,7 +298,6 @@ public class ViewPOIActivity extends AppCompatActivity {
                 }
 
                 linearLayout.addView(layout);
-                i++;
             }
 
             // Show comments' card
@@ -306,7 +310,7 @@ public class ViewPOIActivity extends AppCompatActivity {
     private void updateComments() {
         LinearLayout linearLayout = findViewById(R.id.comments_list);
         linearLayout.removeAllViews();
-        setComments();
+        uiSetComments();
     }
 
     private void deleteComment(int commentIndex) {

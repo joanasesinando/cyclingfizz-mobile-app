@@ -190,7 +190,7 @@ public final class Sidebar {
         } else {
             if (user.getPhotoUrl() != null) {
                 (new Utils.httpRequestImage(bitmap -> {
-                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, 128, 128);
+                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_SMALL, Utils.THUMBNAIL_SIZE_SMALL);
                     userAvatar.setImageBitmap(thumbImage);
                 })).execute(user.getPhotoUrl().toString());
             } else {

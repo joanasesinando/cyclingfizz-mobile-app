@@ -6,41 +6,38 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Message;
-import android.util.JsonReader;
 import android.util.Log;
-import android.util.LruCache;
 import android.util.Patterns;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.GridLayout;
 import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.LinearLayout;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.common.util.IOUtils;
-import com.google.gson.JsonElement;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mapbox.geojson.Point;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -48,12 +45,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import okio.ByteString;
 
 enum TravelingMode {
     DRIVING("driving"), WALKING("walking"),
@@ -75,13 +71,11 @@ public final class Utils {
 
     public static int MAX_FLAGS_FROM_BAN = 3;
 
+    public static int THUMBNAIL_SIZE_SMALL = 128;
+    public static int THUMBNAIL_SIZE_MEDIUM = 256;
 
-    public static boolean areAllTrue(Collection<Boolean> booleans) {
-        for (boolean b : booleans) {
-            if (!b) return false;
-        }
-        return true;
-    }
+    public static int GALLERY_IMAGE_SIZE_SMALL = 75;
+    public static int GALLERY_IMAGE_SIZE_MEDIUM = 110;
 
 
     /*** -------------------------------------------- ***/
@@ -92,7 +86,6 @@ public final class Utils {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     static void setStatusBarColor(Activity activity, int color) {
         Window window = activity.getWindow();
 
@@ -103,7 +96,7 @@ public final class Utils {
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
 
         // finally change the color
-        window.setStatusBarColor(ContextCompat.getColor(activity,color));
+        window.setStatusBarColor(color);
     }
 
     public static void keepMenuOpen(MenuItem item, Context context) {
@@ -140,6 +133,13 @@ public final class Utils {
         return Patterns.EMAIL_ADDRESS.matcher(target).matches();
     }
 
+    public static boolean areAllTrue(Collection<Boolean> booleans) {
+        for (boolean b : booleans) {
+            if (!b) return false;
+        }
+        return true;
+    }
+
 
     /*** -------------------------------------------- ***/
     /*** -------------------- MAP ------------------- ***/
@@ -162,6 +162,112 @@ public final class Utils {
         distance = Math.pow(distance, 2) + Math.pow(height, 2);
 
         return Math.sqrt(distance);
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ------------------ GALLERY ----------------- ***/
+    /*** -------------------------------------------- ***/
+
+    public static int NO_COLOR = -1;
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public static ViewGroup addImageToGallery(Activity activity, Bitmap bitmap, GridLayout gallery, int size,
+                                   boolean isSelectable, int selectedColor) {
+
+        final float scale = activity.getResources().getDisplayMetrics().density;
+        final int padding = (int) (10 * scale);
+
+        // Create wrapper
+        ConstraintLayout imgWrapper = new ConstraintLayout(activity);
+        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+        params.width = (int) (size * scale);
+        params.height = (int) (size * scale);
+        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        imgWrapper.setLayoutParams(params);
+
+        // Create image
+        ImageView newImg = new ImageView(activity);
+        newImg.setImageBitmap(bitmap);
+        newImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        LinearLayout.LayoutParams newImgParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        );
+        newImg.setLayoutParams(newImgParams);
+        imgWrapper.addView(newImg);
+
+        if (isSelectable) {
+            // Create overlay (when selected)
+            LinearLayout overlay = new LinearLayout(activity);
+            LinearLayout.LayoutParams overlayParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            );
+            overlay.setBackgroundColor(selectedColor);
+            overlay.setAlpha(0.3f);
+            overlay.setVisibility(View.GONE);
+            imgWrapper.addView(overlay, overlayParams);
+
+            // Create checked icon (when selected)
+            ImageView icon = new ImageView(activity);
+            icon.setImageResource(R.drawable.ic_round_check_circle_24);
+            icon.setPadding(padding, padding, padding, padding);
+            icon.setColorFilter(activity.getColor(R.color.white));
+            icon.setVisibility(View.GONE);
+            imgWrapper.addView(icon);
+        }
+
+        gallery.addView(imgWrapper, params);
+        return imgWrapper;
+    }
+
+    public static void selectImage(GridLayout gallery, ArrayList<Integer> imagesToDeleteIndexes, View view, MaterialToolbar toolbar) {
+        // Add index to delete
+        imagesToDeleteIndexes.add(gallery.indexOfChild(view));
+
+        // Update toolbar
+        toolbar.setTitle(imagesToDeleteIndexes.size() + " selected");
+
+        // Show overlay and check
+        for (int i = 1; i < ((ViewGroup) view).getChildCount(); i++) {
+            View child = ((ViewGroup) view).getChildAt(i);
+            child.setVisibility(View.VISIBLE);
+        }
+    }
+
+    public static void deselectImage(GridLayout gallery, ArrayList<Integer> imagesToDeleteIndexes, View view, MaterialToolbar toolbar) {
+        // Remove index to delete
+        imagesToDeleteIndexes.remove(gallery.indexOfChild(view));
+
+        // Update toolbar
+        toolbar.setTitle(imagesToDeleteIndexes.size() + " selected");
+
+        // Hide overlay and check
+        for (int i = 1; i < ((ViewGroup) view).getChildCount(); i++) {
+            View child = ((ViewGroup) view).getChildAt(i);
+            child.setVisibility(View.GONE);
+        }
+    }
+
+    public static void deleteImages(GridLayout gallery, ArrayList<Integer> imagesToDeleteIndexes, ArrayList<Bitmap> images) {
+        Collections.sort(imagesToDeleteIndexes, Collections.reverseOrder());
+
+        for (int index : imagesToDeleteIndexes) {
+            images.remove(index);
+            gallery.removeViewAt(index);
+        }
+    }
+
+    public static void quitDeletingImages(GridLayout gallery) {
+        for (int i = 0; i < gallery.getChildCount(); i++) {
+            View imgWrapper = gallery.getChildAt(i);
+
+            for (int j = 1; j < ((ViewGroup) imgWrapper).getChildCount(); j++) {
+                View child = ((ViewGroup) imgWrapper).getChildAt(j);
+                child.setVisibility(View.GONE);
+            }
+        }
     }
 
 
