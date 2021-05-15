@@ -206,10 +206,23 @@ public class AddReviewActivity extends AppCompatActivity {
 
     @SuppressLint("UseCompatLoadingForDrawables")
     private void uiSetRate() {
-        for (int i = 1; i <= rate; i++) {
+        for (int i = 1; i <= 5; i++) {
             ImageView star = findViewById(getResources().getIdentifier("rate_star" + i, "id", getPackageName()));
-            star.setImageDrawable(getDrawable(R.drawable.ic_round_star_24));
-            star.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange_500)));
+
+            if (i <= rate) {
+                star.setImageDrawable(getDrawable(R.drawable.ic_round_star_24));
+                star.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange_500)));
+
+            } else {
+                star.setImageDrawable(getDrawable(R.drawable.ic_round_star_border_24));
+                star.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.mtrl_textinput_default_box_stroke_color)));
+            }
+
+            int starInt = i;
+            star.setOnClickListener(v -> {
+                rate = starInt;
+                uiSetRate();
+            });
         }
     }
 

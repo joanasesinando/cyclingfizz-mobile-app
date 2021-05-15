@@ -356,13 +356,12 @@ public class ViewPOIActivity extends AppCompatActivity {
                     if (user != null && comment.getAuthorUID().equals(user.getUid())) {
                         ImageView deleteBtn = layout.findViewById(R.id.comment_item_delete);
                         deleteBtn.setVisibility(View.VISIBLE);
-                        int commentIndex = i;
                         deleteBtn.setOnClickListener(v -> {
                             new MaterialAlertDialogBuilder(this, R.style.SecondaryAlertDialog)
                                 .setTitle(R.string.delete_comment)
                                 .setMessage(R.string.delete_comment_warning)
                                 .setNeutralButton(R.string.cancel, null)
-                                .setPositiveButton(R.string.delete, (dialog, which) -> deleteComment(commentIndex))
+                                .setPositiveButton(R.string.delete, (dialog, which) -> deleteComment(comment.getId()))
                                 .show();
                         });
                     }
@@ -395,8 +394,8 @@ public class ViewPOIActivity extends AppCompatActivity {
         uiSetComments();
     }
 
-    private void deleteComment(int commentIndex) {
-        poi.removeComment(commentIndex, routeID, deleted -> {
+    private void deleteComment(String commentID) {
+        poi.removeComment(commentID, routeID, deleted -> {
             if (deleted) finish();
             else Toast.makeText(this, "Could not delete comment", Toast.LENGTH_SHORT).show();
         });

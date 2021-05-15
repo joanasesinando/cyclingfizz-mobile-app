@@ -335,7 +335,6 @@ public class Route implements Serializable {
                     data.addProperty("route_id", id);
 
                     (new Utils.httpPostRequestJson(response -> {
-                        Log.d(TAG, String.valueOf(response));
                         JsonObject reviewJson = response.get("review").getAsJsonObject();
                         addReviewFromJson(reviewJson.get("review").getAsJsonObject(), reviewJson.get("id").getAsString());
                         callback.onTaskCompleted(Review.fromJson(reviewJson.get("review").getAsJsonObject(), reviewJson.get("id").getAsString()));
@@ -345,6 +344,38 @@ public class Route implements Serializable {
             });
         } else {
             callback.onTaskCompleted(null);
+            Log.d(TAG, "Null User");
+        }
+    }
+
+    private void removeReviewById(String reviewID) {
+        for (Review review : reviews) {
+            if (review.getId().equals(reviewID)) {
+                reviews.remove(review);
+                return;
+            }
+        }
+    }
+
+    public void removeReview(String reviewID, Utils.OnTaskCompleted<Boolean> callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                JsonObject data = new JsonObject();
+                data.addProperty("id_token", idToken);
+                data.addProperty("route_id", id);
+                data.addProperty("review_id", reviewID);
+
+                (new Utils.httpPostRequestJson(response -> {
+                    removeReviewById(reviewID);
+                    callback.onTaskCompleted(true);
+                }, data.toString())).execute(SERVER_URL + "/delete-review");
+            });
+        } else {
+            callback.onTaskCompleted(false);
             Log.d(TAG, "Null User");
         }
     }
