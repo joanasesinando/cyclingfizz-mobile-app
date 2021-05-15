@@ -421,12 +421,9 @@ public class RouteActivity extends AppCompatActivity {
                     .setView(customDialog)
                     .setNeutralButton(R.string.cancel, null)
                     .setPositiveButton(R.string.apply, (dialog, which) -> {
-
                         sortBy = radioGroup.getCheckedRadioButtonId();
-                        Log.e(TAG, String.valueOf(sortBy));
                         cleanReviews();
                         updateReviews();
-
                     })
                     .show();
         });

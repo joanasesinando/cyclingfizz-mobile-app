@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
@@ -20,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,6 +42,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
+import java.util.Comparator;
+
+import static android.view.View.GONE;
 
 
 public class ViewPOIActivity extends AppCompatActivity {
@@ -52,6 +57,8 @@ public class ViewPOIActivity extends AppCompatActivity {
 
     PointOfInterest poi;
     String routeID;
+
+    int sortBy = R.id.sort_most_recent;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -127,13 +134,13 @@ public class ViewPOIActivity extends AppCompatActivity {
     private void uiUpdateButtons(MaterialToolbar toolbar) {
         // Hide / change btns
         MaterialButton takePhotosBtn = findViewById(R.id.poi_take_photo);
-        takePhotosBtn.setVisibility(View.GONE);
+        takePhotosBtn.setVisibility(GONE);
 
         MaterialButton pickPhotosBtn = findViewById(R.id.poi_pick_photos);
-        pickPhotosBtn.setVisibility(View.GONE);
+        pickPhotosBtn.setVisibility(GONE);
 
         MaterialButton saveBtn = findViewById(R.id.save_poi);
-        saveBtn.setVisibility(View.GONE);
+        saveBtn.setVisibility(GONE);
 
         toolbar.getMenu().getItem(0).setVisible(false);
         toolbar.setNavigationIcon(R.drawable.ic_round_arrow_back_24);
@@ -144,10 +151,10 @@ public class ViewPOIActivity extends AppCompatActivity {
 
     private void uiHideInputs() {
         TextInputLayout nameInput = findViewById(R.id.poi_name_input);
-        nameInput.setVisibility(View.GONE);
+        nameInput.setVisibility(GONE);
 
         TextInputLayout descriptionInput = findViewById(R.id.poi_description_input);
-        descriptionInput.setVisibility(View.GONE);
+        descriptionInput.setVisibility(GONE);
     }
 
     private void uiSetDescription() {
@@ -184,7 +191,7 @@ public class ViewPOIActivity extends AppCompatActivity {
                     }
 
                     if (poiImages.size() > 0) gallery.setVisibility(View.VISIBLE);
-                    progressIndicator.setVisibility(View.GONE);
+                    progressIndicator.setVisibility(GONE);
                 });
             });
         })).start();
@@ -204,6 +211,7 @@ public class ViewPOIActivity extends AppCompatActivity {
         subtitle.setText(textSubtitle);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void uiSetClickListeners() {
         // Set close btn click listener
         MaterialToolbar toolbar = findViewById(R.id.poi_toolbar).findViewById(R.id.topAppBar);
@@ -236,6 +244,27 @@ public class ViewPOIActivity extends AppCompatActivity {
                     .show();
             }
         });
+
+        findViewById(R.id.sort).setOnClickListener(view -> {
+            View customDialog = LayoutInflater.from(this)
+                    .inflate(R.layout.sort_dialog, null, false);
+
+            RadioGroup radioGroup = customDialog.findViewById(R.id.sort_radio_group);
+            radioGroup.check(sortBy);
+
+            radioGroup.findViewById(R.id.sort_best_rate).setVisibility(GONE);
+            radioGroup.findViewById(R.id.sort_worst_rate).setVisibility(GONE);
+
+            // Show end trip dialog
+            new MaterialAlertDialogBuilder(this)
+                    .setView(customDialog)
+                    .setNeutralButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.apply, (dialog, which) -> {
+                        sortBy = radioGroup.getCheckedRadioButtonId();
+                        updateComments();
+                    })
+                    .show();
+        });
     }
 
     /*** -------------------------------------------- ***/
@@ -246,6 +275,7 @@ public class ViewPOIActivity extends AppCompatActivity {
     private void uiSetComments() {
         getFlaggedCommentsId(flaggedComments -> {
             ArrayList<PointOfInterest.Comment> comments = poi.getCommentsNotFlagged(flaggedComments);
+            comments.sort(getSorter());
             int commentsCount = comments.size();
 
             if (commentsCount > 0) {
@@ -345,6 +375,17 @@ public class ViewPOIActivity extends AppCompatActivity {
                 commentsCard.setVisibility(View.VISIBLE);
             }
         });
+    }
+
+    @SuppressLint("NonConstantResourceId")
+    Comparator<PointOfInterest.Comment> getSorter() {
+        switch (sortBy) {
+            default:
+            case R.id.sort_most_recent:
+                return new PointOfInterest.Comment.SortByMostRecent();
+            case R.id.sort_least_recent:
+                return new PointOfInterest.Comment.SortByLeastRecent();
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
