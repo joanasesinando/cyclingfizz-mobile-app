@@ -15,6 +15,7 @@ import com.mapbox.geojson.Point;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -451,6 +452,31 @@ public class PointOfInterest implements Serializable {
 
         public boolean isFlagged() {
             return flags >= Utils.MAX_FLAGS_FROM_BAN;
+        }
+
+
+        static class SortByMostRecent implements Comparator<Comment> {
+
+            @Override
+            public int compare(Comment c1, Comment c2) {
+                if (c1.getCreationTimestamp().equals(c2.getCreationTimestamp())) {
+                    return c1.flags - c2.flags;
+                } else {
+                    return (int) (Long.parseLong(c1.getCreationTimestamp()) - Long.parseLong(c2.getCreationTimestamp()));
+                }
+            }
+        }
+
+        static class SortByLeastRecent implements Comparator<Comment> {
+
+            @Override
+            public int compare(Comment c1, Comment c2) {
+                if (c1.getCreationTimestamp().equals(c2.getCreationTimestamp())) {
+                    return c1.flags - c2.flags;
+                } else {
+                    return (int) (Long.parseLong(c2.getCreationTimestamp()) - Long.parseLong(c1.getCreationTimestamp()));
+                }
+            }
         }
     }
 }

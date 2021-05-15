@@ -29,6 +29,7 @@
     <string name="sign_up_later">Sign up later</string>
     <string name="sign_up">Sign up</string>
     <string name="cancel">Cancel</string>
+    <string name="apply">Apply</string>
     <string name="ok">OK</string>
     <string name="record">Record</string>
     <string name="save">Save</string>
@@ -160,7 +161,17 @@
     <string name="description">Description</string>
 
     <!-- Comments -->
-    <string name="write_comment">Write your comment...</string>
+    <string name="write_comment">Write your comment…</string>
+
+    <!-- Sort Dialog -->
+    <string name="sort_reviews_by">Sort reviews by</string>
+    <string name="sort_comments_by">Sort comments by</string>
+    <string name="sort_routes_by">Sort routes by</string>
+
+    <string name="sort_most_recent">Most recent</string>
+    <string name="sort_least_recent">Least recent</string>
+    <string name="sort_best_rate">Best rate</string>
+    <string name="sort_worst_rate">Worst rate</string>
 
     <!-- Reviews -->
     <string name="write_review">Describe your experience (optional)</string>

@@ -43,10 +43,8 @@ public final class Sidebar {
     }
 
     public boolean itemClicked(MenuItem item) {
-        Log.d(TAG, "Clicked on \"" + item.getTitle() + "\"");
 
         int id = item.getItemId();
-        Log.d(TAG + "itemclicked", String.valueOf(menuItem));
         if (id == menuItem.getId()) return false;
 
         if (id == R.id.sidebar_logout) {
@@ -171,6 +169,8 @@ public final class Sidebar {
     }
 
     public void changeUserUI() {
+
+        Log.e(TAG, "update UI");
         TextView userEmail = activity.findViewById(R.id.logged_user_email);
         TextView userName = activity.findViewById(R.id.logged_user_name);
         ImageView userAvatar = activity.findViewById(R.id.logged_user_avatar);

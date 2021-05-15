@@ -26,6 +26,7 @@ import android.view.WindowManager;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -71,6 +72,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -122,6 +124,8 @@ public class RouteActivity extends AppCompatActivity {
 
     DecimalFormat oneDecimalFormatter = new DecimalFormat("#.0");
     private boolean hasStartedSnapshotGeneration;
+
+    int sortBy = R.id.sort_best_rate;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -353,6 +357,7 @@ public class RouteActivity extends AppCompatActivity {
         subtitle.setText(textSubtitle);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void uiSetClickListeners() {
         // Set close btn click listener
         MaterialToolbar toolbar = findViewById(R.id.taller_top_bar);
@@ -406,6 +411,39 @@ public class RouteActivity extends AppCompatActivity {
                 overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
             });
         });
+
+        findViewById(R.id.sort).setOnClickListener(view -> {
+            View customDialog = LayoutInflater.from(this)
+                    .inflate(R.layout.sort_dialog, null, false);
+            RadioGroup radioGroup = customDialog.findViewById(R.id.sort_radio_group);
+            radioGroup.check(sortBy);
+
+            // Show end trip dialog
+            new MaterialAlertDialogBuilder(this)
+                    .setView(customDialog)
+                    .setNeutralButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.apply, (dialog, which) -> {
+                        sortBy = radioGroup.getCheckedRadioButtonId();
+                        cleanReviews();
+                        updateReviews();
+                    })
+                    .show();
+        });
+    }
+
+    @SuppressLint("NonConstantResourceId")
+    Comparator<Route.Review> getSorter() {
+        switch (sortBy) {
+            default:
+            case R.id.sort_best_rate:
+                return new Route.Review.SortByBestRate();
+            case R.id.sort_worst_rate:
+                return new Route.Review.SortByWorstRate();
+            case R.id.sort_most_recent:
+                return new Route.Review.SortByMostRecent();
+            case R.id.sort_least_recent:
+                return new Route.Review.SortByLeastRecent();
+        }
     }
 
     private void shareRouteShot() {
@@ -743,6 +781,7 @@ public class RouteActivity extends AppCompatActivity {
     private void updateReviews() {
         getFlaggedReviewsId(flaggedReviews -> {
             ArrayList<Route.Review> reviews = route.getReviewsNotFlagged();
+            reviews.sort(getSorter());
             int reviewsCount = reviews.size();
 
             if (reviewsCount > 0) {
