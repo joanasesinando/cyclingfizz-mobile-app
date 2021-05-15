@@ -16,6 +16,7 @@ import com.mapbox.geojson.Point;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -573,6 +574,54 @@ public class Route implements Serializable {
 
         public boolean isFlagged() {
             return flags >= Utils.MAX_FLAGS_FROM_BAN;
+        }
+
+        static class SortByBestRate implements Comparator<Review> {
+
+            @Override
+            public int compare(Review r1, Review r2) {
+                if (r1.getRate() == r2.getRate()) {
+                    return r1.flags - r2.flags;
+                } else {
+                    return r2.getRate() - r1.getRate();
+                }
+            }
+        }
+
+        static class SortByWorstRate implements Comparator<Review> {
+
+            @Override
+            public int compare(Review r1, Review r2) {
+                if (r1.getRate() == r2.getRate()) {
+                    return r1.flags - r2.flags;
+                } else {
+                    return r1.getRate() - r2.getRate();
+                }
+            }
+        }
+
+        static class SortByMostRecent implements Comparator<Review> {
+
+            @Override
+            public int compare(Review r1, Review r2) {
+                if (r1.getCreationTimestamp().equals(r2.getCreationTimestamp())) {
+                    return r1.flags - r2.flags;
+                } else {
+                    return (int) (Long.parseLong(r1.getCreationTimestamp()) - Long.parseLong(r2.getCreationTimestamp()));
+                }
+            }
+        }
+
+        static class SortByLeastRecent implements Comparator<Review> {
+
+            @Override
+            public int compare(Review r1, Review r2) {
+                if (r1.getCreationTimestamp().equals(r2.getCreationTimestamp())) {
+                    return r1.flags - r2.flags;
+                } else {
+                    return (int) (Long.parseLong(r2.getCreationTimestamp()) - Long.parseLong(r1.getCreationTimestamp()));
+                }
+            }
         }
 
     }
