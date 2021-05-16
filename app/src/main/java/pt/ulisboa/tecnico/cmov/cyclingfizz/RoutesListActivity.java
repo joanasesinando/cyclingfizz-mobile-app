@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.MenuItem;
-import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 
 import com.google.android.material.appbar.MaterialToolbar;
@@ -51,17 +50,19 @@ public class RoutesListActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
         uiInit();
-        updateRouteListView();
     }
 
     /*** -------------------------------------------- ***/
     /*** -------------- USER INTERFACE -------------- ***/
     /*** -------------------------------------------- ***/
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private void uiInit() {
         // Set sidebar
         sidebar = new Sidebar(this);
+
+        // Set routes
+        updateRouteListView();
 
         // Set click listeners
         uiSetClickListeners();

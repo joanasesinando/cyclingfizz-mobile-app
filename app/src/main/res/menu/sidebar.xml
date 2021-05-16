@@ -22,9 +22,9 @@
             android:icon="@drawable/ic_round_info_24"
             android:title="@string/sidebar_about" />
         <item
-            android:id="@+id/sidebar_settings"
-            android:icon="@drawable/ic_round_settings_24"
-            android:title="@string/sidebar_settings" />
+            android:id="@+id/sidebar_profile"
+            android:icon="@drawable/ic_round_person_24"
+            android:title="@string/sidebar_profile" />
         <item
             android:id="@+id/sidebar_logout"
             android:icon="@drawable/ic_round_logout_24"

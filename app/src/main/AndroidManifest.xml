@@ -37,7 +37,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CyclingFizz"
         tools:replace="android:icon,android:theme">
-        <activity android:name=".SlideshowActivity"></activity>
+        <activity android:name=".ProfileActivity"></activity>
+        <activity android:name=".SlideshowActivity" />
         <activity android:name=".EditReviewActivity" />
         <activity android:name=".AddReviewActivity" />
         <activity android:name=".AddCommentActivity" />

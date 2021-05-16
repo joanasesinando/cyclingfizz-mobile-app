@@ -66,6 +66,13 @@ public final class Sidebar {
             activity.overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
             return true;
 
+        } else if (id == R.id.sidebar_profile) {
+            toggleSidebar();
+            Intent intent = new Intent(activity, ProfileActivity.class);
+            activity.startActivity(intent);
+            activity.overridePendingTransition(R.anim.fade_out, R.anim.fade_in);
+            return true;
+
         } else {
             return false;
         }
