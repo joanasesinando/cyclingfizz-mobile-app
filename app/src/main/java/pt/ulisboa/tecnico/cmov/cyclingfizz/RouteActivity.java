@@ -784,40 +784,42 @@ public class RouteActivity extends AppCompatActivity {
 
             int reviewsCount = route.getReviewsNotFlagged().size();
 
-            // Set total number reviews
-            TextView total = findViewById(R.id.reviews_card_subtitle);
-            String s = reviewsCount + " " + getString(R.string.reviews).toLowerCase();
-            if (reviewsCount == 1) s = s.substring(0, s.length() - 1);
-            total.setText(s);
+            if (reviewsCount > 0) {
+                // Set total number reviews
+                TextView total = findViewById(R.id.reviews_card_subtitle);
+                String s = reviewsCount + " " + getString(R.string.reviews).toLowerCase();
+                if (reviewsCount == 1) s = s.substring(0, s.length() - 1);
+                total.setText(s);
 
-            // Set histogram
-            float rateAvg = (float) rateSum / reviewsCount;
-            TextView avg = findViewById(R.id.histogram_avg);
-            avg.setText(oneDecimalFormatter.format(rateAvg));
-            avg.setTextColor(getColorFromRate(rateAvg));
+                // Set histogram
+                float rateAvg = (float) rateSum / reviewsCount;
+                TextView avg = findViewById(R.id.histogram_avg);
+                avg.setText(oneDecimalFormatter.format(rateAvg));
+                avg.setTextColor(getColorFromRate(rateAvg));
 
-            int maxRate = Math.min(Math.round(rateAvg), 5);
-            for (int i = 1; i <= maxRate; i++) {
-                ImageView star = findViewById(getResources().getIdentifier("histogram_star" + i, "id", getPackageName()));
-                star.setColorFilter(getColorFromRate(rateAvg));
-            }
+                int maxRate = Math.min(Math.round(rateAvg), 5);
+                for (int i = 1; i <= maxRate; i++) {
+                    ImageView star = findViewById(getResources().getIdentifier("histogram_star" + i, "id", getPackageName()));
+                    star.setColorFilter(getColorFromRate(rateAvg));
+                }
 
-            final float scale = getResources().getDisplayMetrics().density;
-            for (int i = 1; i <= 5; i++) {
-                LinearLayout bar = findViewById(getResources().getIdentifier("histogram_bar" + i, "id", getPackageName()));
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, (int) (5 * scale));
-                params.weight = (float) histogramCounts[i - 1] / reviewsCount;
-                bar.setLayoutParams(params);
-            }
+                final float scale = getResources().getDisplayMetrics().density;
+                for (int i = 1; i <= 5; i++) {
+                    LinearLayout bar = findViewById(getResources().getIdentifier("histogram_bar" + i, "id", getPackageName()));
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, (int) (5 * scale));
+                    params.weight = (float) histogramCounts[i - 1] / reviewsCount;
+                    bar.setLayoutParams(params);
+                }
 
-            TextView totalReviews = findViewById(R.id.histogram_total);
-            String str = "(" + reviewsCount + ")";
-            totalReviews.setText(str);
+                TextView totalReviews = findViewById(R.id.histogram_total);
+                String str = "(" + reviewsCount + ")";
+                totalReviews.setText(str);
 
-            // Make reviews card visible if has reviews
-            if (reviews.size() > 0) {
-                MaterialCardView reviewsCard = findViewById(R.id.route_reviews);
-                reviewsCard.setVisibility(View.VISIBLE);
+                // Make reviews card visible if has reviews
+                if (reviews.size() > 0) {
+                    MaterialCardView reviewsCard = findViewById(R.id.route_reviews);
+                    reviewsCard.setVisibility(View.VISIBLE);
+                }
             }
         });
     }

@@ -85,7 +85,7 @@ public class RecyclerViewFragment<T> extends Fragment {
 
             case COMMENTS:
                 mCurrentLayoutManagerType = LayoutManagerType.LINEAR_LAYOUT_MANAGER;
-                //mAdapter = new RoutesCustomAdapter((ArrayList<Route>) mDataset); TODO
+                mAdapter = new CommentsCustomAdapter(getActivity(), (ArrayList<PointOfInterest.Comment>) mDataset);
                 break;
 
             case REVIEWS:
