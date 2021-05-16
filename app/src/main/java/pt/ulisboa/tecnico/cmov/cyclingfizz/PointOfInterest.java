@@ -490,7 +490,6 @@ public class PointOfInterest implements Serializable {
             return flags >= Utils.MAX_FLAGS_FROM_BAN;
         }
 
-
         static class SortByMostRecent implements Comparator<Comment> {
 
             @Override
@@ -498,11 +497,10 @@ public class PointOfInterest implements Serializable {
                 if (c1.getCreationTimestamp().equals(c2.getCreationTimestamp())) {
                     return c1.flags - c2.flags;
                 } else {
-                    return (int) (Long.parseLong(c1.getCreationTimestamp()) - Long.parseLong(c2.getCreationTimestamp()));
+                    return (int) (Long.parseLong(c2.getCreationTimestamp()) - Long.parseLong(c1.getCreationTimestamp()));
                 }
             }
         }
-
         static class SortByLeastRecent implements Comparator<Comment> {
 
             @Override
@@ -510,7 +508,7 @@ public class PointOfInterest implements Serializable {
                 if (c1.getCreationTimestamp().equals(c2.getCreationTimestamp())) {
                     return c1.flags - c2.flags;
                 } else {
-                    return (int) (Long.parseLong(c2.getCreationTimestamp()) - Long.parseLong(c1.getCreationTimestamp()));
+                    return (int) (Long.parseLong(c1.getCreationTimestamp()) - Long.parseLong(c2.getCreationTimestamp()));
                 }
             }
         }
