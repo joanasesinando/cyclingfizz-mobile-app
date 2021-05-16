@@ -35,6 +35,7 @@
     <string name="save">Save</string>
     <string name="delete">Delete</string>
     <string name="pick_photos">Pick photos</string>
+    <string name="choose_video">Choose video</string>
     <string name="take_photo">Take photo</string>
     <string name="quit">Quit</string>
     <string name="sort">Sort</string>

@@ -143,8 +143,6 @@ public class AddPOIActivity extends AppCompatActivity {
                             "pt.ulisboa.tecnico.cmov.cyclingfizz.fileprovider",
                             photoFile);
                     intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                } else {
-                    Log.e(TAG, "Entra no else, photoFile = null");
                 }
                 startActivityForResult(intent, TAKE_PHOTO);
             }

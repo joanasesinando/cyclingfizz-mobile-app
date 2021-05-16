@@ -273,6 +273,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     userLocation = locationResult.getLastLocation();
                     mapboxMap.getLocationComponent().forceLocationUpdate(userLocation);
                 }
+                Log.d(TAG, "Got Location -> " + userLocation);
 
                 // Create thread waiting for path recording
                 (new Thread(() -> {

@@ -7,22 +7,29 @@ import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.annotation.SuppressLint;
+import android.content.ContentProvider;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.Layout;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
@@ -51,6 +58,7 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonOptions;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.mapboxsdk.utils.BitmapUtils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
@@ -85,6 +93,7 @@ public class NewRouteActivity extends AppCompatActivity {
     static String TAG = "Cycling_Fizz@NewRoute";
     public final static String POI_INDEX = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI_INDEX";
     static final int PICK_IMAGES = 1;
+    static final int PICK_VIDEO = 2;
 
     PathRecorder pathRecorder;
 
@@ -121,6 +130,7 @@ public class NewRouteActivity extends AppCompatActivity {
         initMap(savedInstanceState);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         try {
@@ -134,14 +144,35 @@ public class NewRouteActivity extends AppCompatActivity {
                 ImageView thumbnail = findViewById(R.id.route_thumbnail);
                 thumbnail.setImageBitmap(thumbImage);
 
+            } else if (requestCode == PICK_VIDEO && resultCode == RESULT_OK && data != null) {
+                Toast.makeText(this, "Got Video", Toast.LENGTH_LONG).show();
+
+                // Get URI
+                Uri uri = data.getData();
+//
+                Log.d(TAG, String.valueOf(Utils.retrieveVideoFrameFromVideo(Utils.getRealPathFromURIVideo(this, uri))));
+                Bitmap thumbnailVideo = Utils.retrieveVideoFrameFromVideo(uri.getPath());
+//                Log.d(TAG, String.valueOf(thumbnailVideo));
+
+                // Update view
+                ImageView thumbnailVideoView = findViewById(R.id.route_video_thumbnail);
+                View routeVideoThumbnailLayout = findViewById(R.id.route_video_thumbnail_layout);
+                thumbnailVideoView.setImageURI(uri);
+                routeVideoThumbnailLayout.setVisibility(View.VISIBLE);
+
+
             } else {
                 Toast.makeText(this, "No photo selected", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             Log.e(TAG, Arrays.toString(e.getStackTrace()));
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
+
+
 
 
     /*** -------------------------------------------- ***/
@@ -178,6 +209,14 @@ public class NewRouteActivity extends AppCompatActivity {
             Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             intent.setType("image/*");
             startActivityForResult(intent, PICK_IMAGES);
+        });
+
+        // Set pick photos btn listener
+        MaterialButton pickVideoBtn = findViewById(R.id.route_pick_video);
+        pickVideoBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+            intent.setType("video/*");
+            startActivityForResult(intent, PICK_VIDEO);
         });
 
         // Set save btn click listener
