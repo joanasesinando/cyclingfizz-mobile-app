@@ -26,9 +26,12 @@ import java.util.ArrayList;
 public class POIsCustomAdapter extends RecyclerView.Adapter<POIsCustomAdapter.ViewHolder> {
     private static final String TAG = "Cycling_Fizz@POIsCustomAdapter";
     public final static String ROUTE_ID = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_ID";
+    public final static String POI_INDEX = "pt.ulisboa.tecnico.cmov.cyclingfizz.POI_INDEX";
 
     private final Activity mActivity;
     private final ArrayList<PointOfInterest> mDataSet;
+
+    private boolean mEditMode;
     private final String mRouteID;
 
     // BEGIN_INCLUDE(recyclerViewSampleViewHolder)
@@ -42,7 +45,7 @@ public class POIsCustomAdapter extends RecyclerView.Adapter<POIsCustomAdapter.Vi
         private final TextView title;
         private final TextView description;
 
-        public ViewHolder(Activity activity, View v, ArrayList<PointOfInterest> dataset, String routeID) {
+        public ViewHolder(Activity activity, View v, ArrayList<PointOfInterest> dataset, boolean editMode, String routeID) {
             super(v);
 
             order = v.findViewById(R.id.poi_item_order);
@@ -54,15 +57,23 @@ public class POIsCustomAdapter extends RecyclerView.Adapter<POIsCustomAdapter.Vi
             v.setOnClickListener(view -> {
                 PointOfInterest poi = dataset.get(getAdapterPosition());
 
-                SharedState sharedState = (SharedState) activity.getApplicationContext();
-                sharedState.viewingPOI = poi;
+                if (editMode) {
+                    Intent intent = new Intent(activity, EditPOIActivity.class);
+                    intent.putExtra(POI_INDEX, getAdapterPosition());
+                    activity.startActivity(intent);
+                    activity.overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
 
-                Intent intent = new Intent(activity, ViewPOIActivity.class);
-                Bundle bundle = new Bundle();
-                bundle.putString(ROUTE_ID, routeID);
-                intent.putExtras(bundle);
-                activity.startActivity(intent);
-                activity.overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                } else {
+                    SharedState sharedState = (SharedState) activity.getApplicationContext();
+                    sharedState.viewingPOI = poi;
+
+                    Intent intent = new Intent(activity, ViewPOIActivity.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putString(ROUTE_ID, routeID);
+                    intent.putExtras(bundle);
+                    activity.startActivity(intent);
+                    activity.overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
+                }
             });
         }
         // END_INCLUDE(recyclerViewSampleViewHolder)
@@ -89,9 +100,10 @@ public class POIsCustomAdapter extends RecyclerView.Adapter<POIsCustomAdapter.Vi
      *
      * @param dataSet ArrayList<PointOfInterest> containing the data to populate views to be used by RecyclerView.
      */
-    public POIsCustomAdapter(Activity activity, ArrayList<PointOfInterest> dataSet, String routeID) {
+    public POIsCustomAdapter(Activity activity, ArrayList<PointOfInterest> dataSet, boolean editMode, String routeID) {
         mActivity = activity;
         mDataSet = dataSet;
+        mEditMode = editMode;
         mRouteID = routeID;
     }
 
@@ -104,7 +116,7 @@ public class POIsCustomAdapter extends RecyclerView.Adapter<POIsCustomAdapter.Vi
         View v = LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.poi_item, viewGroup, false);
 
-        return new ViewHolder(mActivity, v, mDataSet, mRouteID);
+        return new ViewHolder(mActivity, v, mDataSet, mEditMode, mRouteID);
     }
     // END_INCLUDE(recyclerViewOnCreateViewHolder)
 

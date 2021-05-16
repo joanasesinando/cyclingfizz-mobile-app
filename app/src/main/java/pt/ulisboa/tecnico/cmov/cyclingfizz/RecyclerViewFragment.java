@@ -43,6 +43,7 @@ public class RecyclerViewFragment<T> extends Fragment {
     protected DatasetType mDatasetType;
     protected ArrayList<T> mDataset;
 
+    protected boolean mEditMode;
     protected String mRouteID;
 
     public RecyclerViewFragment(ArrayList<T> dataset, DatasetType type) {
@@ -50,8 +51,9 @@ public class RecyclerViewFragment<T> extends Fragment {
         mDatasetType = type;
     }
 
-    public RecyclerViewFragment(ArrayList<T> dataset, DatasetType type, String routeID) {
+    public RecyclerViewFragment(ArrayList<T> dataset, DatasetType type, boolean editMode, String routeID) {
         this(dataset, type);
+        mEditMode = editMode;
         mRouteID = routeID;
     }
 
@@ -77,7 +79,7 @@ public class RecyclerViewFragment<T> extends Fragment {
 
             case POIS:
                 mCurrentLayoutManagerType = LayoutManagerType.LINEAR_LAYOUT_MANAGER;
-                mAdapter = new POIsCustomAdapter(getActivity(), (ArrayList<PointOfInterest>) mDataset, mRouteID);
+                mAdapter = new POIsCustomAdapter(getActivity(), (ArrayList<PointOfInterest>) mDataset, mEditMode, mRouteID);
                 mRecyclerView.setNestedScrollingEnabled(false);
                 break;
 

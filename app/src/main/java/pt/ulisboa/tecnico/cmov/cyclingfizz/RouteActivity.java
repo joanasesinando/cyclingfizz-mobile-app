@@ -742,7 +742,7 @@ public class RouteActivity extends AppCompatActivity {
 
         // Init RecyclerView
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        RecyclerViewFragment fragment = new RecyclerViewFragment(pois, RecyclerViewFragment.DatasetType.POIS, route.getId());
+        RecyclerViewFragment fragment = new RecyclerViewFragment(pois, RecyclerViewFragment.DatasetType.POIS, false, route.getId());
         transaction.replace(R.id.poi_list, fragment);
         transaction.commit();
 
