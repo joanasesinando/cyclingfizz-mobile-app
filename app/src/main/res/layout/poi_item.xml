@@ -20,11 +20,12 @@
 
         <TextView
             android:id="@+id/poi_item_order"
-            android:layout_width="wrap_content"
+            android:layout_width="15dp"
             android:layout_height="wrap_content"
             android:text="?"
             android:textColor="@color/material_on_surface_emphasis_high_type"
             android:textSize="13sp"
+            android:textAlignment="textEnd"
             android:layout_marginEnd="12dp"/>
 
         <ImageView

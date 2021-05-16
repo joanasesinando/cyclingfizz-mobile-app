@@ -96,6 +96,14 @@ public class PointOfInterest implements Serializable {
         return result;
     }
 
+    public ArrayList<Comment> getCommentsNotFlagged() {
+        ArrayList<Comment> result = new ArrayList<>();
+        for (Comment comment : getComments()) {
+            if (!comment.isFlagged()) result.add(comment);
+        }
+        return result;
+    }
+
     public ArrayList<String> getMediaLinks() {
         return mediaLinks;
     }
@@ -300,6 +308,9 @@ public class PointOfInterest implements Serializable {
 
         private final int flags;
 
+        private String userName;
+        private Bitmap userAvatar;
+
         private Comment(String id, String creationTimestamp, String authorUID, String msg, ArrayList<String> mediaLinks, ArrayList<Bitmap> images, int flags) {
             this.id = id;
             this.creationTimestamp = creationTimestamp;
@@ -342,6 +353,22 @@ public class PointOfInterest implements Serializable {
 
         public ArrayList<Bitmap> getImages() {
             return images;
+        }
+
+        public String getUserName() {
+            return userName;
+        }
+
+        public void setUserName(String userName) {
+            this.userName = userName;
+        }
+
+        public Bitmap getUserAvatar() {
+            return userAvatar;
+        }
+
+        public void setUserAvatar(Bitmap userAvatar) {
+            this.userAvatar = userAvatar;
         }
 
         public void uploadImages(Utils.OnTaskCompleted<Void> callback) {
@@ -463,7 +490,6 @@ public class PointOfInterest implements Serializable {
             return flags >= Utils.MAX_FLAGS_FROM_BAN;
         }
 
-
         static class SortByMostRecent implements Comparator<Comment> {
 
             @Override
@@ -471,11 +497,10 @@ public class PointOfInterest implements Serializable {
                 if (c1.getCreationTimestamp().equals(c2.getCreationTimestamp())) {
                     return c1.flags - c2.flags;
                 } else {
-                    return (int) (Long.parseLong(c1.getCreationTimestamp()) - Long.parseLong(c2.getCreationTimestamp()));
+                    return (int) (Long.parseLong(c2.getCreationTimestamp()) - Long.parseLong(c1.getCreationTimestamp()));
                 }
             }
         }
-
         static class SortByLeastRecent implements Comparator<Comment> {
 
             @Override
@@ -483,7 +508,7 @@ public class PointOfInterest implements Serializable {
                 if (c1.getCreationTimestamp().equals(c2.getCreationTimestamp())) {
                     return c1.flags - c2.flags;
                 } else {
-                    return (int) (Long.parseLong(c2.getCreationTimestamp()) - Long.parseLong(c1.getCreationTimestamp()));
+                    return (int) (Long.parseLong(c1.getCreationTimestamp()) - Long.parseLong(c2.getCreationTimestamp()));
                 }
             }
         }

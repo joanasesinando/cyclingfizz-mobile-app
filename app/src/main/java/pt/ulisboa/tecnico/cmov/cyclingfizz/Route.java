@@ -487,11 +487,10 @@ public class Route implements Serializable {
             if (r1.getCreationTimestamp().equals(r2.getCreationTimestamp())) {
                 return r1.flags - r2.flags;
             } else {
-                return (int) (Long.parseLong(r1.getCreationTimestamp()) - Long.parseLong(r2.getCreationTimestamp()));
+                return (int) (Long.parseLong(r2.getCreationTimestamp()) - Long.parseLong(r1.getCreationTimestamp()));
             }
         }
     }
-
     static class SortByLeastRecent implements Comparator<Route> {
 
         @Override
@@ -499,7 +498,7 @@ public class Route implements Serializable {
             if (r1.getCreationTimestamp().equals(r2.getCreationTimestamp())) {
                 return r1.flags - r2.flags;
             } else {
-                return (int) (Long.parseLong(r2.getCreationTimestamp()) - Long.parseLong(r1.getCreationTimestamp()));
+                return (int) (Long.parseLong(r1.getCreationTimestamp()) - Long.parseLong(r2.getCreationTimestamp()));
             }
         }
     }
@@ -514,9 +513,13 @@ public class Route implements Serializable {
 
         private final int flags;
 
-
         private final ArrayList<Bitmap> images;
+
         private final ArrayList<String> mediaLinks;
+
+        private String userName;
+
+        private Bitmap userAvatar;
 
         private final HashMap<String, Boolean> mediaLinksDownloaded = new HashMap<>();
 
@@ -562,8 +565,28 @@ public class Route implements Serializable {
             return creationTimestamp;
         }
 
+        public ArrayList<String> getMediaLinks() {
+            return mediaLinks;
+        }
+
         public ArrayList<Bitmap> getImages() {
             return images;
+        }
+
+        public String getUserName() {
+            return userName;
+        }
+
+        public Bitmap getUserAvatar() {
+            return userAvatar;
+        }
+
+        public void setUserName(String userName) {
+            this.userName = userName;
+        }
+
+        public void setUserAvatar(Bitmap userAvatar) {
+            this.userAvatar = userAvatar;
         }
 
         public void uploadImages(Utils.OnTaskCompleted<Void> callback) {
@@ -720,11 +743,10 @@ public class Route implements Serializable {
                 if (r1.getCreationTimestamp().equals(r2.getCreationTimestamp())) {
                     return r1.flags - r2.flags;
                 } else {
-                    return (int) (Long.parseLong(r1.getCreationTimestamp()) - Long.parseLong(r2.getCreationTimestamp()));
+                    return (int) (Long.parseLong(r2.getCreationTimestamp()) - Long.parseLong(r1.getCreationTimestamp()));
                 }
             }
         }
-
         static class SortByLeastRecent implements Comparator<Review> {
 
             @Override
@@ -732,11 +754,10 @@ public class Route implements Serializable {
                 if (r1.getCreationTimestamp().equals(r2.getCreationTimestamp())) {
                     return r1.flags - r2.flags;
                 } else {
-                    return (int) (Long.parseLong(r2.getCreationTimestamp()) - Long.parseLong(r1.getCreationTimestamp()));
+                    return (int) (Long.parseLong(r1.getCreationTimestamp()) - Long.parseLong(r2.getCreationTimestamp()));
                 }
             }
         }
-
     }
 
 

@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.FileProvider;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -103,7 +104,6 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textSize;
 public class RouteActivity extends AppCompatActivity {
 
     static String TAG = "Cycling_Fizz@RouteActivity";
-    static String SERVER_URL = Utils.STATIONS_SERVER_URL;
     public final static String ROUTE_ID = "pt.ulisboa.tecnico.cmov.cyclingfizz.ROUTE_ID";
     public final static String RATE = "pt.ulisboa.tecnico.cmov.cyclingfizz.RATE";
 
@@ -163,7 +163,7 @@ public class RouteActivity extends AppCompatActivity {
             initMap(savedInstanceState);
             uiInit();
 
-        })).execute(SERVER_URL + "/get-route-by-id?routeID=" + routeID);
+        })).execute(Utils.STATIONS_SERVER_URL + "/get-route-by-id?routeID=" + routeID);
     }
 
 
@@ -194,8 +194,8 @@ public class RouteActivity extends AppCompatActivity {
                     .setMessage(R.string.are_you_sure_flag_message)
                     .setNeutralButton(R.string.cancel, null)
                     .setPositiveButton(R.string.are_you_sure_flag_positive, (dialog, which) -> {
-                        review.flag(route.getId(),ignored -> {
-                            cleanReviews();
+                        review.flag(route.getId(), ignored -> {
+                            resetRate();
                             updateReviews();
                         });
                     })
@@ -358,7 +358,7 @@ public class RouteActivity extends AppCompatActivity {
             String s = getString(R.string.created_by) + " " + authorName;
             creator.setText(s);
 
-        })).execute(SERVER_URL + "/get-user-info?uid=" + route.getAuthorUID());
+        })).execute(Utils.STATIONS_SERVER_URL + "/get-user-info?uid=" + route.getAuthorUID());
     }
 
     private void uiUpdateCard(View card, @DrawableRes int iconId, CharSequence textTitle, CharSequence textSubtitle) {
@@ -442,7 +442,7 @@ public class RouteActivity extends AppCompatActivity {
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.apply, (dialog, which) -> {
                     sortBy = radioGroup.getCheckedRadioButtonId();
-                    cleanReviews();
+                    resetRate();
                     updateReviews();
                 })
                 .show();
@@ -542,7 +542,7 @@ public class RouteActivity extends AppCompatActivity {
                     }
 
                     callback.onTaskCompleted(flaggedReviews);
-                })).execute(SERVER_URL + "/get-flagged-reviews-by-user-and-route?idToken=" + idToken + "&route_id=" + route.getId());
+                })).execute(Utils.STATIONS_SERVER_URL + "/get-flagged-reviews-by-user-and-route?idToken=" + idToken + "&route_id=" + route.getId());
 
             });
         } else {
@@ -738,53 +738,16 @@ public class RouteActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void updatePOIs() {
-        LinearLayout linearLayout = findViewById(R.id.poi_list);
-        int i = 1;
+        ArrayList<PointOfInterest> pois = route.getAllPOIs();
 
-        for (PointOfInterest poi : route.getAllPOIs()) {
-            LayoutInflater inflater = LayoutInflater.from(this);
-            ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.poi_item, null, false);
+        // Init RecyclerView
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        RecyclerViewFragment fragment = new RecyclerViewFragment(pois, RecyclerViewFragment.DatasetType.POIS, false, route.getId());
+        transaction.replace(R.id.poi_list, fragment);
+        transaction.commit();
 
-            // Set order
-            TextView order = layout.findViewById(R.id.poi_item_order);
-            order.setText(String.valueOf(i));
-
-            // Set thumbnail
-            if (poi.getMediaLinks().size() > 0) {
-                poi.downloadAndGetImage(0, bitmap -> {
-                    ImageView thumbnail = layout.findViewById(R.id.poi_item_thumbnail);
-                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_SMALL, Utils.THUMBNAIL_SIZE_SMALL);
-                    thumbnail.setImageBitmap(thumbImage);
-                });
-            }
-
-            //Set title
-            TextView title = layout.findViewById(R.id.poi_item_title);
-            title.setText(poi.getName());
-
-            //Set description
-            TextView description = layout.findViewById(R.id.route_card_description);
-            description.setText(poi.getDescription());
-
-            linearLayout.addView(layout);
-
-            // Set poi click listener
-            layout.setOnClickListener(v -> {
-                SharedState sharedState = (SharedState) getApplicationContext();
-                sharedState.viewingPOI = poi;
-
-                Intent intent = new Intent(this, ViewPOIActivity.class);
-                Bundle bundle = new Bundle();
-                bundle.putString(ROUTE_ID, route.getId());
-                intent.putExtras(bundle);
-                startActivity(intent);
-                overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
-            });
-
-            i++;
-        }
-
-        if (route.getAllPOIs().size() > 0) {
+        // Make POIs card visible if has POIs
+        if (pois.size() > 0) {
             MaterialCardView poisLayout = findViewById(R.id.route_pois);
             poisLayout.setVisibility(View.VISIBLE);
         }
@@ -798,9 +761,28 @@ public class RouteActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void updateReviews() {
         getFlaggedReviewsId(flaggedReviews -> {
-            ArrayList<Route.Review> reviews = route.getReviewsNotFlagged();
+
+            ArrayList<Route.Review> reviews = new ArrayList<>();
+            int rateSum = 0;
+            Integer[] histogramCounts = Collections.nCopies(5, 0).toArray(new Integer[0]);
+
+            for (Route.Review review : route.getReviewsNotFlagged()) {
+                int rate = review.getRate();
+                rateSum += rate;
+                histogramCounts[Math.round(rate) > 5 ? 4 : Math.round(rate) - 1]++;
+
+                if (!flaggedReviews.contains(review.getId())) reviews.add(review);
+            }
+
             reviews.sort(getSorter());
-            int reviewsCount = reviews.size();
+
+            // Init RecyclerView
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            RecyclerViewFragment fragment = new RecyclerViewFragment(reviews, RecyclerViewFragment.DatasetType.REVIEWS);
+            transaction.replace(R.id.reviews_list, fragment);
+            transaction.commit();
+
+            int reviewsCount = route.getReviewsNotFlagged().size();
 
             if (reviewsCount > 0) {
                 // Set total number reviews
@@ -808,94 +790,6 @@ public class RouteActivity extends AppCompatActivity {
                 String s = reviewsCount + " " + getString(R.string.reviews).toLowerCase();
                 if (reviewsCount == 1) s = s.substring(0, s.length() - 1);
                 total.setText(s);
-
-                int rateSum = 0;
-                Integer[] histogramCounts = Collections.nCopies(5, 0).toArray(new Integer[0]);
-                LinearLayout linearLayout = findViewById(R.id.reviews_list);
-
-
-                for (Route.Review review : reviews) {
-                    rateSum += review.getRate();
-                    LayoutInflater inflater = LayoutInflater.from(this);
-                    ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.review_item, null, false);
-
-                    // Set avatar & name
-                    (new Utils.httpRequestJson(obj -> {
-                        if (!obj.get("status").getAsString().equals("success")) return;
-
-                        TextView name = layout.findViewById(R.id.review_item_name);
-                        String userName = obj.get("data").getAsJsonObject().get("name").getAsString();
-                        name.setText(userName);
-
-                        ImageView avatar = layout.findViewById(R.id.review_item_avatar);
-                        JsonElement avatarURLElement = obj.get("data").getAsJsonObject().get("avatar");
-                        if (!avatarURLElement.isJsonNull()) {
-                            String avatarURL = avatarURLElement.getAsString();
-                            (new Utils.httpRequestImage(bitmap -> {
-                                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_SMALL, Utils.THUMBNAIL_SIZE_SMALL);
-                                avatar.setImageBitmap(thumbImage);
-                            })).execute(avatarURL);
-                        }
-
-                        // set context menu for flag
-                        layout.setTag(review);
-                        registerForContextMenu(layout);
-
-                    })).execute(SERVER_URL + "/get-user-info?uid=" + review.getAuthorUID());
-
-
-                    // Set comment
-                    TextView comment = layout.findViewById(R.id.review_item_comment);
-                    comment.setText(review.getMsg() != null && !review.getMsg().equals("") ? review.getMsg() : getString(R.string.no_comment));
-
-                    // Set rate
-                    int rate = review.getRate();
-                    histogramCounts[Math.round(rate) > 5 ? 4 : Math.round(rate) - 1]++;
-                    TextView rateValue = layout.findViewById(R.id.review_item_rate_value);
-                    ImageView rateIcon = layout.findViewById(R.id.review_item_rate_icon);
-                    rateValue.setText(String.valueOf(rate));
-                    rateValue.setTextColor(getColorFromRate(rate));
-                    rateIcon.setColorFilter(getColorFromRate(rate));
-
-                    // Set images
-                    (new Thread(() -> {
-                        review.downloadImages(ignored -> {
-                            runOnUiThread(() -> {
-                                GridLayout gallery = layout.findViewById(R.id.review_item_gallery);
-                                ArrayList<Bitmap> reviewImages = review.getImages();
-
-                                for (int i = 0; i < reviewImages.size(); i++) {
-                                    Bitmap bitmap = reviewImages.get(i);
-                                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_MEDIUM, Utils.THUMBNAIL_SIZE_MEDIUM);
-                                    ViewGroup imgWrapper = Utils.addImageToGallery(this, thumbImage, gallery, Utils.GALLERY_IMAGE_SIZE_SMALL, false, Utils.NO_COLOR);
-
-                                    // Set click listeners
-                                    final int index = i;
-                                    imgWrapper.setOnClickListener(v -> {
-                                        ((SharedState) getApplicationContext()).slideshowImages = reviewImages;
-                                        Intent intent = new Intent(this, SlideshowActivity.class);
-                                        intent.putExtra("index", index);
-                                        startActivity(intent);
-                                        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
-                                    });
-                                }
-
-                                if (reviewImages.size() > 0) gallery.setVisibility(View.VISIBLE);
-                            });
-                        });
-                    })).start();
-
-                    // Set date
-                    TextView date = layout.findViewById(R.id.review_item_date);
-                    Timestamp timestamp = new Timestamp(Long.parseLong(review.getCreationTimestamp()));
-                    LocalDate localDate = timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                    date.setText(localDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)));
-
-
-                    if (!flaggedReviews.contains(review.getId())) {
-                        linearLayout.addView(layout);
-                    }
-                }
 
                 // Set histogram
                 float rateAvg = (float) rateSum / reviewsCount;
@@ -921,19 +815,17 @@ public class RouteActivity extends AppCompatActivity {
                 String str = "(" + reviewsCount + ")";
                 totalReviews.setText(str);
 
-                // Show reviews' card
-                MaterialCardView reviewsCard = findViewById(R.id.route_reviews);
-                reviewsCard.setVisibility(View.VISIBLE);
+                // Make reviews card visible if has reviews
+                if (reviews.size() > 0) {
+                    MaterialCardView reviewsCard = findViewById(R.id.route_reviews);
+                    reviewsCard.setVisibility(View.VISIBLE);
+                }
             }
         });
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
-    private void cleanReviews() {
-        // Clean Reviews
-        LinearLayout linearLayout = findViewById(R.id.reviews_list);
-        linearLayout.removeAllViews();
-
+    private void resetRate() {
         // Reset rate
         View rateCard = findViewById(R.id.route_rate_card);
         rateCard.setVisibility(View.GONE);
@@ -963,12 +855,12 @@ public class RouteActivity extends AppCompatActivity {
 
             route = Route.fromJson(obj.get("data").getAsJsonObject());
 
-            cleanReviews();
+            resetRate();
 
             uiUpdateUserRate();
             updateReviews();
             uiUpdateRouteRate();
 
-        })).execute(SERVER_URL + "/get-route-by-id?routeID=" + route.getId());
+        })).execute(Utils.STATIONS_SERVER_URL + "/get-route-by-id?routeID=" + route.getId());
     }
 }

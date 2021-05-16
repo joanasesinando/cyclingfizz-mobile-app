@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.annotation.SuppressLint;
 import android.content.ContentProvider;
@@ -464,57 +465,19 @@ public class NewRouteActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void setPOIs() {
-        cleanPOIs();
-        LinearLayout linearLayout = findViewById(R.id.poi_list);
-        int i = 1;
+        ArrayList<PointOfInterest> pois = pathRecorder.getAllPOIs();
 
-        for (PointOfInterest poi : pathRecorder.getAllPOIs()) {
-            LayoutInflater inflater = LayoutInflater.from(this);
-            ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.poi_item, null, false);
+        // Init RecyclerView
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        RecyclerViewFragment fragment = new RecyclerViewFragment(pois, RecyclerViewFragment.DatasetType.POIS, true, null);
+        transaction.replace(R.id.poi_list, fragment);
+        transaction.commit();
 
-            // Set order
-            TextView order = layout.findViewById(R.id.poi_item_order);
-            order.setText(String.valueOf(i));
-
-            // Set thumbnail
-            ArrayList<Bitmap> images = poi.getImages();
-            if (images.size() > 0) {
-                ImageView thumbnail = layout.findViewById(R.id.poi_item_thumbnail);
-                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(images.get(0), Utils.THUMBNAIL_SIZE_SMALL, Utils.THUMBNAIL_SIZE_SMALL);
-                thumbnail.setImageBitmap(thumbImage);
-            }
-
-            //Set title
-            TextView title = layout.findViewById(R.id.poi_item_title);
-            title.setText(poi.getName());
-
-            //Set description
-            TextView description = layout.findViewById(R.id.route_card_description);
-            description.setText(poi.getDescription());
-
-            linearLayout.addView(layout);
-
-            // Set poi click listener
-            int poiIndex = i - 1;
-            layout.setOnClickListener(v -> {
-                Intent intent = new Intent(this, EditPOIActivity.class);
-                intent.putExtra(POI_INDEX, poiIndex);
-                startActivity(intent);
-                overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
-            });
-
-            i++;
-        }
-
-        if (pathRecorder.getAllPOIs().size() > 0) {
+        // Make POIs card visible if has POIs
+        if (pois.size() > 0) {
             MaterialCardView poisLayout = findViewById(R.id.route_pois);
             poisLayout.setVisibility(View.VISIBLE);
         }
-    }
-
-    private void cleanPOIs() {
-        LinearLayout linearLayout = findViewById(R.id.poi_list);
-        linearLayout.removeAllViews();
     }
 
 

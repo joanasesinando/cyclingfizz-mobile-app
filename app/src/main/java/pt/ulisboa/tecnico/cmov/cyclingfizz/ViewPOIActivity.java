@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -104,7 +105,7 @@ public class ViewPOIActivity extends AppCompatActivity {
                     .setNeutralButton(R.string.cancel, null)
                     .setPositiveButton(R.string.are_you_sure_flag_positive, (dialog, which) -> {
                         comment.flag(routeID, poi.getId(),ignored -> {
-                            updateComments();
+                            uiSetComments();
                         });
                     })
                     .show();
@@ -261,7 +262,7 @@ public class ViewPOIActivity extends AppCompatActivity {
                     .setNegativeButton(R.string.cancel, null)
                     .setPositiveButton(R.string.apply, (dialog, which) -> {
                         sortBy = radioGroup.getCheckedRadioButtonId();
-                        updateComments();
+                        uiSetComments();
                     })
                     .show();
         });
@@ -274,9 +275,21 @@ public class ViewPOIActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void uiSetComments() {
         getFlaggedCommentsId(flaggedComments -> {
-            ArrayList<PointOfInterest.Comment> comments = poi.getCommentsNotFlagged(flaggedComments);
+
+            ArrayList<PointOfInterest.Comment> comments = new ArrayList<>();
+            for (PointOfInterest.Comment comment : poi.getCommentsNotFlagged()) {
+                if (!flaggedComments.contains(comment.getId())) comments.add(comment);
+            }
+
             comments.sort(getSorter());
-            int commentsCount = comments.size();
+
+            // Init RecyclerView
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            RecyclerViewFragment fragment = new RecyclerViewFragment(comments, RecyclerViewFragment.DatasetType.COMMENTS);
+            transaction.replace(R.id.comments_list, fragment);
+            transaction.commit();
+
+            int commentsCount = poi.getCommentsNotFlagged().size();
 
             if (commentsCount > 0) {
                 // Set total number comments
@@ -285,93 +298,11 @@ public class ViewPOIActivity extends AppCompatActivity {
                 if (commentsCount == 1) s = s.substring(0, s.length() - 1);
                 total.setText(s);
 
-                LinearLayout linearLayout = findViewById(R.id.comments_list);
-                for (int i = 0; i < commentsCount; i++) {
-                    PointOfInterest.Comment comment = comments.get(i);
-
-                    LayoutInflater inflater = LayoutInflater.from(this);
-                    ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.comment_item, null, false);
-
-                    // Set avatar & name
-                    (new Utils.httpRequestJson(obj -> {
-                        if (!obj.get("status").getAsString().equals("success")) return;
-
-                        TextView name = layout.findViewById(R.id.comment_item_name);
-                        String userName = obj.get("data").getAsJsonObject().get("name").getAsString();
-                        name.setText(userName);
-
-                        ImageView avatar = layout.findViewById(R.id.comment_item_avatar);
-                        JsonElement avatarURLElement = obj.get("data").getAsJsonObject().get("avatar");
-                        if (!avatarURLElement.isJsonNull()) {
-                            String avatarURL = avatarURLElement.getAsString();
-                            (new Utils.httpRequestImage(bitmap -> {
-                                Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_SMALL, Utils.THUMBNAIL_SIZE_SMALL);
-                                avatar.setImageBitmap(thumbImage);
-                            })).execute(avatarURL);
-                        }
-
-                    })).execute(SERVER_URL + "/get-user-info?uid=" + comment.getAuthorUID());
-
-                    // Set message
-                    TextView msg = layout.findViewById(R.id.comment_item_msg);
-                    msg.setText(comment.getMsg());
-
-                    // Set images
-                    (new Thread(() -> {
-                        comment.downloadImages(ignored -> {
-                            runOnUiThread(() -> {
-                                GridLayout gallery = layout.findViewById(R.id.comment_item_gallery);
-                                ArrayList<Bitmap> commentImages = comment.getImages();
-
-                                for (int j = 0; j < commentImages.size(); j++) {
-                                    Bitmap bitmap = commentImages.get(j);
-                                    Bitmap thumbImage = ThumbnailUtils.extractThumbnail(bitmap, Utils.THUMBNAIL_SIZE_MEDIUM, Utils.THUMBNAIL_SIZE_MEDIUM);
-                                    ViewGroup imgWrapper = Utils.addImageToGallery(this, thumbImage, gallery, Utils.GALLERY_IMAGE_SIZE_SMALL, false, Utils.NO_COLOR);
-
-                                    // Set click listeners
-                                    final int index = j;
-                                    imgWrapper.setOnClickListener(v -> {
-                                        ((SharedState) getApplicationContext()).slideshowImages = commentImages;
-                                        Intent intent = new Intent(this, SlideshowActivity.class);
-                                        intent.putExtra("index", index);
-                                        startActivity(intent);
-                                        overridePendingTransition(R.anim.slide_left_enter, R.anim.slide_left_leave);
-                                    });
-                                }
-
-                                if (commentImages.size() > 0) gallery.setVisibility(View.VISIBLE);
-                            });
-                        });
-                    })).start();
-
-                    // Set date
-                    TextView date = layout.findViewById(R.id.comment_item_date);
-                    Timestamp timestamp = new Timestamp(Long.parseLong(comment.getCreationTimestamp()));
-                    LocalDate localDate = timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                    date.setText(localDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)));
-
-                    // Enable editing if created by user
-                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
-                    if (user != null && comment.getAuthorUID().equals(user.getUid())) {
-                        ImageView deleteBtn = layout.findViewById(R.id.comment_item_delete);
-                        deleteBtn.setVisibility(View.VISIBLE);
-                        deleteBtn.setOnClickListener(v -> {
-                            new MaterialAlertDialogBuilder(this, R.style.SecondaryAlertDialog)
-                                .setTitle(R.string.delete_comment)
-                                .setMessage(R.string.delete_comment_warning)
-                                .setNeutralButton(R.string.cancel, null)
-                                .setPositiveButton(R.string.delete, (dialog, which) -> deleteComment(comment.getId()))
-                                .show();
-                        });
-                    }
-
-                    linearLayout.addView(layout);
+                // Make comments card visible if has comments
+                if (comments.size() > 0) {
+                    MaterialCardView commentsCard = findViewById(R.id.poi_comments);
+                    commentsCard.setVisibility(View.VISIBLE);
                 }
-
-                // Show comments' card
-                MaterialCardView commentsCard = findViewById(R.id.poi_comments);
-                commentsCard.setVisibility(View.VISIBLE);
             }
         });
     }
@@ -385,13 +316,6 @@ public class ViewPOIActivity extends AppCompatActivity {
             case R.id.sort_least_recent:
                 return new PointOfInterest.Comment.SortByLeastRecent();
         }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void updateComments() {
-        LinearLayout linearLayout = findViewById(R.id.comments_list);
-        linearLayout.removeAllViews();
-        uiSetComments();
     }
 
     private void deleteComment(String commentID) {
@@ -433,6 +357,6 @@ public class ViewPOIActivity extends AppCompatActivity {
     public void onRestart() {
         super.onRestart();
         poi = ((SharedState) getApplicationContext()).viewingPOI;
-        updateComments();
+        uiSetComments();
     }
 }
