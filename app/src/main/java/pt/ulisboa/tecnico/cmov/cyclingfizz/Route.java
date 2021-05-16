@@ -487,11 +487,10 @@ public class Route implements Serializable {
             if (r1.getCreationTimestamp().equals(r2.getCreationTimestamp())) {
                 return r1.flags - r2.flags;
             } else {
-                return (int) (Long.parseLong(r1.getCreationTimestamp()) - Long.parseLong(r2.getCreationTimestamp()));
+                return (int) (Long.parseLong(r2.getCreationTimestamp()) - Long.parseLong(r1.getCreationTimestamp()));
             }
         }
     }
-
     static class SortByLeastRecent implements Comparator<Route> {
 
         @Override
@@ -499,7 +498,7 @@ public class Route implements Serializable {
             if (r1.getCreationTimestamp().equals(r2.getCreationTimestamp())) {
                 return r1.flags - r2.flags;
             } else {
-                return (int) (Long.parseLong(r2.getCreationTimestamp()) - Long.parseLong(r1.getCreationTimestamp()));
+                return (int) (Long.parseLong(r1.getCreationTimestamp()) - Long.parseLong(r2.getCreationTimestamp()));
             }
         }
     }
