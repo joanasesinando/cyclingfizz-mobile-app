@@ -1,8 +1,14 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
+import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.Build;
+import android.os.FileUtils;
 import android.util.Base64;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -14,7 +20,12 @@ import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -38,8 +49,11 @@ public class Route implements Serializable {
     private String mediaLink;
     private final int flags;
 
+    private String videoLink;
+    public File videoFile;
 
-    private Route(String routeJson, String idToken, String title, String creationTimestamp, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, Bitmap bitmap, String mediaLink, int flags) {
+
+    private Route(String routeJson, String idToken, String title, String creationTimestamp, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, Bitmap bitmap, String mediaLink, int flags, File videoFile, String videoLink) {
         this.routeJson = routeJson;
         this.idToken = idToken;
         this.creationTimestamp = creationTimestamp;
@@ -51,31 +65,35 @@ public class Route implements Serializable {
         this.image = bitmap;
         this.mediaLink = mediaLink;
         this.flags = flags;
+        this.videoLink = videoLink;
+        this.videoFile = videoFile;
     }
 
-    private Route(String routeJson, String title, String creationTimestamp, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, String mediaLink, int flags) {
+    private Route(String routeJson, String title, String creationTimestamp, String description, ArrayList<PointOfInterest> POIs, String id, String authorUID, String mediaLink, int flags, String videoLink) {
         // from server
-        this(routeJson, null, title, creationTimestamp, description, POIs, id, authorUID, null, mediaLink, flags);
+        this(routeJson, null, title, creationTimestamp, description, POIs, id, authorUID, null, mediaLink, flags, null, videoLink);
     }
 
-    public Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs, Bitmap bitmap) {
+    public Route(String routeJson, String idToken, String title, String description, ArrayList<PointOfInterest> POIs, Bitmap bitmap, File videoFile) {
         // from android
-        this(routeJson, idToken, title, null, description, POIs, null, null, bitmap, null, 0);
+        this(routeJson, idToken, title, null, description, POIs, null, null, bitmap, null, 0, videoFile, null);
     }
 
     public Feature getRouteFeature() {
         return Feature.fromJson(routeJson);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void getJsonAsync(Utils.OnTaskCompleted<JsonObject> callback) {
 
-        uploadImage(ignored -> {
+        uploadImage(ignored -> uploadVideo(ignored2 -> {
             JsonObject data = new JsonObject();
             data.addProperty("route", routeJson);
             data.addProperty("id_token", idToken);
             data.addProperty("title", title);
             data.addProperty("description", description);
             data.addProperty("media_link", mediaLink);
+            data.addProperty("video_link", videoLink);
 
             JsonArray jsonPOIArray = new JsonArray();
 
@@ -94,7 +112,7 @@ public class Route implements Serializable {
                     }
                 });
             }
-        });
+        }));
     }
 
     public ArrayList<PointOfInterest> getAllPOIs() {
@@ -107,6 +125,14 @@ public class Route implements Serializable {
 
     public Bitmap getImage() {
         return image;
+    }
+
+    public File getVideoFile() {
+        return videoFile;
+    }
+
+    public String getVideoLink() {
+        return videoLink;
     }
 
     public static Route fromJson(JsonObject json) {
@@ -127,7 +153,9 @@ public class Route implements Serializable {
                 json.get("id").getAsString(),
                 json.get("author_uid").getAsString(),
                 json.has("media_link") && !json.get("media_link").isJsonNull() ? json.get("media_link").getAsString() : null,
-                json.has("flags") && !json.get("flags").isJsonNull() ? json.get("flags").getAsInt() : 0
+                json.has("flags") && !json.get("flags").isJsonNull() ? json.get("flags").getAsInt() : 0,
+                json.has("video_link") && !json.get("video_link").isJsonNull() ? json.get("video_link").getAsString() : null
+
         );
 
         if (json.get("reviews") != null && json.has("reviews")) {
@@ -183,6 +211,58 @@ public class Route implements Serializable {
 
     public void addReviewFromJson(JsonObject json, String id) {
         this.reviews.add(Review.fromJson(json, id));
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void uploadVideo(Utils.OnTaskCompleted<Void> callback) {
+        if (videoFile == null) {
+            callback.onTaskCompleted(null);
+            return;
+        }
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                try {
+                    String idToken = result.getToken();
+                    byte[] byteArray = Files.readAllBytes(videoFile.toPath());
+                    String mediaBase64 = Base64.encodeToString(byteArray, Base64.DEFAULT);
+
+                    JsonObject data = new JsonObject();
+                    data.addProperty("media_base64", mediaBase64);
+                    data.addProperty("id_token", idToken);
+
+                    (new Utils.httpPostRequestJson(response -> {
+                        if (response.get("status").getAsString().equals("success")) {
+                            videoLink = response.get("media_link").getAsString();
+                        }
+                        callback.onTaskCompleted(null);
+
+                    }, data.toString())).execute(SERVER_URL + "/upload-media");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            });
+        } else {
+            Log.d(TAG, "Null User");
+            callback.onTaskCompleted(null);
+        }
+    }
+
+    public void downloadVideo(Context context, Utils.OnTaskCompleted<Void> callback) {
+        if (videoLink == null) {
+            callback.onTaskCompleted(null);
+            return;
+        }
+
+        (new Utils.httpRequestVideoFile(response -> {
+            Log.e(TAG, "Got response");
+            videoFile = response;
+            callback.onTaskCompleted(null);
+
+        }, context)).execute(videoLink);
     }
 
     public void uploadImage(Utils.OnTaskCompleted<Void> callback) {

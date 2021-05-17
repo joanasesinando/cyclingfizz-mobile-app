@@ -8,6 +8,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.MenuItem;
@@ -44,6 +45,7 @@ public class RoutesListActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.e(TAG, "aqui tou eu");
         Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
         super.onCreate(savedInstanceState);
         setContentView(R.layout.routes_list);
@@ -89,7 +91,7 @@ public class RoutesListActivity extends AppCompatActivity {
 
                 // Init RecyclerView
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-                RecyclerViewFragment fragment = new RecyclerViewFragment(routes, RecyclerViewFragment.DatasetType.ROUTES);
+                RecyclerViewFragment<Route> fragment = new RecyclerViewFragment<>(routes, RecyclerViewFragment.DatasetType.ROUTES);
                 transaction.replace(R.id.routes_list, fragment);
                 transaction.commit();
 

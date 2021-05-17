@@ -17,6 +17,7 @@ import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -214,6 +215,7 @@ public class RouteActivity extends AppCompatActivity {
         updateAuthor();
         uiUpdateCard(findViewById(R.id.route_description), R.drawable.ic_description,
                 getString(R.string.description), route.getDescription());
+        updateVideo();
         updatePOIs();
         updateReviews();
 
@@ -447,6 +449,19 @@ public class RouteActivity extends AppCompatActivity {
                 })
                 .show();
         });
+
+        // Set video click listener
+        View routeVideoThumbnailLayout = findViewById(R.id.route_video_thumbnail_layout);
+        routeVideoThumbnailLayout.setOnClickListener(view -> {
+
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            Uri videoURI = FileProvider.getUriForFile(this,
+                    "pt.ulisboa.tecnico.cmov.cyclingfizz.fileprovider",
+                    route.getVideoFile());
+            intent.setDataAndType(videoURI, "video/*");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(intent);
+        });
     }
 
     @SuppressLint("NonConstantResourceId")
@@ -548,6 +563,24 @@ public class RouteActivity extends AppCompatActivity {
         } else {
             callback.onTaskCompleted(new ArrayList<>());
         }
+    }
+
+    private void updateVideo() {
+
+        if (route.getVideoLink() == null) return;
+
+        route.downloadVideo(this, ignored -> {
+
+            if (route.getVideoFile() == null) return;
+
+            Bitmap thumbnailVideo = ThumbnailUtils.createVideoThumbnail(route.getVideoFile().getAbsolutePath(), MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
+
+            // Update view
+            ImageView thumbnailVideoView = findViewById(R.id.route_video_thumbnail);
+            View routeVideoThumbnailLayout = findViewById(R.id.route_video_thumbnail_layout);
+            thumbnailVideoView.setImageBitmap(thumbnailVideo);
+            routeVideoThumbnailLayout.setVisibility(View.VISIBLE);
+        });
     }
 
 

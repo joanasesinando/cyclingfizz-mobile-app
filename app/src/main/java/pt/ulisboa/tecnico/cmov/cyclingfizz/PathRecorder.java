@@ -1,7 +1,10 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -9,6 +12,7 @@ import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,9 +88,10 @@ public class PathRecorder {
         isRecording = false;
     }
 
-    public void saveRecording(String name, String description, Bitmap bitmap, Utils.OnTaskCompleted<Boolean> callback) {
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void saveRecording(String name, String description, Bitmap bitmap, File videoFile, Utils.OnTaskCompleted<Boolean> callback) {
         printFeature();
-        saveFeature(name, description, bitmap, callback);
+        saveFeature(name, description, bitmap, videoFile, callback);
     }
 
     public boolean addPointToPath(Point point) {
@@ -136,7 +141,8 @@ public class PathRecorder {
         Log.d(TAG, jsonString);
     }
 
-    public void saveFeature(String name, String description, Bitmap bitmap, Utils.OnTaskCompleted<Boolean> callback) {
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void saveFeature(String name, String description, Bitmap bitmap, File videoFile, Utils.OnTaskCompleted<Boolean> callback) {
         if (path.size() < 2) return;
 
         FirebaseUser user = mAuth.getCurrentUser();
@@ -145,7 +151,7 @@ public class PathRecorder {
             user.getIdToken(true).addOnSuccessListener(result -> {
                 String idToken = result.getToken();
 
-                Route route = new Route(getFeature().toJson(), idToken, name, description, POIs, bitmap);
+                Route route = new Route(getFeature().toJson(), idToken, name, description, POIs, bitmap, videoFile);
 
                 route.getJsonAsync(data -> {
                     (new Utils.httpPostRequestJson(response -> {

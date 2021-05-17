@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.annotation.SuppressLint;
@@ -12,12 +13,14 @@ import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.Layout;
@@ -60,8 +63,16 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.mapboxsdk.utils.BitmapUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -115,8 +126,11 @@ public class NewRouteActivity extends AppCompatActivity {
 
     private Bitmap image;
 
+    private File videoFile;
+    private String currentVideoPath;
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
@@ -150,16 +164,31 @@ public class NewRouteActivity extends AppCompatActivity {
 
                 // Get URI
                 Uri uri = data.getData();
-//
-                Log.d(TAG, String.valueOf(Utils.retrieveVideoFrameFromVideo(Utils.getRealPathFromURIVideo(this, uri))));
-                Bitmap thumbnailVideo = Utils.retrieveVideoFrameFromVideo(uri.getPath());
-//                Log.d(TAG, String.valueOf(thumbnailVideo));
+                InputStream inputStream = getContentResolver().openInputStream(uri);
 
-                // Update view
-                ImageView thumbnailVideoView = findViewById(R.id.route_video_thumbnail);
-                View routeVideoThumbnailLayout = findViewById(R.id.route_video_thumbnail_layout);
-                thumbnailVideoView.setImageURI(uri);
-                routeVideoThumbnailLayout.setVisibility(View.VISIBLE);
+                videoFile = createVideoFile();
+                if (videoFile != null) {
+                    readInputStreamToVideoFile(inputStream);
+
+                    Bitmap thumbnailVideo = ThumbnailUtils.createVideoThumbnail(videoFile.getAbsolutePath(), MediaStore.Video.Thumbnails.FULL_SCREEN_KIND);
+
+                    // Update view
+                    ImageView thumbnailVideoView = findViewById(R.id.route_video_thumbnail);
+                    View routeVideoThumbnailLayout = findViewById(R.id.route_video_thumbnail_layout);
+                    thumbnailVideoView.setImageBitmap(thumbnailVideo);
+                    routeVideoThumbnailLayout.setVisibility(View.VISIBLE);
+
+                    // set onClick
+                    routeVideoThumbnailLayout.setOnClickListener(view -> {
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        Uri videoURI = FileProvider.getUriForFile(this,
+                                "pt.ulisboa.tecnico.cmov.cyclingfizz.fileprovider",
+                                videoFile);
+                        intent.setDataAndType(videoURI, "video/*");
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(intent);
+                    });
+                }
 
 
             } else {
@@ -167,10 +196,44 @@ public class NewRouteActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             Log.e(TAG, Arrays.toString(e.getStackTrace()));
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
+            e.printStackTrace();
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+
+    private File createVideoFile() {
+
+        try {
+            // Create an image file name
+            @SuppressLint("SimpleDateFormat") String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            String fileName = "Video_" + timeStamp + "_";
+            File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            File video = File.createTempFile(
+                    fileName,  /* prefix */
+                    ".mp4",         /* suffix */
+                    storageDir      /* directory */
+            );
+
+            currentVideoPath = video.getAbsolutePath();
+            return video;
+        } catch (IOException e) {
+            Log.e(TAG, e.getMessage());
+            return null;
+        }
+    }
+
+    private void readInputStreamToVideoFile(InputStream inputStream) throws IOException {
+        try (OutputStream output = new FileOutputStream(videoFile)) {
+            byte[] buffer = new byte[4 * 1024]; // or other buffer size
+            int read;
+
+            while ((read = inputStream.read(buffer)) != -1) {
+                output.write(buffer, 0, read);
+            }
+
+            output.flush();
+        }
     }
 
 
@@ -180,6 +243,7 @@ public class NewRouteActivity extends AppCompatActivity {
     /*** -------------- USER INTERFACE -------------- ***/
     /*** -------------------------------------------- ***/
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @SuppressLint("IntentReset")
     private void uiSetClickListeners() {
         // Set close btn click listener
@@ -485,6 +549,7 @@ public class NewRouteActivity extends AppCompatActivity {
     /*** ------------------- ROUTE ------------------ ***/
     /*** -------------------------------------------- ***/
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void saveRoute() {
         // Clean error messages
         nameInputLayout.setError(null);
@@ -500,7 +565,7 @@ public class NewRouteActivity extends AppCompatActivity {
         if (!error) {
             LinearProgressIndicator progressIndicator = findViewById(R.id.progress_indicator);
             progressIndicator.setVisibility(View.VISIBLE);
-            pathRecorder.saveRecording(name, description, image, result -> {
+            pathRecorder.saveRecording(name, description, image, videoFile, result -> {
                 progressIndicator.setVisibility(View.GONE);
                 finish();
             });

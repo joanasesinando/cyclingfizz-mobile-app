@@ -1,5 +1,6 @@
 package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
@@ -33,6 +34,9 @@ import com.google.gson.JsonParser;
 import com.mapbox.geojson.Point;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -45,11 +49,13 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -74,7 +80,7 @@ public final class Utils {
     static String TAG = "Cycling_Fizz@Utils";
 
     public static String STATIONS_SERVER_URL = "https://stations.cfservertest.ga";
-//    public static String STATIONS_SERVER_URL = "https://d5271dafc363.ngrok.io";
+//    public static String STATIONS_SERVER_URL = "https://1e7ea1130b2b.ngrok.io";
     public static String MAP_SERVER_URL = "https://map.cfservertest.ga";
 
     public static int MAX_FLAGS_FROM_BAN = 3;
@@ -537,6 +543,102 @@ public final class Utils {
             callback.onTaskCompleted(result);
         }
     }
+
+
+    public static class httpRequestVideoFile extends AsyncTask<String, Void, File> {
+
+        private final OnTaskCompleted<File> callback;
+        private final Cache cache;
+        @SuppressLint("StaticFieldLeak")
+        private final Context context;
+
+
+        public httpRequestVideoFile(OnTaskCompleted<File> callback, Context context) {
+            this.callback = callback;
+            this.cache = Cache.getInstanceBigFiles();
+            this.context = context;
+        }
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        private File readInputStreamToFile(InputStream inputStream) {
+            File file;
+
+            try {
+                @SuppressLint("SimpleDateFormat") String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                file = File.createTempFile(timeStamp, null, context.getCacheDir());
+
+                try (OutputStream output = new FileOutputStream(file)) {
+                    byte[] buffer = new byte[4 * 1024]; // or other buffer size
+                    int read;
+
+                    while ((read = inputStream.read(buffer)) != -1) {
+                        output.write(buffer, 0, read);
+                    }
+
+                    output.flush();
+                }
+                return file;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected File doInBackground(String[] urls) {
+            URL url;
+
+            byte[] cachedValue = cache.get(urls[0]);
+
+
+            if (cachedValue != null && cachedValue.length > 0) {
+                Log.d(TAG, "Got " + urls[0] + " from cache");
+
+                InputStream input = new ByteArrayInputStream(cachedValue);
+
+                return readInputStreamToFile(input);
+            }
+
+            try {
+                url = new URL(urls[0]);
+                HttpURLConnection connection;
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+
+                byte[] bytes = IOUtils.toByteArray(input);
+
+                File videoFile = readInputStreamToFile(input);
+
+                cache.save(urls[0], bytes);
+
+                return videoFile;
+
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+
+                cachedValue = cache.get(urls[0]);
+
+                if (cachedValue != null && cachedValue.length > 0) {
+                    InputStream input = new ByteArrayInputStream(cachedValue);
+
+                    return readInputStreamToFile(input);                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(File result) {
+            callback.onTaskCompleted(result);
+        }
+    }
+
 
     public static class httpPostRequestJson extends AsyncTask<String, Void, JsonObject> {
 
