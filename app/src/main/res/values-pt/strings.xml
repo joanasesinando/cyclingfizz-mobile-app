@@ -150,4 +150,11 @@
     <string name="portuguese">Português</string>
     <string name="english">Inglês</string>
     <string name="language">Lingua</string>
+    <string name="motto">Descobre os melhores locais em Lisboa de bicicleta</string>
+    <string name="intro1_title">Alugar bicicletas</string>
+    <string name="intro1_text">Explora Lisboa de bicicleta com o nosso sistema de partilha de bicicletas</string>
+    <string name="intro2_title">Seguir uma rota</string>
+    <string name="intro2_text">Segue uma rota e conhece os melhores locais</string>
+    <string name="intro3_title">Gravar rotas</string>
+    <string name="intro3_text">Cria rotas personalizadas para outras pessoas seguirem</string>
 </resources>

@@ -29,7 +29,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/intro1_title"
-        android:src="@drawable/ic_sample"
+        android:src="@drawable/ic_welcome1"
         android:layout_marginTop="35dp"/>
 
     <com.google.android.material.textview.MaterialTextView
@@ -45,7 +45,9 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/intro1_img"
-        android:layout_marginTop="35dp"/>
+        android:layout_marginTop="35dp"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"/>
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btn_next_intro1"

@@ -94,19 +94,19 @@
     <string name="ask_rate_route_message">Did you like this route? Review it and let other user know your opinion!</string>
 
     <!-- Welcome -->
-    <string name="motto">Discover Lisbon’s attractions\nand hotspots by bike</string>
+    <string name="motto">Discover Lisbon’s attractions and hotspots by bike</string>
 
     <!-- Intro 1 -->
-    <string name="intro1_title">Title1</string>
-    <string name="intro1_text">Scelerisque rhoncus faucibus\nut ac etiam varius</string>
+    <string name="intro1_title">Rent bikes</string>
+    <string name="intro1_text">Explore Lisbon by bike with our bike-sharing system</string>
 
     <!-- Intro 2 -->
-    <string name="intro2_title">Title2</string>
-    <string name="intro2_text">A justo, in porttitor consequat\nnisi netus sit ultricies</string>
+    <string name="intro2_title">Play routes</string>
+    <string name="intro2_text">Go through a route and get to know the best places around</string>
 
     <!-- Intro 3 -->
-    <string name="intro3_title">Title3</string>
-    <string name="intro3_text">Aenean amet hendrerit non\na egestas</string>
+    <string name="intro3_title">Create routes</string>
+    <string name="intro3_text">Create custom routes for other people to follow along</string>
 
     <!-- Sidebar -->
     <string name="sidebar_map">Cycling Map</string>
