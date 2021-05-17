@@ -180,9 +180,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     static String POI_CLUSTER_LAYER_ID = "poi-cluster-layer";
     static String POI_COUNT_LAYER_ID = "poi-count-layer";
 
-    static Long LOCATION_UPDATE_INTERVAL = 1000L;
-    static Long LOCATION_UPDATE_MAX_WAIT_INTERVAL = LOCATION_UPDATE_INTERVAL;
-//    static Long LOCATION_UPDATE_MAX_WAIT_INTERVAL = LOCATION_UPDATE_INTERVAL * 5;
+    static Long LOCATION_UPDATE_INTERVAL_LOW = 1000L;
+    static Long LOCATION_UPDATE_MAX_WAIT_INTERVAL_LOW = LOCATION_UPDATE_INTERVAL_LOW;
+
+    static Long LOCATION_UPDATE_INTERVAL_HIGH = 15000L;
+    static Long LOCATION_UPDATE_MAX_WAIT_INTERVAL_HIGH = LOCATION_UPDATE_INTERVAL_HIGH * 2;
 
     public final static String STATION_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.STATION_INFO";
     public final static String CYCLEWAY_INFO = "pt.ulisboa.tecnico.cmov.cyclingfizz.CYCLEWAY_INFO";
@@ -743,19 +745,33 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     /*** ---------------- LOCATION ------------------ ***/
     /*** -------------------------------------------- ***/
 
-    protected void createLocationRequest() {
+    protected void createLocationRequestHighInterval() {
         locationRequest = LocationRequest.create();
-        locationRequest.setInterval(LOCATION_UPDATE_INTERVAL);
-        locationRequest.setMaxWaitTime(LOCATION_UPDATE_MAX_WAIT_INTERVAL);
+        locationRequest.setInterval(LOCATION_UPDATE_INTERVAL_HIGH);
+        locationRequest.setMaxWaitTime(LOCATION_UPDATE_MAX_WAIT_INTERVAL_HIGH);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
-    void updateLocationRequestRecording() {
-        locationRequest.setMaxWaitTime(LOCATION_UPDATE_INTERVAL);
+    protected void createLocationRequestSmallInterval() {
+        locationRequest = LocationRequest.create();
+        locationRequest.setInterval(LOCATION_UPDATE_INTERVAL_LOW);
+        locationRequest.setMaxWaitTime(LOCATION_UPDATE_MAX_WAIT_INTERVAL_LOW);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
-    void updateLocationRequestNotRecording() {
-        locationRequest.setMaxWaitTime(LOCATION_UPDATE_MAX_WAIT_INTERVAL);
+    void updateLocationRequestToHighInterval() {
+        createLocationRequestHighInterval();
+        restartLocationUpdates();
+    }
+
+    void updateLocationRequestToSmallInterval() {
+        createLocationRequestSmallInterval();
+        restartLocationUpdates();
+    }
+
+    void restartLocationUpdates() {
+        stopLocationUpdates();
+        startLocationUpdates();
     }
 
     void checkIfLocationOn() {
@@ -795,7 +811,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 //            Toast.makeText(this, "Permission already Granted", Toast.LENGTH_SHORT).show();
 
-            if (locationRequest == null) createLocationRequest();
+            if (locationRequest == null) createLocationRequestHighInterval();
             checkIfLocationOn();
 
         } else {
@@ -838,7 +854,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 Looper.getMainLooper());
 
         fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
-            if (mapboxMap != null && location != null) {
+            if (mapboxMap != null && location != null && mapboxMap.getLocationComponent().isLocationComponentActivated()) {
                 mapboxMap.getLocationComponent().forceLocationUpdate(location);
                 userLocation = location;
             }
@@ -1001,7 +1017,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void recordNewRoute(View view) {
         // Start recording
         pathRecorder.startRecording();
-        updateLocationRequestRecording();
+        updateLocationRequestToSmallInterval();
         pathRecorder.setPreparingToRecord(false);
         setMapboxCameraFollowUserWithBearing();
         updateCurrentLocationBtn();
@@ -1021,7 +1037,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         setMapboxCameraFollowUser();
         updateCurrentLocationBtn();
         updateMapboxCamera(mapboxMap.getLocationComponent());
-        updateLocationRequestNotRecording();
+        updateLocationRequestToHighInterval();
         pointToNorth();
 
         // Allow screen to turn off
@@ -1297,8 +1313,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void stopPlaying() {
         // Allow screen to turn off
-        Log.e(TAG, "Ja passou");
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        updateLocationRequestToHighInterval();
 
         cleanRoute();
         pathPlayer.stopRoute();
@@ -1579,6 +1595,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
 
         if (pathPlayer.isPlayingRoute()) {
+            if (locationRequest.getInterval() == LOCATION_UPDATE_INTERVAL_HIGH) {
+                updateLocationRequestToSmallInterval();
+            }
             showPlayingRouteUI();
             showPlayingRouteOnMap();
             showPlayingPOIsOnMap();
