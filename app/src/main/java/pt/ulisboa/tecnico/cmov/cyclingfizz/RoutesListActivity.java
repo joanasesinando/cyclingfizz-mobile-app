@@ -47,7 +47,9 @@ public class RoutesListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         Log.e(TAG, "aqui tou eu");
         Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
+
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.routes_list);
 
         mAuth = FirebaseAuth.getInstance();

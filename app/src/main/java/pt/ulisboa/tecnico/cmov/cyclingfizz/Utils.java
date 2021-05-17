@@ -80,7 +80,7 @@ public final class Utils {
     static String TAG = "Cycling_Fizz@Utils";
 
     public static String STATIONS_SERVER_URL = "https://stations.cfservertest.ga";
-//    public static String STATIONS_SERVER_URL = "https://1e7ea1130b2b.ngrok.io";
+//    public static String STATIONS_SERVER_URL = "https://6d89166a616e.ngrok.io";
     public static String MAP_SERVER_URL = "https://map.cfservertest.ga";
 
     public static int MAX_FLAGS_FROM_BAN = 3;

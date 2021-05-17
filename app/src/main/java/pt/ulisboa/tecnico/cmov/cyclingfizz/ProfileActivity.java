@@ -2,7 +2,6 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.annotation.SuppressLint;
@@ -24,12 +23,13 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 enum RoutesSelected {
     CREATED, PLAYED
@@ -42,10 +42,10 @@ public class ProfileActivity extends AppCompatActivity {
 
     FirebaseAuth mAuth;
 
-    ArrayList<Route> createdRoutes;
-    ArrayList<Route> playedRoutes;
+    ArrayList<Route> createdRoutes = new ArrayList<>();
+    ArrayList<Route> playedRoutes = new ArrayList<>();
 
-    RoutesSelected selected;
+    RoutesSelected selected = RoutesSelected.CREATED;
 
     int sortBy = R.id.sort_best_rate;
     TextInputLayout searchInput;
@@ -58,10 +58,110 @@ public class ProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.user_profile);
 
-        // TODO
-
         mAuth = FirebaseAuth.getInstance();
-        uiInit();
+
+        updateCreatedRoutes(successCreatedRoutes -> {
+            updatePlayedRoutes(successPlayedRoutes -> {
+                uiInit();
+            });
+        });
+
+    }
+
+    public void updateCreatedRoutes(Utils.OnTaskCompleted<Boolean> callback) {
+        FirebaseUser user = mAuth.getCurrentUser();
+        createdRoutes.clear();
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                (new Utils.httpRequestJson(response -> {
+                    if (!response.get("status").getAsString().equals("success")) return;
+
+                    JsonArray jsonArray = response.get("routes").getAsJsonArray();
+
+                    AtomicInteger routesSize = new AtomicInteger(jsonArray.size());
+                    if (routesSize.get() == 0) {
+                        callback.onTaskCompleted(true);
+                        return;
+                    }
+
+
+                    for (JsonElement routeIDJson : jsonArray) {
+                        String routeID = routeIDJson.getAsString();
+                        (new Utils.httpRequestJson(obj -> {
+                            if (!obj.get("status").getAsString().equals("success")) {
+                                routesSize.getAndDecrement();
+                                if (routesSize.get() == createdRoutes.size()) {
+                                    callback.onTaskCompleted(true);
+                                }
+                                return;
+                            }
+                            createdRoutes.add(Route.fromJson(obj.get("data").getAsJsonObject()));
+                            if (routesSize.get() == createdRoutes.size()) {
+                                callback.onTaskCompleted(true);
+                                return;
+                            }
+
+                        })).execute(SERVER_URL + "/get-route-by-id?routeID=" + routeID);
+
+                    }
+                })).execute(SERVER_URL + "/get-routes-created-by-user?idToken=" + idToken);
+
+            });
+        } else {
+            Log.d(TAG, "Null User");
+            callback.onTaskCompleted(false);
+        }
+    }
+
+
+    public void updatePlayedRoutes(Utils.OnTaskCompleted<Boolean> callback) {
+        FirebaseUser user = mAuth.getCurrentUser();
+        playedRoutes.clear();
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                (new Utils.httpRequestJson(response -> {
+                    if (!response.get("status").getAsString().equals("success")) return;
+
+                    JsonArray jsonArray = response.get("routes").getAsJsonArray();
+
+                    AtomicInteger routesSize = new AtomicInteger(jsonArray.size());
+                    if (routesSize.get() == 0) {
+                        callback.onTaskCompleted(true);
+                        return;
+                    }
+
+
+                    for (JsonElement routeIDJson : jsonArray) {
+                        String routeID = routeIDJson.getAsString();
+
+                        (new Utils.httpRequestJson(obj -> {
+                            if (!obj.get("status").getAsString().equals("success")) {
+                                routesSize.getAndDecrement();
+                                if (routesSize.get() == playedRoutes.size()) {
+                                    callback.onTaskCompleted(true);
+                                }
+                                return;
+                            }
+                            playedRoutes.add(Route.fromJson(obj.get("data").getAsJsonObject()));
+                            if (routesSize.get() == playedRoutes.size()) {
+                                callback.onTaskCompleted(true);
+                                return;
+                            }
+
+                        })).execute(SERVER_URL + "/get-route-by-id?routeID=" + routeID);
+
+                    }
+                })).execute(SERVER_URL + "/get-routes-played-by-user?idToken=" + idToken);
+
+            });
+        } else {
+            Log.d(TAG, "Null User");
+            callback.onTaskCompleted(false);
+        }
     }
 
 
@@ -120,24 +220,17 @@ public class ProfileActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void updateRouteListView() {
         if (selected == RoutesSelected.CREATED) {
-            (new Utils.httpRequestJson(this::updateRouteListView)).execute(SERVER_URL + "/get-routes"); // FIXME: get routes created
+            updateRouteListView(createdRoutes);
 
         } else if (selected == RoutesSelected.PLAYED) {
-            (new Utils.httpRequestJson(this::updateRouteListView)).execute(SERVER_URL + "/get-routes"); // FIXME: get routes played
+            updateRouteListView(playedRoutes);
         }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    private void updateRouteListView(JsonObject obj) {
-        if (!obj.get("status").getAsString().equals("success")) return;
+    private void updateRouteListView(ArrayList<Route> routes) {
 
-        ArrayList<Route> routes = new ArrayList<>();
-        for (JsonElement routeJsonElement : obj.get("data").getAsJsonArray()) {
-            JsonObject routeJson = routeJsonElement.getAsJsonObject();
-
-            if (!routeJson.isJsonNull())
-                routes.add(Route.fromJson(routeJson));
-        }
+        Log.e(TAG, "routes -> " + routes.size());
 
         routes.sort(getSorter());
 
@@ -172,6 +265,7 @@ public class ProfileActivity extends AppCompatActivity {
             routesPlayedBtn.setText(playedRoutes.size() + " " + getString(R.string.routes_played));
 
             // Show routes created
+            selected = RoutesSelected.CREATED;
             updateRouteListView();
         });
 
@@ -185,6 +279,7 @@ public class ProfileActivity extends AppCompatActivity {
             routesCreatedBtn.setText(createdRoutes.size() + " " + getString(R.string.routes_created));
 
             // Show routes played
+            selected = RoutesSelected.PLAYED;
             updateRouteListView();
         });
     }
