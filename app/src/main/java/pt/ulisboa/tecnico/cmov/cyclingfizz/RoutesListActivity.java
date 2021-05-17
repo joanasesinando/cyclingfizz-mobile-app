@@ -45,7 +45,6 @@ public class RoutesListActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.e(TAG, "aqui tou eu");
         Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
 
         super.onCreate(savedInstanceState);
