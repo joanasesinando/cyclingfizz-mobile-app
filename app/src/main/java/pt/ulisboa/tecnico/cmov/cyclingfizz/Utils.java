@@ -3,6 +3,9 @@ package pt.ulisboa.tecnico.cmov.cyclingfizz;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,6 +14,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.MenuItem;
@@ -29,6 +33,8 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.common.util.IOUtils;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mapbox.geojson.Point;
@@ -57,6 +63,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -80,7 +87,7 @@ public final class Utils {
     static String TAG = "Cycling_Fizz@Utils";
 
     public static String STATIONS_SERVER_URL = "https://stations.cfservertest.ga";
-//    public static String STATIONS_SERVER_URL = "https://6d89166a616e.ngrok.io";
+//    public static String STATIONS_SERVER_URL = "https://3f0ac6bf1192.ngrok.io";
     public static String MAP_SERVER_URL = "https://map.cfservertest.ga";
 
     public static int MAX_FLAGS_FROM_BAN = 3;
@@ -686,6 +693,77 @@ public final class Utils {
         protected void onPostExecute(JsonObject result) {
             callback.onTaskCompleted(result);
         }
+    }
+
+
+    /*** -------------------------------------------- ***/
+    /*** ----------------- SETTINGS ----------------- ***/
+    /*** -------------------------------------------- ***/
+
+
+    public static void setLocale(Context context, Locale locale) {
+        Log.e(TAG, "(LOAD) Change to " + locale);
+        Resources res = context.getResources();
+        DisplayMetrics dm = res.getDisplayMetrics();
+        Configuration conf = res.getConfiguration();
+        conf.locale = locale;
+        res.updateConfiguration(conf, dm);
+    }
+
+
+    public static void saveSettings(Context context, Utils.OnTaskCompleted<Boolean> callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                JsonObject settings = new JsonObject();
+                settings.addProperty("locale", context.getResources().getConfiguration().locale.getLanguage());
+
+
+                JsonObject data = new JsonObject();
+
+                data.addProperty("idToken", idToken);
+                data.addProperty("settings", settings.toString());
+
+
+                (new Utils.httpPostRequestJson(response -> {
+                    callback.onTaskCompleted(true);
+                }, data.toString())).execute(Utils.STATIONS_SERVER_URL + "/set-settings");
+
+            });
+        } else {
+            callback.onTaskCompleted(false);
+        }
+    }
+
+    public static void getLocale(Context context, Utils.OnTaskCompleted<Locale> callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            user.getIdToken(true).addOnSuccessListener(result -> {
+                String idToken = result.getToken();
+
+                (new Utils.httpRequestJson(response -> {
+                    String locale = response.get("locale").getAsString();
+                    callback.onTaskCompleted(locale != null ? new Locale(locale) : context.getResources().getConfiguration().locale);
+                })).execute(Utils.STATIONS_SERVER_URL + "/get-locale?idToken=" + idToken);
+
+            });
+        } else {
+            callback.onTaskCompleted(context.getResources().getConfiguration().locale);
+        }
+    }
+
+
+    public static void updateLocaleFromServer(Context context, Utils.OnTaskCompleted<Boolean> callback) {
+        getLocale(context, locale -> {
+            Log.e(TAG, "should be -> " + locale);
+            setLocale(context, locale);
+            callback.onTaskCompleted(true);
+        });
+
     }
 
 }

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Cycling Fizz</string>
+    <string name="app_name" translatable="false">Cycling Fizz</string>
     <string name="street_view">Street view</string>
     <string name="new_poi">New point of interest</string>
     <string name="new_route">New route</string>
@@ -54,7 +54,7 @@
     <string name="edit_review">Edit review</string>
 
     <!-- States -->
-    <string name="recording">Recording...</string>
+    <string name="recording">Recording…</string>
     <string name="on_a_route">On a route</string>
 
     <!-- Warnings -->
@@ -139,7 +139,7 @@
     <string name="lock_bike">Lock bike</string>
     <string name="end_ride">End ride</string>
     <string name="bike_delivered">Bike delivered!</string>
-    <string name="bike_delivered_message">Your trip has ended. See you next time. </string>
+    <string name="bike_delivered_message">Your trip has ended. See you next time.</string>
 
     <!-- Login -->
     <string name="email">Email</string>
@@ -155,7 +155,7 @@
     <string name="email_required_error">Please input your email address.</string>
     <string name="email_format_error">Invalid email address format.</string>
     <string name="email_invalid_error">Email address does not exist or is invalid.</string>
-    <string name="password_required_error">Please input your password address.</string>
+    <string name="password_required_error">Please input your password.</string>
     <string name="password_wrong_error">Password is incorrect or invalid.</string>
     <string name="auth_failed">Authentication failed.</string>
     <string name="sign_in_msg">Click here to sign in</string>
@@ -204,4 +204,7 @@
     <string name="google_API_KEY" translatable="false">AIzaSyBycELmIsSb30MHTmFol4Ez5lXSc1IA7eg</string>
     <string name="google_signing_secret" translatable="false">DTDrKz5z8ti16fOGYOhIkPNFkXk=</string>
     <string name="created_by">Created by </string>
+    <string name="portuguese">Portuguese</string>
+    <string name="english">English</string>
+    <string name="language">Language</string>
 </resources>
