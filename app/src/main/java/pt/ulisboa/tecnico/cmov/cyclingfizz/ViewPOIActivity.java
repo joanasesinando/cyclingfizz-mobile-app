@@ -64,7 +64,7 @@ public class ViewPOIActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
+        Utils.forceLightModeOn();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.poi);
 
@@ -321,7 +321,7 @@ public class ViewPOIActivity extends AppCompatActivity {
     private void deleteComment(String commentID) {
         poi.removeComment(commentID, routeID, deleted -> {
             if (deleted) finish();
-            else Toast.makeText(this, "Could not delete comment", Toast.LENGTH_SHORT).show();
+            else Toast.makeText(this, R.string.could_not_delete_comment, Toast.LENGTH_SHORT).show();
         });
     }
 

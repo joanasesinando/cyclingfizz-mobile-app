@@ -62,8 +62,6 @@ public class Cache implements Serializable {
             INSTANCE_BIG.cacheFileName = "BigCache";
             INSTANCE_BIG.context = context;
             INSTANCE_BIG.getFromFile();
-            Log.d(TAG, "Contexto: " + INSTANCE_BIG.context);
-
         }
         return(INSTANCE_BIG);
     }
@@ -75,19 +73,14 @@ public class Cache implements Serializable {
             INSTANCE_SMALL.cacheFileName = "SmallCache";
             INSTANCE_SMALL.context = context;
             INSTANCE_SMALL.getFromFile();
-            Log.d(TAG, "Contexto: " + INSTANCE_SMALL.context);
-
         }
         return(INSTANCE_SMALL);
     }
 
 
     public void save(String key, byte[] bytes) {
-        Log.d(TAG, "Saved " + key + " result in cache");
-        Log.d(TAG, "Saved value -> " + Arrays.toString(bytes));
         lruCache.put(key, bytes);
         saveToFile();
-//        (new Thread(this::saveToFile)).start();
     }
 
     public byte[] get(String key) {
@@ -96,7 +89,7 @@ public class Cache implements Serializable {
 
     private void saveToFile() {
         if (context == null) {
-            Log.e(TAG, "Still Null");
+            Log.w(TAG, "Couldn't save to file, context is still null");
             return;
         }
         File file = new File(context.getCacheDir(), cacheFileName);
@@ -114,7 +107,7 @@ public class Cache implements Serializable {
 
     private void getFromFile() {
         if (context == null) {
-            Log.e(TAG, "Sem Contexto");
+            Log.e(TAG, "Couldn't get from file, context is still null");
             return;
         }
         File file = new File(context.getCacheDir(), cacheFileName);

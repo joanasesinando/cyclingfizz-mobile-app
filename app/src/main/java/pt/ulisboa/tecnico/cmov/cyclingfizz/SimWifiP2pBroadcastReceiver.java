@@ -23,7 +23,6 @@ public class SimWifiP2pBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-        Log.d("Cycling_Fizz", "action: " + action);
         if (SimWifiP2pBroadcast.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
 
             // This action is triggered when the Termite service changes state:
@@ -45,9 +44,8 @@ public class SimWifiP2pBroadcastReceiver extends BroadcastReceiver {
             // asynchronous call and the calling activity is notified with a
             // callback on PeerListListener.onPeersAvailable()
 
-            Log.d("Cycling_Fizz", "peers changed");
-            Toast.makeText(mActivity, "Peer list changed",
-                    Toast.LENGTH_SHORT).show();
+//            Toast.makeText(mActivity, "Peer list changed",
+//                    Toast.LENGTH_SHORT).show();
             ((SimWifiP2PActivityListener) mActivity).checkForStationsInRange();
 
         } else if (SimWifiP2pBroadcast.WIFI_P2P_NETWORK_MEMBERSHIP_CHANGED_ACTION.equals(action)) {
@@ -55,16 +53,16 @@ public class SimWifiP2pBroadcastReceiver extends BroadcastReceiver {
             SimWifiP2pInfo ginfo = (SimWifiP2pInfo) intent.getSerializableExtra(
                     SimWifiP2pBroadcast.EXTRA_GROUP_INFO);
             ginfo.print();
-            Toast.makeText(mActivity, "Network membership changed",
-                    Toast.LENGTH_SHORT).show();
+//            Toast.makeText(mActivity, "Network membership changed",
+//                    Toast.LENGTH_SHORT).show();
 
         } else if (SimWifiP2pBroadcast.WIFI_P2P_GROUP_OWNERSHIP_CHANGED_ACTION.equals(action)) {
 
             SimWifiP2pInfo ginfo = (SimWifiP2pInfo) intent.getSerializableExtra(
                     SimWifiP2pBroadcast.EXTRA_GROUP_INFO);
             ginfo.print();
-            Toast.makeText(mActivity, "Group ownership changed",
-                    Toast.LENGTH_SHORT).show();
+//            Toast.makeText(mActivity, "Group ownership changed",
+//                    Toast.LENGTH_SHORT).show();
         }
     }
 }

@@ -142,7 +142,7 @@ public class PointOfInterest implements Serializable {
 
                 });
             } else {
-                Log.d(TAG, "Null User");
+                Log.e(TAG, "Null User");
             }
 
         }
@@ -253,7 +253,7 @@ public class PointOfInterest implements Serializable {
             });
         } else {
             callback.onTaskCompleted(null);
-            Log.d(TAG, "Null User");
+            Log.e(TAG, "Null User");
         }
     }
 
@@ -286,7 +286,7 @@ public class PointOfInterest implements Serializable {
             });
         } else {
             callback.onTaskCompleted(false);
-            Log.d(TAG, "Null User");
+            Log.e(TAG, "Null User");
         }
     }
 
@@ -405,7 +405,7 @@ public class PointOfInterest implements Serializable {
 
                     });
                 } else {
-                    Log.d(TAG, "Null User");
+                    Log.e(TAG, "Null User");
                 }
 
             }
@@ -482,7 +482,7 @@ public class PointOfInterest implements Serializable {
                 });
             } else {
                 callback.onTaskCompleted(null);
-                Log.d(TAG, "Null User");
+                Log.e(TAG, "Null User");
             }
         }
 

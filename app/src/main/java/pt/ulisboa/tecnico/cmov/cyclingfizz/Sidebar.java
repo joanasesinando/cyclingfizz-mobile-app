@@ -158,7 +158,6 @@ public final class Sidebar {
             }
 
             overlay.setOnClickListener(item -> {
-                Log.d(TAG, String.valueOf(activity));
                 toggleSidebar();
             });
             LinearLayout sidebarUser = activity.findViewById(R.id.sidebar_user);
@@ -176,14 +175,11 @@ public final class Sidebar {
     }
 
     public void changeUserUI() {
-
-        Log.e(TAG, "update UI");
         TextView userEmail = activity.findViewById(R.id.logged_user_email);
         TextView userName = activity.findViewById(R.id.logged_user_name);
         ImageView userAvatar = activity.findViewById(R.id.logged_user_avatar);
-        NavigationMenuItemView logoutBtn = activity.findViewById(R.id.sidebar_logout);
 
-        if (userEmail == null || userName == null || userAvatar == null || logoutBtn == null)
+        if (userEmail == null || userName == null || userAvatar == null)
             return;
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -192,7 +188,7 @@ public final class Sidebar {
             userAvatar.setImageDrawable(ContextCompat.getDrawable(activity, R.drawable.ic_default_avatar));
             userEmail.setText(R.string.sign_in_msg);
             userName.setText(R.string.sign_in);
-            logoutBtn.setVisibility(View.GONE);
+            sidebar.getMenu().findItem(R.id.sidebar_logout).setVisible(false);
 
         } else {
             if (user.getPhotoUrl() != null) {
@@ -207,7 +203,7 @@ public final class Sidebar {
             userName.setText(user.getDisplayName() != null && !user.getDisplayName().isEmpty() ?
                     user.getDisplayName() :
                     Utils.capitalize(Objects.requireNonNull(user.getEmail()).split("@")[0]));
-            logoutBtn.setVisibility(View.VISIBLE);
+            sidebar.getMenu().findItem(R.id.sidebar_logout).setVisible(true);
         }
     }
 }

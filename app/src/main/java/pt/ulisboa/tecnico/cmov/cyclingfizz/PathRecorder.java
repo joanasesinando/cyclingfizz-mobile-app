@@ -90,7 +90,6 @@ public class PathRecorder {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void saveRecording(String name, String description, Bitmap bitmap, File videoFile, Utils.OnTaskCompleted<Boolean> callback) {
-        printFeature();
         saveFeature(name, description, bitmap, videoFile, callback);
     }
 
@@ -135,12 +134,6 @@ public class PathRecorder {
         return path.get((int) (path.size()/2));
     }
 
-    private void printFeature() {
-        if (path.size() < 2) return;
-        String jsonString = getFeature().toJson();
-        Log.d(TAG, jsonString);
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void saveFeature(String name, String description, Bitmap bitmap, File videoFile, Utils.OnTaskCompleted<Boolean> callback) {
         if (path.size() < 2) return;
@@ -155,7 +148,6 @@ public class PathRecorder {
 
                 route.getJsonAsync(data -> {
                     (new Utils.httpPostRequestJson(response -> {
-                        Log.d(TAG, String.valueOf(response));
                         callback.onTaskCompleted(true);
                     }, data.toString())).execute(SERVER_URL + "/save-route");
                 });
@@ -164,7 +156,7 @@ public class PathRecorder {
             });
         } else {
             callback.onTaskCompleted(false);
-            Log.d(TAG, "Null User");
+            Log.e(TAG, "Null User");
         }
     }
 }

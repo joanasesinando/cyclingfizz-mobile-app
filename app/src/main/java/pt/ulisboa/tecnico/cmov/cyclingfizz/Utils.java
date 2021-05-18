@@ -511,9 +511,6 @@ public final class Utils {
             byte[] cachedValue = cache.get(urls[0]);
 
             if (cachedValue != null && cachedValue.length > 0) {
-                Log.d(TAG, "Got " + urls[0] + " from cache");
-                Log.d(TAG, "Got value -> " + Arrays.toString(cachedValue));
-
                 return BitmapFactory.decodeByteArray(cachedValue, 0, cachedValue.length);
             }
 
@@ -604,10 +601,7 @@ public final class Utils {
 
 
             if (cachedValue != null && cachedValue.length > 0) {
-                Log.d(TAG, "Got " + urls[0] + " from cache");
-
                 InputStream input = new ByteArrayInputStream(cachedValue);
-
                 return readInputStreamToFile(input);
             }
 

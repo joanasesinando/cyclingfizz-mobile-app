@@ -68,7 +68,7 @@ public class AddReviewActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
+        Utils.forceLightModeOn();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.leave_review);
 
@@ -114,7 +114,7 @@ public class AddReviewActivity extends AppCompatActivity {
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else {
-                Toast.makeText(this, "No photos selected", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.no_photos_selected, Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -136,8 +136,6 @@ public class AddReviewActivity extends AppCompatActivity {
                             "pt.ulisboa.tecnico.cmov.cyclingfizz.fileprovider",
                             photoFile);
                     intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                } else {
-                    Log.e(TAG, "Entra no else, photoFile = null");
                 }
                 startActivityForResult(intent, TAKE_PHOTO);
             }
@@ -185,7 +183,7 @@ public class AddReviewActivity extends AppCompatActivity {
         MaterialButton pickPhotosBtn = findViewById(R.id.leave_review_pick_photos);
         pickPhotosBtn.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            intent.setType("image/*"); //FIXME: add video support
+            intent.setType("image/*");
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             startActivityForResult(intent, PICK_IMAGES);
         });

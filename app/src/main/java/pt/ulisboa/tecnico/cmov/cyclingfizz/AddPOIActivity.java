@@ -73,7 +73,7 @@ public class AddPOIActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
+        Utils.forceLightModeOn();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.poi);
         Utils.setStatusBarColor(this, getColor(R.color.purple_700));
@@ -120,8 +120,7 @@ public class AddPOIActivity extends AppCompatActivity {
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else {
-                Log.d(TAG, "currentPhotoPath = " + currentPhotoPath);
-                Toast.makeText(this, "No photos selected", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.no_photos_selected, Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -180,7 +179,7 @@ public class AddPOIActivity extends AppCompatActivity {
         MaterialButton pickPhotosBtn = findViewById(R.id.poi_pick_photos);
         pickPhotosBtn.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            intent.setType("image/*"); //FIXME: add video support
+            intent.setType("image/*");
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             startActivityForResult(intent, PICK_IMAGES);
         });
@@ -270,8 +269,6 @@ public class AddPOIActivity extends AppCompatActivity {
 
     @SuppressLint("SimpleDateFormat")
     private File createImageFile() {
-        Log.e(TAG, "createImageFile");
-
         try {
             // Create an image file name
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -282,8 +279,6 @@ public class AddPOIActivity extends AppCompatActivity {
                     ".jpg",         /* suffix */
                     storageDir      /* directory */
             );
-            Log.e(TAG, "get path");
-            Log.e(TAG, image.getAbsolutePath());
 
             currentPhotoPath = image.getAbsolutePath();
             return image;

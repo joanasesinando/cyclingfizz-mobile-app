@@ -246,7 +246,7 @@ public class Route implements Serializable {
 
             });
         } else {
-            Log.d(TAG, "Null User");
+            Log.e(TAG, "Null User");
             callback.onTaskCompleted(null);
         }
     }
@@ -258,7 +258,6 @@ public class Route implements Serializable {
         }
 
         (new Utils.httpRequestVideoFile(response -> {
-            Log.e(TAG, "Got response");
             videoFile = response;
             callback.onTaskCompleted(null);
 
@@ -299,7 +298,7 @@ public class Route implements Serializable {
 
             });
         } else {
-            Log.d(TAG, "Null User");
+            Log.e(TAG, "Null User");
         }
     }
 
@@ -375,7 +374,7 @@ public class Route implements Serializable {
             return;
 
         } else {
-            Log.d(TAG, "Null User");
+            Log.e(TAG, "Null User");
         }
         callback.onTaskCompleted(null);
     }
@@ -399,7 +398,7 @@ public class Route implements Serializable {
             return;
 
         } else {
-            Log.d(TAG, "Null User");
+            Log.e(TAG, "Null User");
         }
         callback.onTaskCompleted(false);
     }
@@ -423,7 +422,7 @@ public class Route implements Serializable {
             return;
 
         } else {
-            Log.d(TAG, "Null User");
+            Log.e(TAG, "Null User");
         }
         callback.onTaskCompleted(false);
     }
@@ -450,7 +449,7 @@ public class Route implements Serializable {
             });
         } else {
             callback.onTaskCompleted(null);
-            Log.d(TAG, "Null User");
+            Log.e(TAG, "Null User");
         }
     }
 
@@ -482,7 +481,7 @@ public class Route implements Serializable {
             });
         } else {
             callback.onTaskCompleted(false);
-            Log.d(TAG, "Null User");
+            Log.e(TAG, "Null User");
         }
     }
 
@@ -523,7 +522,7 @@ public class Route implements Serializable {
             });
         } else {
             callback.onTaskCompleted(null);
-            Log.d(TAG, "Null User");
+            Log.e(TAG, "Null User");
         }
     }
 
@@ -703,7 +702,7 @@ public class Route implements Serializable {
 
                     });
                 } else {
-                    Log.d(TAG, "Null User");
+                    Log.e(TAG, "Null User");
                 }
 
             }
@@ -784,7 +783,7 @@ public class Route implements Serializable {
                 });
             } else {
                 callback.onTaskCompleted(null);
-                Log.d(TAG, "Null User");
+                Log.e(TAG, "Null User");
             }
         }
 

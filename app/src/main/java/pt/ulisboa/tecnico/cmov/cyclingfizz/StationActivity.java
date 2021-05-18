@@ -71,7 +71,7 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
+        Utils.forceLightModeOn();
         super.onCreate(savedInstanceState);
         sharedState = (SharedState) getApplicationContext();
 
@@ -193,9 +193,9 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
         String lon = String.valueOf(coord.longitude());
 
         try {
-            String API_KEY = getString(R.string.google_API_KEY);
+            String API_KEY = BuildConfig.GOOGLE_API_KEY;
             String url = Utils.signRequest(GOOGLE_STREET_VIEW_URL + "?size=600x300&location=" + lat + "," + lon + "&key=" + API_KEY,
-                    getString(R.string.google_signing_secret));
+                    BuildConfig.GOOGLE_SIGNING_SECRET);
             (new Utils.httpRequestImage(thumbnail::setImageBitmap)).execute(url);
 
         } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException | URISyntaxException | MalformedURLException e) {
@@ -242,7 +242,7 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
         URL url = new URL(GOOGLE_DISTANCE_URL + "/json?origins=" + origin.getLatitude() + "," + origin.getLongitude() +
                 "&destinations=" + destination.latitude() + "%2C" + destination.longitude() +
                 "&mode=" + mode +
-                "&language=en&key=" + getString(R.string.google_API_KEY));
+                "&language=en&key=" + BuildConfig.GOOGLE_API_KEY);
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         InputStream in = new BufferedInputStream(urlConnection.getInputStream());
 
@@ -381,13 +381,12 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
         if (MapActivity.mBound) {
             MapActivity.mManager.requestPeers(MapActivity.mChannel, StationActivity.this);
         } else {
-            Toast.makeText(this, "Service not bound", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error: Service not bound", Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
     public void onPeersAvailable(SimWifiP2pDeviceList peers) {
-        Log.e("Cycling_Fizz_peers", "onPeersAvailable - station activity");
         boolean isClose = false;
 
         for (SimWifiP2pDevice device : peers.getDeviceList()) {
@@ -397,13 +396,9 @@ public class StationActivity extends AppCompatActivity implements SimWifiP2pMana
 
             if (beaconID.equals(stationID)) {
                 isClose = true;
-                Toast.makeText(this, "Station in range", Toast.LENGTH_SHORT).show();
                 break;
             }
         }
-
-        if (!isClose)
-            Toast.makeText(this, "Station is far", Toast.LENGTH_SHORT).show();
 
         // Update rent btn
         MaterialButton rentBtn = findViewById(R.id.rent_bike);

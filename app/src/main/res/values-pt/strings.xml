@@ -157,4 +157,7 @@
     <string name="intro2_text">Segue uma rota e conhece os melhores locais</string>
     <string name="intro3_title">Gravar rotas</string>
     <string name="intro3_text">Cria rotas personalizadas para outras pessoas seguirem</string>
+    <string name="no_photos_selected">Sem fotos selecionadas</string>
+    <string name="could_not_delete_review">Não foi possível a apagar a avaliação</string>
+    <string name="could_not_delete_comment">Não foi possível a apagar o comentário</string>
 </resources>

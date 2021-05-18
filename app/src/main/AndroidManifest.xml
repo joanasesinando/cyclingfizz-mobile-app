@@ -95,7 +95,7 @@
             android:resource="@array/preloaded_fonts" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_API_KEY" />
+            android:value="${GOOGLE_API_KEY}" />
 
         <service android:name="pt.inesc.termite.wifidirect.service.SimWifiP2pService" />
 

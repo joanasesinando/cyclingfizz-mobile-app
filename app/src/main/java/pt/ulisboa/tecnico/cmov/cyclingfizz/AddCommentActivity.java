@@ -62,7 +62,6 @@ public class AddCommentActivity extends AppCompatActivity {
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
-                    Log.d(TAG, "passou por aqui");
                     sendTakePhotoIntent();
                 }
             });
@@ -70,7 +69,7 @@ public class AddCommentActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
+        Utils.forceLightModeOn();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.leave_comment);
         Utils.setStatusBarColor(this, getColor(R.color.purple_700));
@@ -116,8 +115,7 @@ public class AddCommentActivity extends AppCompatActivity {
                 if (images.size() > 0) gallery.setVisibility(View.VISIBLE);
 
             } else {
-                Log.d(TAG, "current photo path = " + currentPhotoPath);
-                Toast.makeText(this, "No photos selected", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.no_photos_selected, Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -139,8 +137,6 @@ public class AddCommentActivity extends AppCompatActivity {
                             "pt.ulisboa.tecnico.cmov.cyclingfizz.fileprovider",
                             photoFile);
                     intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                } else {
-                    Log.e(TAG, "Entra no else, photoFile = null");
                 }
                 startActivityForResult(intent, TAKE_PHOTO);
             }
@@ -178,7 +174,7 @@ public class AddCommentActivity extends AppCompatActivity {
         MaterialButton pickPhotosBtn = findViewById(R.id.leave_comment_pick_photos);
         pickPhotosBtn.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            intent.setType("image/*"); //FIXME: add video support
+            intent.setType("image/*");
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             startActivityForResult(intent, PICK_IMAGES);
         });
@@ -278,7 +274,6 @@ public class AddCommentActivity extends AppCompatActivity {
                     ".jpg",         /* suffix */
                     storageDir      /* directory */
             );
-            Log.d(TAG, image.getAbsolutePath());
             currentPhotoPath = image.getAbsolutePath();
             return image;
         } catch (IOException e) {

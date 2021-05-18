@@ -18,7 +18,7 @@ public class StreetViewActivity extends AppCompatActivity implements OnStreetVie
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
+        Utils.forceLightModeOn();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.street_view);
 

@@ -83,6 +83,9 @@
     <string name="route_being_recorded_warning">You are currently recording a route! Please stop the recording first.</string>
     <string name="delete_comment">Delete comment</string>
     <string name="delete_comment_warning">You’re about to delete this comment. Are you sure you want to delete?</string>
+    <string name="no_photos_selected">No photos selected</string>
+    <string name="could_not_delete_review">Could not delete review</string>
+    <string name="could_not_delete_comment">Could not delete comment</string>
 
 
     <!-- Messages -->
@@ -187,22 +190,18 @@
     <string name="are_you_sure_flag_positive">Flag</string>
 
     <!-- Location Permissions -->
-
-    <!--    todo mesmo change this string-->
     <string name="user_location_permission_explanation">This app needs your location to find you in the map.</string>
     <string name="user_location_permission_not_granted">Location permission not granted</string>
 
     <!-- Location Turn on Dialog -->
-
     <string name="user_location_turn_on_title">Turn on Location?</string>
     <string name="user_location_turn_on_text">This app needs your location to find you in the map.</string>
     <string name="user_location_turn_on_ignore">Ignore</string>
     <string name="user_location_turn_on_setting">Open Settings</string>
 
-    <!-- Keys TODO: move somewhere else -->
+    <!-- Keys -->
     <string name="mapbox_access_token" translatable="false">pk.eyJ1IjoiYmVycmUiLCJhIjoiY2tvbXlhNTQyMTdqbDJ2bzBrYXprdDVnbSJ9.-SjB3Hp2spLDCOwXxr_LFw</string>
-    <string name="google_API_KEY" translatable="false">AIzaSyBycELmIsSb30MHTmFol4Ez5lXSc1IA7eg</string>
-    <string name="google_signing_secret" translatable="false">DTDrKz5z8ti16fOGYOhIkPNFkXk=</string>
+
     <string name="created_by">Created by </string>
     <string name="portuguese">Portuguese</string>
     <string name="english">English</string>

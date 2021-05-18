@@ -23,7 +23,7 @@ public class RecyclerViewFragment<T> extends Fragment {
     private static final String TAG = "Cycling_Fizz@RecyclerViewFragment";
 
     private static final String KEY_LAYOUT_MANAGER = "layoutManager";
-    private static final int SPAN_COUNT = 2; // FIXME: nr. columns in GridLayout
+    private static final int SPAN_COUNT = 2; // nr. columns in GridLayout
 
     private enum LayoutManagerType {
         GRID_LAYOUT_MANAGER,
@@ -95,7 +95,7 @@ public class RecyclerViewFragment<T> extends Fragment {
 
             case IMAGES:
                 mCurrentLayoutManagerType = LayoutManagerType.GRID_LAYOUT_MANAGER;
-                //mAdapter = new RoutesCustomAdapter((ArrayList<Route>) mDataset); TODO
+                //mAdapter = new RoutesCustomAdapter((ArrayList<Route>) mDataset);
                 break;
 
             default:

@@ -54,7 +54,7 @@ public class ProfileActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
+        Utils.forceLightModeOn();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.user_profile);
 
@@ -110,7 +110,7 @@ public class ProfileActivity extends AppCompatActivity {
 
             });
         } else {
-            Log.d(TAG, "Null User");
+            Log.e(TAG, "Null User");
             callback.onTaskCompleted(false);
         }
     }
@@ -159,7 +159,7 @@ public class ProfileActivity extends AppCompatActivity {
 
             });
         } else {
-            Log.d(TAG, "Null User");
+            Log.e(TAG, "Null User");
             callback.onTaskCompleted(false);
         }
     }
@@ -204,7 +204,7 @@ public class ProfileActivity extends AppCompatActivity {
                     Utils.capitalize(Objects.requireNonNull(user.getEmail()).split("@")[0]));
 
         } else {
-            Log.d(TAG, "Null user");
+            Log.e(TAG, "Null User");
         }
     }
 
@@ -229,9 +229,6 @@ public class ProfileActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void updateRouteListView(ArrayList<Route> routes) {
-
-        Log.e(TAG, "routes -> " + routes.size());
-
         routes.sort(getSorter());
 
         // Init RecyclerView

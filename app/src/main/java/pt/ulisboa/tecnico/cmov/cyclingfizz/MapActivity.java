@@ -212,11 +212,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
-                    Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
                     startLocation();  // afterPermissionGranted
                 } else {
                     updateCurrentLocationBtn();
-                    Toast.makeText(this, "Permission not Granted", Toast.LENGTH_SHORT).show();
                 }
             });
 
@@ -238,7 +236,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
+        Utils.forceLightModeOn();
         checkIfFirstTimeOpening();
         super.onCreate(savedInstanceState);
 
@@ -266,7 +264,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 if (locationResult == null) return;
-                Log.d(TAG, "Got Location");
 
                 Location previousLocation = userLocation;
 
@@ -275,7 +272,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     userLocation = locationResult.getLastLocation();
                     mapboxMap.getLocationComponent().forceLocationUpdate(userLocation);
                 }
-                Log.d(TAG, "Got Location -> " + userLocation);
 
                 // Create thread waiting for path recording
                 (new Thread(() -> {
@@ -527,8 +523,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         } else if (pathPlayer.isPlayingRoute()) {
                             Route routePlaying = pathPlayer.getPlayingRoute();
                             PointOfInterest poi = routePlaying.getAllPOIs().get(poiIndex);
-                            Log.d(TAG, "POI Image Size: " + poi.getImages().size());
-                            Log.d(TAG, "POI media Size: " + poi.getMediaLinks().size());
                             SharedState sharedState = (SharedState) getApplicationContext();
                             sharedState.viewingPOI = poi;
 
@@ -782,15 +776,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
 
         task.addOnSuccessListener(this, locationSettingsResponse -> {
-
-            Log.d(TAG, "Location ON");
             turnOnLocationTrackerMapbox();  // ifLocationOn
         });
 
         task.addOnFailureListener(this, e -> {
             if (e instanceof ResolvableApiException) {
-                Log.d(TAG, "Location OFF " + e);
-
                 // Location settings are not satisfied, but this can be fixed
                 // by showing the user a dialog.
                 try {
@@ -809,13 +799,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void startLocation() {
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-//            Toast.makeText(this, "Permission already Granted", Toast.LENGTH_SHORT).show();
-
             if (locationRequest == null) createLocationRequestHighInterval();
             checkIfLocationOn();
 
         } else {
-//            Toast.makeText(this, "ask for permission", Toast.LENGTH_SHORT).show();
             requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
         }
     }
@@ -886,7 +873,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             LocationComponent locationComponent = mapboxMap.getLocationComponent();
             return locationComponent.isLocationComponentActivated() && locationComponent.isLocationComponentEnabled();
         } catch (Exception e) {
-            Log.e(TAG + "_isGpsOn()", e.getMessage());
             return false;
         }
     }
@@ -1163,7 +1149,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void updatePathRecordedOnMap() {
-        Log.d(TAG, "Updating path recorded on map");
         if (mapboxMap == null || mapboxMap.getStyle() == null) return;
 
         GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
@@ -1178,8 +1163,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void updatePOIsOnMap() {
-        Log.d(TAG, "Updating POIs on map");
-
         if (mapboxMap == null || mapboxMap.getStyle() == null) return;
 
         GeoJsonSource POIsSource = mapboxMap.getStyle().getSourceAs(POI_SOURCE_ID);
@@ -1199,8 +1182,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void cleanRoute() {
-        Log.d(TAG, "Cleaning route");
-
         // Cleaning path recorded
         GeoJsonSource pathRecordedSource = mapboxMap.getStyle().getSourceAs(PATH_RECORDED_SOURCE_ID);
         if (pathRecordedSource != null) {
@@ -1503,13 +1484,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mBound = true;
     }
 
-    private void turnWifiOff() { // FIXME: onde desligar?
-        if (mBound) {
-            unbindService(mConnection);
-            mBound = false;
-        }
-    }
-
     @Override
     public void checkForStationsInRange() {
         if (mBound) {
@@ -1539,7 +1513,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     public void onPeersAvailable(SimWifiP2pDeviceList peers) {
-        Log.e("Cycling_Fizz_peers", "onPeersAvailable - map activity");
         boolean isClose = peers.getDeviceList().size() > 0;
 
         MaterialButton btnStop = findViewById(R.id.end_ride);
@@ -1547,7 +1520,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         btnStop.setAlpha(isClose ? 1f : 0.5f);
 
         if (!isClose) {
-            Toast.makeText(this, "No stations nearby", Toast.LENGTH_SHORT).show();
             endTripFlag = false;
             return;
         }
@@ -1557,8 +1529,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             // Get beacon ID
             String beaconName = device.deviceName;
             String beaconID = beaconName.contains("_") ? beaconName.split("_")[1] : beaconName;
-
-            Toast.makeText(this, "Station " + beaconID + " is in range", Toast.LENGTH_SHORT).show();
 
             if (endTripFlag)
                 endTrip(beaconID);
@@ -1589,7 +1559,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
 
         if (pathRecorder.isRecording()) {
-
             showRecordingUI();
             updateRoute();
         }
@@ -1632,14 +1601,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     protected void onPause() {
-        Log.d(TAG, "onPause - map activity");
         super.onPause();
         if (isGpsOn() && !pathRecorder.isRecording()) {
             stopLocationUpdates();
         }
         mapView.onPause();
         if (mReceiver != null ) {
-            Log.d(TAG, "unregistering - map activity");
             unregisterReceiver(mReceiver);
         }
     }

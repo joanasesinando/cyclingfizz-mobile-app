@@ -47,7 +47,7 @@ public class CyclewayActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
+        Utils.forceLightModeOn();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.cycleway);
 
@@ -147,9 +147,9 @@ public class CyclewayActivity extends AppCompatActivity {
         String lon = String.valueOf(coord.longitude());
 
         try {
-            String API_KEY = getString(R.string.google_API_KEY);
+            String API_KEY = BuildConfig.GOOGLE_API_KEY;
             String url = Utils.signRequest(GOOGLE_STREET_VIEW_URL + "?size=600x300&location=" + lat + "," + lon + "&key=" + API_KEY,
-                    getString(R.string.google_signing_secret));
+                    BuildConfig.GOOGLE_SIGNING_SECRET);
             (new Utils.httpRequestImage(thumbnail::setImageBitmap)).execute(url);
 
         } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException | URISyntaxException | MalformedURLException e) {
@@ -192,7 +192,7 @@ public class CyclewayActivity extends AppCompatActivity {
         URL url = new URL(GOOGLE_DISTANCE_URL + "/json?origins=" + origin.getLatitude() + "," + origin.getLongitude() +
                 "&destinations=" + destination.latitude() + "%2C" + destination.longitude() +
                 "&mode=" + mode +
-                "&language=en&key=" + getString(R.string.google_API_KEY));
+                "&language=en&key=" + BuildConfig.GOOGLE_API_KEY);
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         InputStream in = new BufferedInputStream(urlConnection.getInputStream());
 

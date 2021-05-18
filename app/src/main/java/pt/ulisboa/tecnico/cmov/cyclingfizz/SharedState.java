@@ -7,9 +7,6 @@ import java.util.ArrayList;
 
 public class SharedState extends Application {
 
-    // FIXME: remove renting from here and create singleton
-    // FIXME: add general stuff here like server URL
-
     PointOfInterest viewingPOI = null;
     Route.Review editingReview = null;
     Route reviewingRoute = null;

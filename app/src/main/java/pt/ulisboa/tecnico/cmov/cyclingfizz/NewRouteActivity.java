@@ -133,7 +133,7 @@ public class NewRouteActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
+        Utils.forceLightModeOn();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.new_route);
 
@@ -160,8 +160,6 @@ public class NewRouteActivity extends AppCompatActivity {
                 thumbnail.setImageBitmap(thumbImage);
 
             } else if (requestCode == PICK_VIDEO && resultCode == RESULT_OK && data != null) {
-                Toast.makeText(this, "Got Video", Toast.LENGTH_LONG).show();
-
                 // Get URI
                 Uri uri = data.getData();
                 InputStream inputStream = getContentResolver().openInputStream(uri);
@@ -192,10 +190,10 @@ public class NewRouteActivity extends AppCompatActivity {
 
 
             } else {
-                Toast.makeText(this, "No photo selected", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.no_photos_selected, Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
-            Log.e(TAG, Arrays.toString(e.getStackTrace()));
+            Log.e(TAG, e.getMessage());
             e.printStackTrace();
         }
         super.onActivityResult(requestCode, resultCode, data);

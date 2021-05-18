@@ -45,7 +45,7 @@ public class RoutesListActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.forceLightModeOn(); // FIXME: remove when dark mode implemented
+        Utils.forceLightModeOn();
 
         super.onCreate(savedInstanceState);
 
@@ -259,6 +259,13 @@ public class RoutesListActivity extends AppCompatActivity {
     @Override
     public void onRestart() {
         super.onRestart();
+        sidebar.changeUserUI();
         updateRouteListView();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sidebar.changeUserUI();
     }
 }
