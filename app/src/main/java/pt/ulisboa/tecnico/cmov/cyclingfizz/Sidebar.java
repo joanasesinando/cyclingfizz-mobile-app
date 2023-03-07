@@ -45,7 +45,7 @@ public final class Sidebar {
     public boolean itemClicked(MenuItem item) {
 
         int id = item.getItemId();
-        if (id == menuItem.getId()) return false;
+        if (menuItem != null && id == menuItem.getId()) return false;
 
         if (id == R.id.sidebar_logout) {
             FirebaseAuth.getInstance().signOut();

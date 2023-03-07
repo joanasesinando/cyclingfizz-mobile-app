@@ -95,7 +95,7 @@
             android:resource="@array/preloaded_fonts" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="${GOOGLE_API_KEY}" />
+            android:value="AIzaSyCHq-SKxNdmIqqQjbq2N5BNu4im6NolsD4" />
 
         <service android:name="pt.inesc.termite.wifidirect.service.SimWifiP2pService" />
 
@@ -103,7 +103,8 @@
             android:name="androidx.core.content.FileProvider"
             android:authorities="pt.ulisboa.tecnico.cmov.cyclingfizz.fileprovider"
             android:exported="false"
-            android:grantUriPermissions="true">
+            android:grantUriPermissions="true"
+            tools:ignore="MissingClass">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />

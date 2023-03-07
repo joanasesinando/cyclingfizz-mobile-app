@@ -627,6 +627,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void addGiraStations(@NonNull Style loadedMapStyle) {
+        Log.i(TAG, "addGiraStations: ");
         try {
             loadedMapStyle.addSource(
                 new GeoJsonSource(GIRA_SOURCE_ID,

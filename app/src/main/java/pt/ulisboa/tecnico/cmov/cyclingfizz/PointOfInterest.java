@@ -126,7 +126,6 @@ public class PointOfInterest implements Serializable {
 
                     String mediaBase64 = Base64.encodeToString(byteArray, Base64.DEFAULT);
 
-
                     JsonObject data = new JsonObject();
                     data.addProperty("media_base64", mediaBase64);
                     data.addProperty("id_token", idToken);

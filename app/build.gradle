@@ -20,6 +20,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField "String", "GOOGLE_API_KEY", "\"AIzaSyCHq-SKxNdmIqqQjbq2N5BNu4im6NolsD4\""
+            buildConfigField "String", "GOOGLE_SIGNING_SECRET", "\"DTDrKz5z8ti16fOGYOhIkPNFkXk=\""
+    }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

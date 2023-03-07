@@ -95,34 +95,35 @@
                 android:columnCount="3"
                 android:orientation="horizontal"
                 android:useDefaultMargins="true"
-                android:visibility="gone">
+                android:visibility="visible">
 
-<!--                <androidx.constraintlayout.widget.ConstraintLayout-->
-<!--                        android:layout_width="110dp"-->
-<!--                        android:layout_height="110dp"-->
-<!--                        android:layout_rowWeight="1">-->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="110dp"
+                        android:layout_height="110dp"
+                        android:layout_rowWeight="1">
 
-<!--                        <ImageView-->
-<!--                            android:layout_width="match_parent"-->
-<!--                            android:layout_height="match_parent"-->
-<!--                            android:src="@drawable/ic_default"-->
-<!--                            android:scaleType="centerCrop" />-->
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:src="@drawable/ic_default"
+                            android:scaleType="centerCrop" />
 
-<!--                        <LinearLayout-->
-<!--                            android:layout_width="match_parent"-->
-<!--                            android:layout_height="match_parent"-->
-<!--                            android:background="@color/purple_500"-->
-<!--                            android:alpha=".3" />-->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@color/purple_500"
+                            android:alpha=".3" />
 
-<!--                        <ImageView-->
-<!--                            android:layout_width="wrap_content"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:padding="10dp"-->
-<!--                            android:src="@drawable/ic_round_check_circle_24"-->
-<!--                            app:layout_constraintEnd_toEndOf="parent"-->
-<!--                            app:layout_constraintTop_toTopOf="parent"-->
-<!--                            app:tint="@color/white" />-->
-<!--                    </androidx.constraintlayout.widget.ConstraintLayout>-->
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_round_check_circle_24"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:tint="@color/white" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
             </GridLayout>
 
             <LinearLayout
