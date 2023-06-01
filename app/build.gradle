@@ -17,13 +17,16 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        Properties properties = new Properties()
+        properties.load(project.rootProject.file("local.properties").newDataInputStream())
+
+        resValue "string", "GOOGLE_API_KEY", "\"${properties.getProperty("GOOGLE_API_KEY")}"
+        resValue "string", "GOOGLE_SIGNING_SECRET", "\"${properties.getProperty("GOOGLE_SIGNING_SECRET")}"
+
     }
 
     buildTypes {
-        debug {
-            buildConfigField "String", "GOOGLE_API_KEY", "\"AIzaSyCHq-SKxNdmIqqQjbq2N5BNu4im6NolsD4\""
-            buildConfigField "String", "GOOGLE_SIGNING_SECRET", "\"DTDrKz5z8ti16fOGYOhIkPNFkXk=\""
-    }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

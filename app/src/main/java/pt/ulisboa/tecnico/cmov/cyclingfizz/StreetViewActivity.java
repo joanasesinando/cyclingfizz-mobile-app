@@ -11,6 +11,7 @@ import com.google.android.gms.maps.SupportStreetViewPanoramaFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.mapbox.geojson.Point;
+import java.util.Objects;
 
 public class StreetViewActivity extends AppCompatActivity implements OnStreetViewPanoramaReadyCallback {
 
@@ -25,7 +26,7 @@ public class StreetViewActivity extends AppCompatActivity implements OnStreetVie
         coordinates = (Point) Point.fromJson(getIntent().getStringExtra(StationActivity.COORDINATES));
 
         SupportStreetViewPanoramaFragment streetViewPanoramaFragment = (SupportStreetViewPanoramaFragment) getSupportFragmentManager().findFragmentById(R.id.gms_street_view);
-        streetViewPanoramaFragment.getStreetViewPanoramaAsync(this);
+        Objects.requireNonNull(streetViewPanoramaFragment).getStreetViewPanoramaAsync(this);
 
         // Set click listener for back btn
         MaterialToolbar materialToolbar = findViewById(R.id.backBar);
